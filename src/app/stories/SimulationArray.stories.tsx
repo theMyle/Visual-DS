@@ -1,8 +1,9 @@
 
-import SimulationArray from "@/app/components/SimulationArray";
+import "../globals.css"
+import SimulationArray from "@/app/components/simulation/SimulationArray";
 
 export default {
-    title: "Simulation/Array",
+    title: "simulation/Array",
     component: SimulationArray,
 }
 

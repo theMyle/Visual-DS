@@ -1,13 +1,11 @@
-
-import VisualArrayBox from "@/app/components/VisualArrayBox";
+import VisualArrayBox from "@/app/components/visual-array/VisualArrayBox";
 import {AnimatePresence} from "framer-motion";
-import {ArrayElement} from "@/app/types/VisualArrayTypes";
 
+import {ArrayElement} from "./types";
 
 type VisualArrayProps = {
     array: ArrayElement[];
 }
-
 
 export default function VisualArray({ array }: VisualArrayProps) {
     return (
@@ -15,7 +13,7 @@ export default function VisualArray({ array }: VisualArrayProps) {
             <AnimatePresence>
                 {
                     array.map((arrayElem) => (
-                        <VisualArrayBox key={arrayElem.id} value={arrayElem.value}/>
+                        <VisualArrayBox key={arrayElem.id} value={arrayElem.value} animationState={arrayElem.animationState}/>
                     ))
                 }
             </AnimatePresence>

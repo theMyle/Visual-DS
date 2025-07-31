@@ -1,18 +1,15 @@
-import { useState } from "react";
-import VisualArray from "@/app/components/VisualArray";
-import {ArrayElement} from "@/app/types/VisualArrayTypes";
+import {useState} from "react";
 
+import VisualArray from "@/app/components/visual-array/VisualArray";
+import {createArrayElement} from "@/app/components/visual-array/utils";
+import {ArrayElement, ArrayElementAnimationState} from "@/app/components/visual-array/types";
 
 export default function SimulationArray() {
     const [array, setArray] = useState<ArrayElement[]>([]);
     const [inputValue, setInputValue] = useState<string>("");
     const [insertIndex, setInsertIndex] = useState<number>(0);
-
-    const createArrayElement = (
-        value: string | number
-    ): ArrayElement => {
-        return { id: crypto.randomUUID(), value }
-    };
+    const [isAnimating, setIsAnimating] = useState<boolean>(false);
+    const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
     /* Layout
     * static nav on top
@@ -21,8 +18,32 @@ export default function SimulationArray() {
     * */
 
     // insertFront
-    const insertFront = (value: ArrayElement) => {
-        setArray(prev => [value, ...prev]);
+    const insertFront = async (value: ArrayElement) => {
+        if (isAnimating) return;
+        setIsAnimating(true);
+
+        const interval = 300;
+
+        const invisible = createArrayElement("", ArrayElementAnimationState.Invisible);
+        const result = [...array];
+        let original = [...array, invisible];
+
+        setArray(original);
+
+        for (let i = original.length - 1; i >= 1; i--) {
+            const temp = [...original];
+            temp[i] = temp[i-1];
+            temp[i-1] = invisible;
+            setArray(temp);
+            await sleep(interval);
+            original = [...temp];
+        }
+
+        invisible.value = value.value
+        invisible.animationState = ArrayElementAnimationState.Default
+        setArray([invisible, ...result]);
+
+        setIsAnimating(false)
     };
 
     // insertBack

@@ -1,6 +1,7 @@
 
-import '../globals.css'
-import VisualArrayBox from "../components/VisualArrayBox"
+import "../globals.css"
+import VisualArrayBox from "@/app/components/visual-array/VisualArrayBox";
+import {ArrayElementAnimationState} from "@/app/components/visual-array/types";
 
 export default {
     title: "Components/VisualArrayBox",
@@ -8,7 +9,8 @@ export default {
 };
 
 export const Default = {
-    args:{
-        value:20,
-    },
+    args: {
+        value: 4,
+        animationState: ArrayElementAnimationState.Default,
+    }
 };

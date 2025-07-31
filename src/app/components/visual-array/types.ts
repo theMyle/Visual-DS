@@ -6,4 +6,10 @@
 export type ArrayElement = {
     id: string,
     value: string | number,
+    animationState: ArrayElementAnimationState
+}
+
+export enum ArrayElementAnimationState {
+    Default,
+    Invisible,
 }
