@@ -4,11 +4,9 @@ import {useState} from "react";
 import MenuItemButton from "@/app/components/MenuItemButton";
 import VisualDSIcon from "@/app/components/VisualDSIcon";
 import Link from "next/link";
-import {useRouter} from "next/navigation";
 
 export default function NavBar() {
     const [menuOpen, setMenuOpen] = useState(false);
-    const router = useRouter();
 
     return(
         <div>
@@ -37,24 +35,18 @@ export default function NavBar() {
                 <div className="fixed top-14 left-0 w-full bg-white">
                     <MenuItemButton
                         text={"Lessons"}
-                        onClick={() => {
-                            router.push("/lesson")
-                            setMenuOpen(false)
-                        }} />
+                        href={"/lesson"}
+                        onClick={() => {setMenuOpen(false)}} />
 
                     <MenuItemButton
-                        text={"Playground"}
-                        onClick={() => {
-                            router.push("/simulator")
-                            setMenuOpen(false)
-                        }} />
+                        text={"Simulator"}
+                        href={"/simulator"}
+                        onClick={() => {setMenuOpen(false)}} />
 
                     <MenuItemButton
                         text={"Assessment"}
-                        onClick={() => {
-                            router.push("/assessment")
-                            setMenuOpen(false)
-                        }} />
+                        href={"/assessment"}
+                        onClick={() => {setMenuOpen(false)}} />
                 </div>
             )}
         </div>
