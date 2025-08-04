@@ -10,12 +10,17 @@ type VisualArrayBoxProps = {
 const animationVariants: Record<ArrayElementAnimationState, MotionNodeAnimationOptions> = {
     [ArrayElementAnimationState.Default]: {
         initial: {opacity: 0, scale: 0.5},
-        animate: {opacity: 1, scale: [1,1.3,0.95,1]},
-        exit: {opacity: 0, scale: 0.7, backgroundColor: "#ef4444"},
+        animate: {opacity: 1, scale: 1},
+        exit: {opacity: 0, scale: [1, 1.1,0.7], backgroundColor: "#ef4444"}, transition: {duration: 0.4},
     },
     [ArrayElementAnimationState.Invisible]: {
         initial: {opacity: 0, scale: 0.5},
         animate: {opacity: 0, scale: 1, visibility: "hidden"},
+        exit: {opacity: 0, scale: 0, visibility: "hidden"},
+    },
+    [ArrayElementAnimationState.RemovedInvisible]: {
+        initial: {opacity: 0, scale: 0.5},
+        animate: {opacity: 0, scale: [1, 1.1,0.7], backgroundColor: "#ef4444"}, transition: {duration: 0.4},
         exit: {opacity: 0, scale: 0, visibility: "hidden"},
     }
 }

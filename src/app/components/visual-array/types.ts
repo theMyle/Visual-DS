@@ -12,4 +12,5 @@ export type ArrayElement = {
 export enum ArrayElementAnimationState {
     Default,
     Invisible,
+    RemovedInvisible,
 }

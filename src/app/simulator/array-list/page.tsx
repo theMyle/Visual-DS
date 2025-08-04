@@ -4,81 +4,173 @@ import {useEffect, useState} from "react";
 import {ArrayElement, ArrayElementAnimationState} from "@/app/components/visual-array/types";
 import {createArrayElement, createArrayElements} from "@/app/components/visual-array/utils";
 import VisualArray from "@/app/components/visual-array/VisualArray";
+import { invisibleValues } from "framer-motion";
 
 export default function SimulationArray() {
     const [array, setArray] = useState<ArrayElement[]>([]);
     const [inputValue, setInputValue] = useState<string>("");
     const [insertIndex, setInsertIndex] = useState<number>(0);
     const [isAnimating, setIsAnimating] = useState<boolean>(false);
+
     const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
+    const delay = {
+      interval: 350,
+      focus: 600,
+    }
 
     useEffect(() => {
         const initial = createArrayElements(..."helloworld".split(""))
         setArray(initial);
     },[]);
 
-    /* Layout
-    * static nav on top
-    * visualizer in the middle
-    * control panel at the bottom
-    * */
+    // INSERT OPERATIONS
+    // TODO - Add fucking insert animation like green green or some shit
+    // [/] - Insert Front 
+    // [/] - Insert Back 
+    // [/] - Insert At     
+    //
+    // REMOVAL OPERATIONS
+    // [/] - Remove Front
+    // [/] - Remove Back
+    // [ ] - Remove At      | Not yet implemented
+    //
+    // UPDATE OPERATIONS
+    // [/] - Set
+    //
+    // PROPERTIES
+    // [/] - Size
+    // [/] - At
+    // [/] - Get
 
 
-    // insertFront
+    // Insert item at start of the array
+    // shifting all elements to the right first to create space
+    // showing the process of resizing
     const insertFront = async (value: ArrayElement) => {
         if (isAnimating) return;
         setIsAnimating(true);
 
-        const interval = 300;
-
+        // create "empty" space at the end
         const invisible = createArrayElement("", ArrayElementAnimationState.Invisible);
-        const result = [...array];
-        let original = [...array, invisible];
+        invisible.value = value.value
 
-        setArray(original);
-        await sleep(interval);
+        let newArray = [...array, invisible];
 
-        for (let i = original.length - 1; i >= 1; i--) {
-            const temp = [...original];
+        setArray(newArray);
+        await sleep(600);
+
+        // move the invisible space across the list
+        // from end to the front
+        // then insert the actual value
+        for (let i = newArray.length - 1; i >= 1; i--) {
+            const temp = [...newArray];
             temp[i] = temp[i-1];
             temp[i-1] = invisible;
             setArray(temp);
-            await sleep(interval);
-            original = [...temp];
+            await sleep(delay.interval);
+            newArray = [...temp];
         }
 
-        invisible.value = value.value
+        // show the invisible item
         invisible.animationState = ArrayElementAnimationState.Default
-        setArray([invisible, ...result]);
-
+        setArray([...newArray]);
         setIsAnimating(false)
     };
 
-    // insertBack
-    const insertBack = (value: ArrayElement) => {
-        setArray(prev => [...prev, value]);
+
+    // Insert at end
+    const insertBack = async (value: ArrayElement) => {
+        if (isAnimating) return;
+        if (array.length == 0) {
+          insertFront(value);
+          return;
+        }
+        setArray([...array, value])
     }
 
-    // insertAt
-    const insertAt = (
-        value: ArrayElement, index: number
-    ) => {
-        const original = [...array]
-        const left = original.slice(0, index);
-        const right = original.slice(index);
-        const new_array = [...left, value, ...right];
-        setArray(new_array);
+
+    // Insert an item at a specific index
+    // by creating an empty space at the end
+    // and sliding all elements starting from the target 
+    // index to the end 
+    const insertAt = async (value: ArrayElement, index: number) => {
+        if (isAnimating) return;
+
+        // prolly need to add check if index is invalid
+        // better checking needed + frontend information feedback
+        if (index < 0 || index > array.length) {
+          console.log(`Invalid Index: {Array Size: array[${array.length}], target_index: [${index}]}`);
+          return;
+        }
+
+        setIsAnimating(true);
+
+        const invisible = value;
+        invisible.animationState = ArrayElementAnimationState.Invisible;
+
+        // allocate space
+        let newArray = [...array, invisible];
+        setArray(newArray);
+        sleep(delay.focus);
+
+        // move the invisible item to the desired index
+        for (let i = newArray.length-1; i > index; i--) {
+           const temp = [...newArray];
+           temp[i] = temp[i-1];
+           temp[i-1] = invisible;
+           setArray(temp);
+           await sleep(delay.interval);
+           newArray = temp;
+        };
+
+        // show/insert the new item into the array
+        invisible.animationState = ArrayElementAnimationState.Default;
+        setArray([...newArray]);
+        setIsAnimating(false);
     }
 
-    // removeFront
-    const removeFront = (): ArrayElement | undefined => {
-        const new_array = [...array];
-        const removed = new_array.shift();
-        setArray(new_array);
-        return removed;
+
+    // remove item from the front
+    // shift the rest of the items forward
+    //
+    // *PUTA*
+    // *PUTA*
+    const removeFront = async (): Promise<ArrayElement | undefined> => {
+        // make the front invisible but keep space
+        // show shifting of items
+        // once invisible item is at the end, remove it
+
+        if (isAnimating) return;
+        setIsAnimating(true);
+
+        let newArray = [...array]
+        const invisible = newArray[0];
+
+        // animate removal
+        invisible.animationState = ArrayElementAnimationState.RemovedInvisible;
+        setArray(newArray);
+        await sleep(delay.focus);
+
+        invisible.animationState = ArrayElementAnimationState.Invisible;
+
+        // loop until invisible is at the last index then remove
+        for (let i = 1; i < newArray.length; i++) {
+          const temp = [...newArray];
+          temp[i-1] = temp[i];
+          temp[i] = invisible;
+          setArray(temp);
+          await sleep(delay.interval);
+          newArray = [...temp];
+        }
+
+        // remove the shit
+        setArray(prev => prev.slice(0,-1));
+        setIsAnimating(false);
+        return invisible;
     }
 
-    // removeBack
+
+    // remove last item
     const removeBack = (): ArrayElement | undefined => {
         const new_array = [...array];
         const removed = new_array.pop();
@@ -88,13 +180,51 @@ export default function SimulationArray() {
 
 
     // removeAt
+    const removeAt = async (index: number) => {
+      // TODO
+    }
 
-    // set
-    // get
-    // length
+
+    // set value at specific index
+    const setAt = (newValue: number | string, index: number) => {
+        if (isAnimating) return;
+        // TODO - validate idx
+
+        const newArray = [...array];
+        newArray[index].value = newValue;
+        setArray(newArray);
+    }
+    
+
+    //get item at specific idx
+    const getAt = (i: number): ArrayElement | undefined => {
+        if (!isAnimating) return;
+        // TODO - validate idx
+        
+        return array[i];
+    }
+    
+
+    // return array length
+    const getLength = (): number | undefined => {
+        if (isAnimating) return;
+        return array.length;
+    }
 
     // sort??
     // find??
+    // BIG MAYBE BUT RN NAH
+
+    /* Layout / UI
+    * static nav on top
+    * visualizer in the middle
+    * control panel at the bottom
+    *
+    * [ ] TODO - The fucking buttons my dude
+    * [ ] TODO - IDK the fucking layout as well
+    * [ ] TODO - the fun buttons animation
+    *
+    * */
 
     return (
         <div className="h-full flex flex-col">
