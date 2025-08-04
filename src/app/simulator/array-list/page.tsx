@@ -141,6 +141,7 @@ export default function SimulationArray() {
         // once invisible item is at the end, remove it
 
         if (isAnimating) return;
+        if (array.length === 0) return;
         setIsAnimating(true);
 
         let newArray = [...array]
