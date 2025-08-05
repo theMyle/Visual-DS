@@ -3,7 +3,7 @@ import Link from "next/link"
 export default function IntroductionPage() {
   return(
     <div>
-      <UpperNav/>
+      <UpperNav />
 
       <main className={"flex flex-col gap-6 px-4 py-6"}>
         <WhatIsDS/>
@@ -130,7 +130,7 @@ function BottomNav() {
   )
 }
 
-function UpperNav({current: string}) {
+function UpperNav() {
   return(
     <nav className={"border-b-[1.8px] sticky top-0 z-0 w-full bg-white px-2"}>
 
