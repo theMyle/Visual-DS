@@ -1,12 +1,29 @@
 "use client";
 
-import {useState} from "react";
+import {useRef, useState, useEffect} from "react";
 import MenuItemButton from "@/app/components/MenuItemButton";
 import VisualDSIcon from "@/app/components/VisualDSIcon";
 import Link from "next/link";
 
 export default function NavBar() {
     const [menuOpen, setMenuOpen] = useState(false);
+    const overlayRef = useRef<HTMLDivElement>(null);
+
+    // Detect clicks outside the overlay
+    useEffect(() => {
+      const handleClickOutside = (event: MouseEvent) => {
+        if (
+          menuOpen &&
+          overlayRef.current &&
+          !overlayRef.current.contains(event.target as Node)
+        ) {
+          setMenuOpen(false);
+        }
+      };
+
+      document.addEventListener("mousedown", handleClickOutside);
+      return () => document.removeEventListener("mousedown", handleClickOutside);
+    }, [menuOpen]);
 
     return(
         <div>
@@ -32,7 +49,9 @@ export default function NavBar() {
 
             {/* Overlay Menu */}
             { menuOpen && (
-                <div className="fixed top-14 left-0 w-full bg-white">
+                <div 
+                ref={overlayRef}
+                className="fixed top-14 z-50 left-0 w-full bg-white">
                     <MenuItemButton
                         text={"Lessons"}
                         href={"/lesson"}

@@ -4,18 +4,18 @@ import {useEffect, useState} from "react";
 import {ArrayElement, ArrayElementAnimationState} from "@/app/components/visual-array/types";
 import {createArrayElement, createArrayElements} from "@/app/components/visual-array/utils";
 import VisualArray from "@/app/components/visual-array/VisualArray";
-import { invisibleValues } from "framer-motion";
 
 export default function SimulationArray() {
     const [array, setArray] = useState<ArrayElement[]>([]);
+    const [isAnimating, setIsAnimating] = useState<boolean>(false);
+
     const [inputValue, setInputValue] = useState<string>("");
     const [insertIndex, setInsertIndex] = useState<number>(0);
-    const [isAnimating, setIsAnimating] = useState<boolean>(false);
 
     const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
     const delay = {
       interval: 350,
-      focus: 600,
+      focus: 750,
     }
 
     useEffect(() => {
@@ -43,52 +43,6 @@ export default function SimulationArray() {
     // [/] - Get
 
 
-    // Insert item at start of the array
-    // shifting all elements to the right first to create space
-    // showing the process of resizing
-    const insertFront = async (value: ArrayElement) => {
-        if (isAnimating) return;
-        setIsAnimating(true);
-
-        // create "empty" space at the end
-        const invisible = createArrayElement("", ArrayElementAnimationState.Invisible);
-        invisible.value = value.value
-
-        let newArray = [...array, invisible];
-
-        setArray(newArray);
-        await sleep(600);
-
-        // move the invisible space across the list
-        // from end to the front
-        // then insert the actual value
-        for (let i = newArray.length - 1; i >= 1; i--) {
-            const temp = [...newArray];
-            temp[i] = temp[i-1];
-            temp[i-1] = invisible;
-            setArray(temp);
-            await sleep(delay.interval);
-            newArray = [...temp];
-        }
-
-        // show the invisible item
-        invisible.animationState = ArrayElementAnimationState.Default
-        setArray([...newArray]);
-        setIsAnimating(false)
-    };
-
-
-    // Insert at end
-    const insertBack = async (value: ArrayElement) => {
-        if (isAnimating) return;
-        if (array.length == 0) {
-          insertFront(value);
-          return;
-        }
-        setArray([...array, value])
-    }
-
-
     // Insert an item at a specific index
     // by creating an empty space at the end
     // and sliding all elements starting from the target 
@@ -106,12 +60,13 @@ export default function SimulationArray() {
         setIsAnimating(true);
 
         const invisible = value;
-        invisible.animationState = ArrayElementAnimationState.Invisible;
+        value.animationState = ArrayElementAnimationState.Invisible;
 
         // allocate space
         let newArray = [...array, invisible];
-        setArray(newArray);
-        sleep(delay.focus);
+
+        setArray([...newArray]);
+        await sleep(delay.interval);
 
         // move the invisible item to the desired index
         for (let i = newArray.length-1; i > index; i--) {
@@ -124,28 +79,51 @@ export default function SimulationArray() {
         };
 
         // show/insert the new item into the array
-        invisible.animationState = ArrayElementAnimationState.Default;
+        invisible.animationState = ArrayElementAnimationState.NewInserted;
         setArray([...newArray]);
+
+        await sleep(delay.focus + 200);
+
+        invisible.animationState = ArrayElementAnimationState.Default;
+        setArray(prev => [...prev]);
+
         setIsAnimating(false);
     }
 
 
-    // remove item from the front
-    // shift the rest of the items forward
+    // Insert item at start of the array
+    const insertFront = async (value: ArrayElement) => {
+        insertAt(value, 0);
+    };
+
+
+    // Insert at the end of the array 
+    const insertBack = async (value: ArrayElement) => {
+        if (isAnimating) return;
+        if (array.length == 0) {
+          insertFront(value);
+          return;
+        }
+        setArray([...array, value])
+    }
+
+
+    // remove item at specific index
+    // shift the rest of the items forward / to the left
     //
     // *PUTA*
     // *PUTA*
-    const removeFront = async (): Promise<ArrayElement | undefined> => {
+    const removeAt = async (index: number) => {
         // make the front invisible but keep space
         // show shifting of items
         // once invisible item is at the end, remove it
 
         if (isAnimating) return;
-        if (array.length === 0) return;
+        if (array.length === 0 || index < 0 || index > array.length - 1) return;
         setIsAnimating(true);
 
         let newArray = [...array]
-        const invisible = newArray[0];
+        const invisible = newArray[index];
 
         // animate removal
         invisible.animationState = ArrayElementAnimationState.RemovedInvisible;
@@ -154,14 +132,13 @@ export default function SimulationArray() {
 
         invisible.animationState = ArrayElementAnimationState.Invisible;
 
-        // loop until invisible is at the last index then remove
-        for (let i = 1; i < newArray.length; i++) {
-          const temp = [...newArray];
-          temp[i-1] = temp[i];
-          temp[i] = invisible;
-          setArray(temp);
-          await sleep(delay.interval);
-          newArray = [...temp];
+        for (let i = index + 1; i < newArray.length; i++) {
+            const temp = [...newArray];
+            temp[i-1] = temp[i];
+            temp[i] = invisible;
+            setArray(temp);
+            await sleep(delay.interval);
+            newArray = [...temp];
         }
 
         // remove the shit
@@ -171,8 +148,15 @@ export default function SimulationArray() {
     }
 
 
+    // remove item from the front
+    const removeFront = async () => {
+        removeAt(0);
+    }
+
+
     // remove last item
     const removeBack = (): ArrayElement | undefined => {
+        if (isAnimating) return;
         const new_array = [...array];
         const removed = new_array.pop();
         setArray(new_array);
@@ -180,29 +164,55 @@ export default function SimulationArray() {
     }
 
 
-    // removeAt
-    const removeAt = async (index: number) => {
-      // TODO
-    }
-
-
     // set value at specific index
-    const setAt = (newValue: number | string, index: number) => {
+    const setAt = async (newValue: number | string, index: number) => {
         if (isAnimating) return;
         // TODO - validate idx
+        
+        setIsAnimating(true);
 
+        // highlight current first
+        // sleep
+        // chage value
+        // sleep
+        // go back
         const newArray = [...array];
-        newArray[index].value = newValue;
+
+        newArray[index].animationState = ArrayElementAnimationState.HighlightedOrange;
         setArray(newArray);
+        await sleep(delay.focus + 100);
+
+        newArray[index].value = newValue;
+        setArray([...newArray]);
+        await sleep(delay.focus);
+
+        newArray[index].animationState = ArrayElementAnimationState.Default;
+        setArray([...newArray]);
+
+        setIsAnimating(false);
     }
     
 
     //get item at specific idx
-    const getAt = (i: number): ArrayElement | undefined => {
-        if (!isAnimating) return;
+    const getAt = async (index: number): Promise<ArrayElement | undefined> => {
+        if (isAnimating) return;
         // TODO - validate idx
         
-        return array[i];
+        setIsAnimating(true);
+
+        let newArray = [...array];
+
+        newArray[index].animationState = ArrayElementAnimationState.HighlightedGreen;
+        setArray([...newArray]);
+
+        await sleep(delay.focus + 200);
+
+        newArray[index].animationState = ArrayElementAnimationState.Default;
+        setArray([...newArray]);
+
+        setIsAnimating(false);
+
+        return newArray[index];
     }
     
 
@@ -256,6 +266,9 @@ export default function SimulationArray() {
                     </div>
                 </div>
                 <div className="flex gap-4 flex-wrap">
+
+                    {/* INSERTION */}
+
                     <button
                         className="bg-blue-500 text-white px-4 py-2 rounded"
                         onClick={() => insertFront(createArrayElement(inputValue))}
@@ -275,6 +288,9 @@ export default function SimulationArray() {
                     >
                         Insert At
                     </button>
+
+                    {/* DELETION */}
+
                     <button onClick={() => removeFront()}
                             className="bg-red-950 text-white px-4 py-2 rounded">
                         Remove Front
@@ -283,6 +299,25 @@ export default function SimulationArray() {
                             className="bg-red-950 text-white px-4 py-2 rounded">
                         Remove Back
                     </button>
+                    <button onClick={() => removeAt(insertIndex)}
+                            className="bg-red-950 text-white px-4 py-2 rounded">
+                        Remove At 
+                    </button>
+
+                    {/* OTHERS */}
+                    <button onClick={() => setAt(inputValue, insertIndex)}
+                            className="bg-orange-400 text-white px-4 py-2 rounded">
+                        Set
+                    </button>
+                    <button onClick={() => getAt(insertIndex)}
+                            className="bg-red-950 text-white px-4 py-2 rounded">
+                        At
+                    </button>
+                    <button onClick={() => getLength()}
+                            className="bg-red-950 text-white px-4 py-2 rounded">
+                        Size
+                    </button>
+
                 </div>
             </div>
         </div>

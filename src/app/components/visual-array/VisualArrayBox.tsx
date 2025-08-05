@@ -11,18 +11,31 @@ const animationVariants: Record<ArrayElementAnimationState, MotionNodeAnimationO
     [ArrayElementAnimationState.Default]: {
         initial: {opacity: 0, scale: 0.5},
         animate: {opacity: 1, scale: 1},
-        exit: {opacity: 0, scale: [1, 1.1,0.7], backgroundColor: "#ef4444"}, transition: {duration: 0.4},
+        exit: {opacity: 0, scale: [1, 1.1,0.7], backgroundColor: "#ef4444"}, 
     },
     [ArrayElementAnimationState.Invisible]: {
-        initial: {opacity: 0, scale: 0.5},
-        animate: {opacity: 0, scale: 1, visibility: "hidden"},
-        exit: {opacity: 0, scale: 0, visibility: "hidden"},
+        initial: {opacity: 0, scale: 1},
     },
     [ArrayElementAnimationState.RemovedInvisible]: {
-        initial: {opacity: 0, scale: 0.5},
-        animate: {opacity: 0, scale: [1, 1.1,0.7], backgroundColor: "#ef4444"}, transition: {duration: 0.4},
+        animate: {opacity: 0, scale: [1, 1.1,0.7], backgroundColor: "#ef4444"},
         exit: {opacity: 0, scale: 0, visibility: "hidden"},
-    }
+    },
+    [ArrayElementAnimationState.NewInserted]: {
+        initial: {opacity: 0, scale: 1},
+        animate: {opacity: 1, scale: [1, 1.2, 0.95, 1], backgroundColor: "#4ADE80"},      
+        transition: {duration: 0.5}
+    },
+    [ArrayElementAnimationState.HighlightedOrange]: {
+        initial: {opacity: 0, scale: 1},
+        animate: {opacity: 1, scale: 1.3, backgroundColor: "#FDBA74"},      
+        transition: {duration: 0.5}
+    },
+    [ArrayElementAnimationState.HighlightedGreen]: {
+        initial: {opacity: 0, scale: 1},
+        animate: {opacity: 1, scale: 1.3, backgroundColor: "#4ADE80"},      
+        transition: {duration: 0.5}
+    },
+
 }
 
 export default function VisualArrayBox({value, animationState}: VisualArrayBoxProps) {
@@ -35,7 +48,7 @@ export default function VisualArrayBox({value, animationState}: VisualArrayBoxPr
             initial={initial}
             animate={animate}
             exit={exit}
-            transition={ transition ?? {duration: 0.3} }
+            transition={ transition ?? {duration: 0.4} }
         >
             <span className={"text-center truncate px-1 text-xl text-black font-bold"}>
                 {value}

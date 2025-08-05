@@ -13,4 +13,7 @@ export enum ArrayElementAnimationState {
     Default,
     Invisible,
     RemovedInvisible,
+    NewInserted,
+    HighlightedOrange,
+    HighlightedGreen,
 }
