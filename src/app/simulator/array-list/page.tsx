@@ -200,7 +200,7 @@ export default function SimulationArray() {
         
         setIsAnimating(true);
 
-        let newArray = [...array];
+        const newArray = [...array];
 
         newArray[index].animationState = ArrayElementAnimationState.HighlightedGreen;
         setArray([...newArray]);

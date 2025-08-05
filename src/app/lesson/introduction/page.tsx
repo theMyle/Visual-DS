@@ -50,8 +50,8 @@ function WhyLearnDS() {
       </h1>
 
       <p>
-      Imagine you're packing for a trip. You’ve got chargers, snacks, notebooks, and electronics.
-      Toss everything into one big bag, and you'll spend forever digging for your charger.
+      {`Imagine you're packing for a trip. You've got chargers, snacks, notebooks, and electronics.
+      Toss everything into one big bag, and you'll spend forever digging for your charger.`}
       </p>
 
       <p>
@@ -65,13 +65,13 @@ function WhyLearnDS() {
       </ul>
 
       <p>
-      All of a sudden, it's much faster and easier to find exactly what you need.
+      {`All of a sudden, it's much faster and easier to find exactly what you need.`}
       </p>
 
       <p>
-      That's what data structures do in programming. 
+      {`That's what data structures do in programming. 
       They help you organize and store data in a way that makes operations, 
-      like searching, sorting, or updating, more efficient.
+      like searching, sorting, or updating, more efficient.`}
       </p>
 
       <p>
