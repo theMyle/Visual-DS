@@ -1,325 +1,434 @@
 'use client';
 
-import {useEffect, useState} from "react";
-import {ArrayElement, ArrayElementAnimationState} from "@/app/components/visual-array/types";
-import {createArrayElement, createArrayElements} from "@/app/components/visual-array/utils";
+import { useEffect, useState } from "react";
+import { ArrayElement, ArrayElementAnimationState } from "@/app/components/visual-array/types";
+import { createArrayElement, createArrayElements } from "@/app/components/visual-array/utils";
 import VisualArray from "@/app/components/visual-array/VisualArray";
 
+enum OperationType {
+  Insertion,
+  Deletion,
+  Others,
+};
+
 export default function SimulationArray() {
-    const [array, setArray] = useState<ArrayElement[]>([]);
-    const [isAnimating, setIsAnimating] = useState<boolean>(false);
+  const [array, setArray] = useState<ArrayElement[]>([]);
+  const [isAnimating, setIsAnimating] = useState<boolean>(false);
 
-    const [inputValue, setInputValue] = useState<string>("");
-    const [insertIndex, setInsertIndex] = useState<number>(0);
+  const [inputValue, setInputValue] = useState<string>("");
+  const [index, setIndex] = useState<number>(0);
 
-    const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
-    const delay = {
-      interval: 350,
-      focus: 750,
+  const [operationType, setOperationType] = useState<OperationType>(OperationType.Insertion);
+
+  const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
+  const delay = {
+    interval: 350,
+    focus: 750,
+  }
+
+  useEffect(() => {
+    const initial = createArrayElements(..."helloworld".split(""))
+    setArray(initial);
+  }, []);
+
+  // TODO
+  // clear inputs when button is pressed
+
+  // INSERT OPERATIONS
+  // TODO - Add fucking insert animation like green green or some shit
+  // [/] - Insert Front 
+  // [/] - Insert Back 
+  // [/] - Insert At     
+  //
+  // REMOVAL OPERATIONS
+  // [/] - Remove Front
+  // [/] - Remove Back
+  // [ ] - Remove At      | Not yet implemented
+  //
+  // UPDATE OPERATIONS
+  // [/] - Set
+  //
+  // PROPERTIES
+  // [/] - Size
+  // [/] - At
+  // [/] - Get
+
+
+  // Insert an item at a specific index
+  // by creating an empty space at the end
+  // and sliding all elements starting from the target 
+  // index to the end 
+  const insertAt = async (value: ArrayElement, index: number) => {
+    if (isAnimating) return;
+
+    // prolly need to add check if index is invalid
+    // better checking needed + frontend information feedback
+    if (index < 0 || index > array.length) {
+      console.log(`Invalid Index: {Array Size: array[${array.length}], target_index: [${index}]}`);
+      return;
     }
 
-    useEffect(() => {
-        const initial = createArrayElements(..."helloworld".split(""))
-        setArray(initial);
-    },[]);
+    setIsAnimating(true);
 
-    // INSERT OPERATIONS
-    // TODO - Add fucking insert animation like green green or some shit
-    // [/] - Insert Front 
-    // [/] - Insert Back 
-    // [/] - Insert At     
-    //
-    // REMOVAL OPERATIONS
-    // [/] - Remove Front
-    // [/] - Remove Back
-    // [ ] - Remove At      | Not yet implemented
-    //
-    // UPDATE OPERATIONS
-    // [/] - Set
-    //
-    // PROPERTIES
-    // [/] - Size
-    // [/] - At
-    // [/] - Get
+    const invisible = value;
+    value.animationState = ArrayElementAnimationState.Invisible;
 
+    // allocate space
+    let newArray = [...array, invisible];
 
-    // Insert an item at a specific index
-    // by creating an empty space at the end
-    // and sliding all elements starting from the target 
-    // index to the end 
-    const insertAt = async (value: ArrayElement, index: number) => {
-        if (isAnimating) return;
+    setArray([...newArray]);
+    await sleep(delay.interval);
 
-        // prolly need to add check if index is invalid
-        // better checking needed + frontend information feedback
-        if (index < 0 || index > array.length) {
-          console.log(`Invalid Index: {Array Size: array[${array.length}], target_index: [${index}]}`);
-          return;
-        }
-
-        setIsAnimating(true);
-
-        const invisible = value;
-        value.animationState = ArrayElementAnimationState.Invisible;
-
-        // allocate space
-        let newArray = [...array, invisible];
-
-        setArray([...newArray]);
-        await sleep(delay.interval);
-
-        // move the invisible item to the desired index
-        for (let i = newArray.length-1; i > index; i--) {
-           const temp = [...newArray];
-           temp[i] = temp[i-1];
-           temp[i-1] = invisible;
-           setArray(temp);
-           await sleep(delay.interval);
-           newArray = temp;
-        };
-
-        // show/insert the new item into the array
-        invisible.animationState = ArrayElementAnimationState.NewInserted;
-        setArray([...newArray]);
-
-        await sleep(delay.focus + 200);
-
-        invisible.animationState = ArrayElementAnimationState.Default;
-        setArray(prev => [...prev]);
-
-        setIsAnimating(false);
-    }
-
-
-    // Insert item at start of the array
-    const insertFront = async (value: ArrayElement) => {
-        insertAt(value, 0);
+    // move the invisible item to the desired index
+    for (let i = newArray.length - 1; i > index; i--) {
+      const temp = [...newArray];
+      temp[i] = temp[i - 1];
+      temp[i - 1] = invisible;
+      setArray(temp);
+      await sleep(delay.interval);
+      newArray = temp;
     };
 
+    // show/insert the new item into the array
+    invisible.animationState = ArrayElementAnimationState.NewInserted;
+    setArray([...newArray]);
 
-    // Insert at the end of the array 
-    const insertBack = async (value: ArrayElement) => {
-        if (isAnimating) return;
-        if (array.length == 0) {
-          insertFront(value);
-          return;
-        }
-        setArray([...array, value])
+    await sleep(delay.focus + 200);
+
+    invisible.animationState = ArrayElementAnimationState.Default;
+    setArray(prev => [...prev]);
+
+    setIsAnimating(false);
+  }
+
+
+  // Insert item at start of the array
+  const insertFront = async (value: ArrayElement) => {
+    insertAt(value, 0);
+  };
+
+
+  // Insert at the end of the array 
+  const insertBack = async (value: ArrayElement) => {
+    if (isAnimating) return;
+    if (array.length == 0) {
+      insertFront(value);
+      return;
+    }
+    setArray([...array, value])
+  }
+
+
+  // remove item at specific index
+  // shift the rest of the items forward / to the left
+  //
+  // *PUTA*
+  // *PUTA*
+  const removeAt = async (index: number) => {
+    // make the front invisible but keep space
+    // show shifting of items
+    // once invisible item is at the end, remove it
+
+    if (isAnimating) return;
+    if (array.length === 0 || index < 0 || index > array.length - 1) return;
+    setIsAnimating(true);
+
+    let newArray = [...array]
+    const invisible = newArray[index];
+
+    // animate removal
+    invisible.animationState = ArrayElementAnimationState.RemovedInvisible;
+    setArray(newArray);
+    await sleep(delay.focus);
+
+    invisible.animationState = ArrayElementAnimationState.Invisible;
+
+    for (let i = index + 1; i < newArray.length; i++) {
+      const temp = [...newArray];
+      temp[i - 1] = temp[i];
+      temp[i] = invisible;
+      setArray(temp);
+      await sleep(delay.interval);
+      newArray = [...temp];
     }
 
+    // remove the shit
+    setArray(prev => prev.slice(0, -1));
+    setIsAnimating(false);
+    return invisible;
+  }
 
-    // remove item at specific index
-    // shift the rest of the items forward / to the left
-    //
-    // *PUTA*
-    // *PUTA*
-    const removeAt = async (index: number) => {
-        // make the front invisible but keep space
-        // show shifting of items
-        // once invisible item is at the end, remove it
 
-        if (isAnimating) return;
-        if (array.length === 0 || index < 0 || index > array.length - 1) return;
-        setIsAnimating(true);
+  // remove item from the front
+  const removeFront = async () => {
+    removeAt(0);
+  }
 
-        let newArray = [...array]
-        const invisible = newArray[index];
 
-        // animate removal
-        invisible.animationState = ArrayElementAnimationState.RemovedInvisible;
-        setArray(newArray);
-        await sleep(delay.focus);
+  // remove last item
+  const removeBack = (): ArrayElement | undefined => {
+    if (isAnimating) return;
+    const new_array = [...array];
+    const removed = new_array.pop();
+    setArray(new_array);
+    return removed;
+  }
 
-        invisible.animationState = ArrayElementAnimationState.Invisible;
 
-        for (let i = index + 1; i < newArray.length; i++) {
-            const temp = [...newArray];
-            temp[i-1] = temp[i];
-            temp[i] = invisible;
-            setArray(temp);
-            await sleep(delay.interval);
-            newArray = [...temp];
-        }
+  // set value at specific index
+  const setAt = async (newValue: number | string, index: number) => {
+    if (isAnimating) return;
 
-        // remove the shit
-        setArray(prev => prev.slice(0,-1));
-        setIsAnimating(false);
-        return invisible;
+    // TODO - validate idx
+    if (index < 0 || index > array.length) {
+      console.log(`Invalid Index: {Array Size: array[${array.length}], target_index: [${index}]}`);
+      return;
     }
 
+    setIsAnimating(true);
 
-    // remove item from the front
-    const removeFront = async () => {
-        removeAt(0);
+    // highlight current first
+    // sleep
+    // chage value
+    // sleep
+    // go back
+    const newArray = [...array];
+
+    newArray[index].animationState = ArrayElementAnimationState.HighlightedOrange;
+    setArray(newArray);
+    await sleep(delay.focus + 100);
+
+    newArray[index].value = newValue;
+    setArray([...newArray]);
+    await sleep(delay.focus);
+
+    newArray[index].animationState = ArrayElementAnimationState.Default;
+    setArray([...newArray]);
+
+    setIsAnimating(false);
+  }
+
+
+  //get item at specific idx
+  const getAt = async (index: number): Promise<ArrayElement | undefined> => {
+    if (isAnimating) return;
+
+    // TODO - validate idx
+    if (index < 0 || index > array.length) {
+      console.log(`Invalid Index: {Array Size: array[${array.length}], target_index: [${index}]}`);
+      return;
     }
 
+    setIsAnimating(true);
 
-    // remove last item
-    const removeBack = (): ArrayElement | undefined => {
-        if (isAnimating) return;
-        const new_array = [...array];
-        const removed = new_array.pop();
-        setArray(new_array);
-        return removed;
-    }
+    const newArray = [...array];
+
+    newArray[index].animationState = ArrayElementAnimationState.HighlightedGreen;
+    setArray([...newArray]);
+
+    await sleep(delay.focus + 200);
+
+    newArray[index].animationState = ArrayElementAnimationState.Default;
+    setArray([...newArray]);
+
+    setIsAnimating(false);
+
+    return newArray[index];
+  }
 
 
-    // set value at specific index
-    const setAt = async (newValue: number | string, index: number) => {
-        if (isAnimating) return;
-        // TODO - validate idx
-        
-        setIsAnimating(true);
+  // return array length
+  const getLength = (): number | undefined => {
+    if (isAnimating) return;
+    return array.length;
+  }
 
-        // highlight current first
-        // sleep
-        // chage value
-        // sleep
-        // go back
-        const newArray = [...array];
+  // sort??
+  // find??
+  // BIG MAYBE BUT RN NAH
 
-        newArray[index].animationState = ArrayElementAnimationState.HighlightedOrange;
-        setArray(newArray);
-        await sleep(delay.focus + 100);
+  /* Layout / UI
+  * static nav on top
+  * visualizer in the middle
+  * control panel at the bottom
+  *
+  * [ ] TODO - The fucking buttons my dude
+  * [ ] TODO - IDK the fucking layout as well
+  * [ ] TODO - the fun buttons animation
+  *
+  * */
 
-        newArray[index].value = newValue;
-        setArray([...newArray]);
-        await sleep(delay.focus);
+  return (
+    <div className="h-full flex flex-col">
+      <div className="flex-2 flex items-center justify-center bg-gray-100 px-9 py-4">
+        <VisualArray array={array} />
+      </div>
 
-        newArray[index].animationState = ArrayElementAnimationState.Default;
-        setArray([...newArray]);
+      {/* Types of operation options */}
 
-        setIsAnimating(false);
-    }
-    
+      <div className="grid grid-cols-3 w-full border-t-[1.8px] border-b-[1.8px] border-gray-200">
+        <button
+          onClick={() => { setOperationType(OperationType.Insertion) }}
+          className="active:bg-green-100 transition-all duration-150 ease-in-out">Insertion</button>
+        <button
+          onClick={() => { setOperationType(OperationType.Deletion) }}
+          className="active:bg-red-100 transition-all duration-150 ease-in-out">Deletion</button>
+        <button
+          onClick={() => { setOperationType(OperationType.Others) }}
+          className="active:bg-gray-100 transition-all duration-150 ease-in-out">Others</button>
+      </div>
 
-    //get item at specific idx
-    const getAt = async (index: number): Promise<ArrayElement | undefined> => {
-        if (isAnimating) return;
-        // TODO - validate idx
-        
-        setIsAnimating(true);
 
-        const newArray = [...array];
 
-        newArray[index].animationState = ArrayElementAnimationState.HighlightedGreen;
-        setArray([...newArray]);
+      <div className="flex-1 p-4 flex flex-col gap-4">
 
-        await sleep(delay.focus + 200);
+        {/* Input Fields */}
 
-        newArray[index].animationState = ArrayElementAnimationState.Default;
-        setArray([...newArray]);
-
-        setIsAnimating(false);
-
-        return newArray[index];
-    }
-    
-
-    // return array length
-    const getLength = (): number | undefined => {
-        if (isAnimating) return;
-        return array.length;
-    }
-
-    // sort??
-    // find??
-    // BIG MAYBE BUT RN NAH
-
-    /* Layout / UI
-    * static nav on top
-    * visualizer in the middle
-    * control panel at the bottom
-    *
-    * [ ] TODO - The fucking buttons my dude
-    * [ ] TODO - IDK the fucking layout as well
-    * [ ] TODO - the fun buttons animation
-    *
-    * */
-
-    return (
-        <div className="h-full flex flex-col">
-            <div className="flex-1 flex items-center justify-center bg-gray-100 px-9 py-4">
-                <VisualArray array={array} />
-            </div>
-            <div className="flex-1 p-4 bg-white border-t flex flex-col items-center gap-4">
-                <div className="flex gap-4">
-                    <div className="flex flex-col">
-                        <label className="text-sm font-medium text-gray-700">Value</label>
-                        <input
-                            type="text"
-                            className="border px-2 py-1 rounded"
-                            value={inputValue}
-                            onChange={(e) => setInputValue(e.target.value)}
-                        />
-                    </div>
-                    <div className="flex flex-col">
-                        <label className="text-sm font-medium text-gray-700">Index</label>
-                        <input
-                            type="number"
-                            className="border px-2 py-1 rounded w-20"
-                            value={insertIndex}
-                            onChange={(e) => setInsertIndex(Number(e.target.value))}
-                            min={0}
-                            max={array.length}
-                        />
-                    </div>
-                </div>
-                <div className="flex gap-4 flex-wrap">
-
-                    {/* INSERTION */}
-
-                    <button
-                        className="bg-blue-500 text-white px-4 py-2 rounded"
-                        onClick={() => insertFront(createArrayElement(inputValue))}
-                    >
-                        Insert Front
-                    </button>
-                    <button
-                        className="bg-green-500 text-white px-4 py-2 rounded"
-                        onClick={() => insertBack(createArrayElement(inputValue))}
-                    >
-                        Insert Back
-                    </button>
-                    <button
-                        className="bg-purple-500 text-white px-4 py-2 rounded"
-                        onClick={() => insertAt(createArrayElement(inputValue), insertIndex)}
-                        disabled={insertIndex < 0 || insertIndex > array.length}
-                    >
-                        Insert At
-                    </button>
-
-                    {/* DELETION */}
-
-                    <button onClick={() => removeFront()}
-                            className="bg-red-950 text-white px-4 py-2 rounded">
-                        Remove Front
-                    </button>
-                    <button onClick={() => removeBack()}
-                            className="bg-red-950 text-white px-4 py-2 rounded">
-                        Remove Back
-                    </button>
-                    <button onClick={() => removeAt(insertIndex)}
-                            className="bg-red-950 text-white px-4 py-2 rounded">
-                        Remove At 
-                    </button>
-
-                    {/* OTHERS */}
-                    <button onClick={() => setAt(inputValue, insertIndex)}
-                            className="bg-orange-400 text-white px-4 py-2 rounded">
-                        Set
-                    </button>
-                    <button onClick={() => getAt(insertIndex)}
-                            className="bg-red-950 text-white px-4 py-2 rounded">
-                        At
-                    </button>
-                    <button onClick={() => getLength()}
-                            className="bg-red-950 text-white px-4 py-2 rounded">
-                        Size
-                    </button>
-
-                </div>
-            </div>
+        <div className="grid grid-cols-2 gap-4">
+          <div className="flex gap-4 items-center">
+            <label className="text-sm font-medium text-gray-700">Value</label>
+            <input
+              type="number"
+              className="bg-gray-200 rounded-md text-center w-full text-xl"
+              value={inputValue}
+              onChange={(e) => setInputValue(e.target.value)}
+            />
+          </div>
+          <div className="flex gap-4 items-center">
+            <label className="text-sm font-medium text-gray-700">Index</label>
+            <input
+              type="number"
+              className="bg-gray-200 rounded-md text-center w-full text-xl"
+              value={index}
+              onChange={(e) => setIndex(Number(e.target.value))}
+              min={0}
+              max={array.length}
+            />
+          </div>
         </div>
-    );
+
+        {/* Buttons and stuff */}
+
+        <div className="grid grid-cols-2 gap-4 w-full md:grid-cols-3">
+
+          {/* INSERTION */}
+
+          {operationType == OperationType.Insertion && (
+            <>
+              <button
+                className="bg-[#2A9D8F] border-b-4 border-[#18635A] text-white px-4 py-2 rounded-xl active:border-0 active:translate-y-1 transition-all duration-150 ease-in-out"
+                onClick={() => insertFront(createArrayElement(inputValue))}
+              >
+                Insert Front
+              </button>
+              <button
+                className="bg-[#2A9D8F] border-b-4 border-[#18635A] text-white px-4 py-2 rounded-xl active:border-0 active:translate-y-1 transition-all duration-150 ease-in-out"
+                onClick={() => insertBack(createArrayElement(inputValue))}
+              >
+                Insert Back
+              </button>
+              <button
+                className="bg-[#2A9D8F] border-b-4 border-[#18635A] text-white px-4 py-2 rounded-xl active:border-0 active:translate-y-1 transition-all duration-150 ease-in-out"
+                onClick={() => insertAt(createArrayElement(inputValue), Number(index))}
+                disabled={Number(index) < 0 || Number(index) > array.length}
+              >
+                Insert At
+              </button>
+            </>
+          )}
+
+          {/* DELETION */}
+
+          {operationType == OperationType.Deletion && (
+            <>
+              <button onClick={() => removeFront()}
+                className="bg-[#C7573B] border-b-4 border-[#8E3E2A] text-white px-4 py-2 rounded-xl active:border-0 active:translate-y-1 transition-all duration-150 ease-in-out">
+                Remove Front
+              </button>
+              <button onClick={() => removeBack()}
+                className="bg-[#C7573B] border-b-4 border-[#8E3E2A] text-white px-4 py-2 rounded-xl active:border-0 active:translate-y-1 transition-all duration-150 ease-in-out">
+                Remove Back
+              </button>
+              <button onClick={() => removeAt(Number(index))}
+                className="bg-[#C7573B] border-b-4 border-[#8E3E2A] text-white px-4 py-2 rounded-xl active:border-0 active:translate-y-1 transition-all duration-150 ease-in-out">
+                Remove At
+              </button>
+            </>
+          )}
+
+          {/* OTHERS */}
+
+          {operationType == OperationType.Others && (
+            <>
+              <button onClick={() => setAt(inputValue, Number(index))}
+                className="bg-[#6C757D] border-b-4 border-[#48525C] text-white px-4 py-2 rounded-xl active:border-0 active:translate-y-1 transition-all duration-150 ease-in-out">
+                Set At
+              </button>
+              <button onClick={() => getAt(Number(index))}
+                className="bg-[#6C757D] border-b-4 border-[#48525C] text-white px-4 py-2 rounded-xl active:border-0 active:translate-y-1 transition-all duration-150 ease-in-out">
+                Get At
+              </button>
+              <button onClick={() => getLength()}
+                className="bg-[#6C757D] border-b-4 border-[#48525C] text-white px-4 py-2 rounded-xl active:border-0 active:translate-y-1 transition-all duration-150 ease-in-out">
+                Size
+              </button>
+            </>
+          )}
+
+        </div>
+      </div>
+    </div>
+  );
 }
+
+/*
+type ButtonOperationsProps = {
+  btnName: string;
+  valueArg?: boolean;
+  indexArg?: boolean;
+  onclick: (value?: string, index?: number) => void | undefined | ArrayElement;
+};
+
+function OperationButton({ btnName, valueArg, indexArg, onclick }: ButtonOperationsProps) {
+  const [value, setValue] = useState<string>("");
+  const [index, setIndex] = useState<number>(0);
+
+  return (
+    <div className="flex gap-4 w-full">
+      <button
+        className="flex-grow bg-[#6C757D] border-b-4 border-[#48525C] text-white px-4 py-2 rounded-xl active:border-0 active:translate-y-1 transition-all duration-150 ease-in-out">
+        {btnName}
+      </button>
+
+      {(valueArg || indexArg) &&
+        <div className="flex flex-col gap-2 w-2/5 justify-center">
+          {indexArg &&
+            <div className="flex gap-2">
+              <label>index: </label>
+              <input
+                type="number"
+                onChange={(e) => { setIndex(Number(e.target.value)) }}
+                className="bg-gray-200 rounded-md decoration-0 text-center w-full"
+                min={0}
+                max={30}
+              />
+            </div>
+          }
+
+          {valueArg &&
+            <div className="flex gap-2">
+              <label>value: </label>
+              <input
+                type="text"
+                onChange={(e) => { setValue(e.target.value) }}
+                className="bg-gray-200 rounded-md text-center w-full"
+              />
+            </div>
+          }
+        </div>
+      }
+
+    </div>
+  )
+}
+  */
