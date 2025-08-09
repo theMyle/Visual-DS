@@ -1,7 +1,7 @@
 import Link from "next/link";
 
 const accentColor = "#5A6FD6"; // Darker version of #94A6FF
-const buttonColor = "#6F83E8";
+const buttonColor = "#6f83e8";
 const buttonShadow = "#C0CBFF";
 
 type HomeItemProps = {
@@ -31,12 +31,8 @@ export default function HomeItem({ title, description, path }: HomeItemProps) {
 
       <Link
         href={path}
-        className="mt-3 block rounded-xl w-full py-3 text-center text-white font-semibold
+        className="mt-3 block bg-[#6F83E8] rounded-xl w-full py-3 text-center text-white font-semibold shadow-[0_4px_0_#C0CBFF]
              transition-all duration-150 ease-in-out active:translate-y-[4px] active:shadow-none"
-        style={{
-          backgroundColor: buttonColor,
-          boxShadow: `0 4px 0 ${buttonShadow}` // hard edge shadow
-        }}
       >
         Explore {title}
       </Link>

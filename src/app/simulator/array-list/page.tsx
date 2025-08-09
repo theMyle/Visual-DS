@@ -1,9 +1,11 @@
 'use client';
 
 import { useEffect, useState } from "react";
-import { ArrayElement, ArrayElementAnimationState } from "@/app/components/visual-array/types";
-import { createArrayElement, createArrayElements } from "@/app/components/visual-array/utils";
-import VisualArray from "@/app/components/visual-array/VisualArray";
+import { ArrayElement, ArrayElementAnimationState } from "@/app/simulator/array-list/components/types";
+import { createArrayElement, createArrayElements } from "@/app/simulator/array-list/components/utils";
+
+import VisualArray from "@/app/simulator/array-list/components/VisualArray";
+import ActionButton from "@/app/simulator/array-list/components/ActionButton";
 
 enum OperationType {
   Insertion,
@@ -258,32 +260,41 @@ export default function SimulationArray() {
   *
   * */
 
+
   return (
     <div className="h-full flex flex-col">
+
+      {/* Array display */}
+
       <div className="flex-2 flex items-center justify-center bg-gray-100 px-9 py-4">
         <VisualArray array={array} />
       </div>
 
-      {/* Types of operation options */}
+      {/* Operation type selector - mobile friendly flex */}
 
-      <div className="grid grid-cols-3 w-full border-t-[1.8px] border-b-[1.8px] border-gray-200">
-        <button
-          onClick={() => { setOperationType(OperationType.Insertion) }}
-          className="active:bg-green-100 transition-all duration-150 ease-in-out">Insertion</button>
-        <button
-          onClick={() => { setOperationType(OperationType.Deletion) }}
-          className="active:bg-red-100 transition-all duration-150 ease-in-out">Deletion</button>
-        <button
-          onClick={() => { setOperationType(OperationType.Others) }}
-          className="active:bg-gray-100 transition-all duration-150 ease-in-out">Others</button>
+      <div className="flex border-t border-b border-gray-200">
+        {[
+          { type: OperationType.Insertion, label: 'Insertion', bgActive: 'bg-green-100' },
+          { type: OperationType.Deletion, label: 'Deletion', bgActive: 'bg-red-100' },
+          { type: OperationType.Others, label: 'Others', bgActive: 'bg-gray-100' },
+        ].map(({ type, label, bgActive }) => (
+          <button
+            key={type}
+            onClick={() => setOperationType(type)}
+            className={`flex-1 py-3 text-center transition-colors duration-150 ease-in-out
+                      ${operationType === type ? bgActive : 'bg-white'}
+                      focus:outline-none`}
+            aria-pressed={operationType === type}
+          >
+            {label}
+          </button>
+        ))}
       </div>
 
-
+      {/* Input Fields */}
 
       <div className="flex-1 p-4 flex flex-col gap-4">
-
-        {/* Input Fields */}
-
+        {/* Input fields: original two-column grid */}
         <div className="grid grid-cols-2 gap-4">
           <div className="flex gap-4 items-center">
             <label className="text-sm font-medium text-gray-700">Value</label>
@@ -309,74 +320,48 @@ export default function SimulationArray() {
 
         {/* Buttons and stuff */}
 
-        <div className="grid grid-cols-2 gap-4 w-full md:grid-cols-3">
+        <div className="flex flex-col gap-4 w-full">
 
           {/* INSERTION */}
 
-          {operationType == OperationType.Insertion && (
+          {operationType === OperationType.Insertion && (
             <>
-              <button
-                className="bg-[#2A9D8F] border-b-4 border-[#18635A] text-white px-4 py-2 rounded-xl active:border-0 active:translate-y-1 transition-all duration-150 ease-in-out"
-                onClick={() => insertFront(createArrayElement(inputValue))}
-              >
-                Insert Front
-              </button>
-              <button
-                className="bg-[#2A9D8F] border-b-4 border-[#18635A] text-white px-4 py-2 rounded-xl active:border-0 active:translate-y-1 transition-all duration-150 ease-in-out"
-                onClick={() => insertBack(createArrayElement(inputValue))}
-              >
-                Insert Back
-              </button>
-              <button
-                className="bg-[#2A9D8F] border-b-4 border-[#18635A] text-white px-4 py-2 rounded-xl active:border-0 active:translate-y-1 transition-all duration-150 ease-in-out"
-                onClick={() => insertAt(createArrayElement(inputValue), Number(index))}
-                disabled={Number(index) < 0 || Number(index) > array.length}
-              >
-                Insert At
-              </button>
+              <ActionButton text="Insert Front" bgColor="#2A9D8F"
+                shadowColor="#18635A" onClick={() => insertFront(createArrayElement(inputValue))} />
+              <ActionButton text="Insert Back" bgColor="#2A9D8F"
+                shadowColor="#18635A" onClick={() => insertBack(createArrayElement(inputValue))} />
+              <ActionButton text="Insert At" bgColor="#2A9D8F"
+                shadowColor="#18635A" onClick={() => insertAt(createArrayElement(inputValue), index)} />
             </>
           )}
 
           {/* DELETION */}
 
-          {operationType == OperationType.Deletion && (
+          {operationType === OperationType.Deletion && (
             <>
-              <button onClick={() => removeFront()}
-                className="bg-[#C7573B] border-b-4 border-[#8E3E2A] text-white px-4 py-2 rounded-xl active:border-0 active:translate-y-1 transition-all duration-150 ease-in-out">
-                Remove Front
-              </button>
-              <button onClick={() => removeBack()}
-                className="bg-[#C7573B] border-b-4 border-[#8E3E2A] text-white px-4 py-2 rounded-xl active:border-0 active:translate-y-1 transition-all duration-150 ease-in-out">
-                Remove Back
-              </button>
-              <button onClick={() => removeAt(Number(index))}
-                className="bg-[#C7573B] border-b-4 border-[#8E3E2A] text-white px-4 py-2 rounded-xl active:border-0 active:translate-y-1 transition-all duration-150 ease-in-out">
-                Remove At
-              </button>
+              <ActionButton text="Remove Front" bgColor="#C7573B"
+                shadowColor="#8E3E2A" onClick={() => removeFront()} />
+              <ActionButton text="Remove Back" bgColor="#C7573B"
+                shadowColor="#8E3E2A" onClick={() => removeBack()} />
+              <ActionButton text="Remove At" bgColor="#C7573B"
+                shadowColor="#8E3E2A" onClick={() => removeAt(index)} />
             </>
           )}
 
           {/* OTHERS */}
 
-          {operationType == OperationType.Others && (
+          {operationType === OperationType.Others && (
             <>
-              <button onClick={() => setAt(inputValue, Number(index))}
-                className="bg-[#6C757D] border-b-4 border-[#48525C] text-white px-4 py-2 rounded-xl active:border-0 active:translate-y-1 transition-all duration-150 ease-in-out">
-                Set At
-              </button>
-              <button onClick={() => getAt(Number(index))}
-                className="bg-[#6C757D] border-b-4 border-[#48525C] text-white px-4 py-2 rounded-xl active:border-0 active:translate-y-1 transition-all duration-150 ease-in-out">
-                Get At
-              </button>
-              <button onClick={() => getLength()}
-                className="bg-[#6C757D] border-b-4 border-[#48525C] text-white px-4 py-2 rounded-xl active:border-0 active:translate-y-1 transition-all duration-150 ease-in-out">
-                Size
-              </button>
+              <ActionButton text="Set At" bgColor="#6C757D"
+                shadowColor="#48525C" onClick={() => setAt(inputValue, index)} />
+              <ActionButton text="Get At" bgColor="#6C757D"
+                shadowColor="#48525C" onClick={() => getAt(Number(index))} />
+              <ActionButton text="Size" bgColor="#6C757D"
+                shadowColor="#48525C" onClick={() => getLength()} />
             </>
           )}
-
         </div>
       </div>
-    </div>
+    </div >
   );
 }
