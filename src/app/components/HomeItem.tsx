@@ -1,5 +1,9 @@
 import Link from "next/link";
 
+const accentColor = "#5A6FD6"; // Darker version of #94A6FF
+const buttonColor = "#6F83E8";
+const buttonShadow = "#C0CBFF";
+
 type HomeItemProps = {
   title: string;
   description: string;
@@ -8,14 +12,32 @@ type HomeItemProps = {
 
 export default function HomeItem({ title, description, path }: HomeItemProps) {
   return (
-    <div className={"flex flex-col gap-2 w-full border-[1.5px] border-[#94A6FF] rounded-3xl px-6 py-4 shadow-[0_4px_4px_rgba(0,0,0,0.25)]"}>
-      <h1 className={"text-[#5168DA] font-bold text-2xl"}>{title}</h1>
-      <h2 className={"text-gray-500 text-base leading-5"}>
+    <div
+      className="flex flex-col gap-3 w-full rounded-2xl px-6 py-5 shadow-md bg-white"
+      style={{
+        boxShadow: "0 4px 12px rgba(0,0,0,0.05)"
+      }}
+    >
+      <h1
+        className="font-bold text-2xl leading-snug"
+        style={{ color: accentColor }}
+      >
+        {title}
+      </h1>
+
+      <p className="text-gray-600 text-lg leading-relaxed">
         {description}
-      </h2>
+      </p>
+
       <Link
         href={path}
-        className={"block bg-[#7B91FB] border-b-4 border-[#C0CBFF] text-white rounded-2xl w-3/4 py-1 mt-3 my-1 mx-auto text-center active:border-0 active:translate-y-1 transition-all duration-150 ease-in-out"}>
+        className="mt-3 block rounded-xl w-full py-3 text-center text-white font-semibold
+             transition-all duration-150 ease-in-out active:translate-y-[4px] active:shadow-none"
+        style={{
+          backgroundColor: buttonColor,
+          boxShadow: `0 4px 0 ${buttonShadow}` // hard edge shadow
+        }}
+      >
         Explore {title}
       </Link>
     </div>
