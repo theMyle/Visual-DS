@@ -173,6 +173,11 @@ export default function SimulationArray() {
     const new_array = [...array];
     const removed = new_array.pop();
     setArray(new_array);
+
+    if (array.length > 0 && index === array.length) {
+      setIndex(current => current - 1);
+    }
+
     return removed;
   }
 
@@ -182,8 +187,7 @@ export default function SimulationArray() {
     if (isAnimating) return;
 
     // TODO - validate idx
-    if (index < 0 || index > array.length) {
-      console.log(`Invalid Index: {Array Size: array[${array.length}], target_index: [${index}]}`);
+    if (index < 0 || index >= array.length) {
       return;
     }
 
@@ -207,6 +211,7 @@ export default function SimulationArray() {
     newArray[index].animationState = ArrayElementAnimationState.Default;
     setArray([...newArray]);
 
+    setInputValue("");
     setIsAnimating(false);
   }
 
@@ -216,8 +221,7 @@ export default function SimulationArray() {
     if (isAnimating) return;
 
     // TODO - validate idx
-    if (index < 0 || index > array.length) {
-      console.log(`Invalid Index: {Array Size: array[${array.length}], target_index: [${index}]}`);
+    if (index < 0 || index >= array.length) {
       return;
     }
 
@@ -240,10 +244,10 @@ export default function SimulationArray() {
 
 
   // return array length
-  const getLength = (): number | undefined => {
-    if (isAnimating) return;
-    return array.length;
-  }
+  // const getLength = (): number | undefined => {
+  //   if (isAnimating) return;
+  //   return array.length;
+  // }
 
   // sort??
   // find??
@@ -311,7 +315,14 @@ export default function SimulationArray() {
               type="number"
               className="bg-gray-200 rounded-md text-center w-full text-xl"
               value={index}
-              onChange={(e) => setIndex(Number(e.target.value))}
+              onChange={(e) => {
+                const value = Number(e.target.value);
+                if (value >= array.length) {
+                  setIndex(array.length > 0 ? array.length - 1 : 0);
+                } else {
+                  setIndex(value);
+                }
+              }}
               min={0}
               max={array.length}
             />
@@ -356,12 +367,12 @@ export default function SimulationArray() {
                 shadowColor="#48525C" onClick={() => setAt(inputValue, index)} />
               <ActionButton text="Get At" bgColor="#6C757D"
                 shadowColor="#48525C" onClick={() => getAt(Number(index))} />
-              <ActionButton text="Size" bgColor="#6C757D"
-                shadowColor="#48525C" onClick={() => getLength()} />
+              <ActionButton text="Size" bgColor="#ffffff"
+                shadowColor="#ffffff" onClick={() => { }} />
             </>
           )}
         </div>
       </div>
-    </div >
+    </div>
   );
 }

@@ -25,7 +25,7 @@ export default function HomeItem({ title, description, path }: HomeItemProps) {
         {title}
       </h1>
 
-      <p className="text-gray-600 text-lg leading-relaxed">
+      <p className="text-gray-600 text-base md:text-lg leading-relaxed">
         {description}
       </p>
 
