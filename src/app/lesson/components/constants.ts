@@ -1,0 +1,1 @@
+export const SECTION_CLASS = "flex flex-col gap-5 leading-relaxed";

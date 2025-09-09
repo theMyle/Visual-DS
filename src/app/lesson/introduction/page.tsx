@@ -1,6 +1,8 @@
 import Link from "next/link";
-
-const accentColor = "#94A6FF";
+import Heading from "../components/Heading";
+import Highlight from "../components/Highlight";
+import ListSection from "../components/ListSection";
+import { ACCENT_COLOR } from "@/app/lib/constants";
 
 export default function IntroductionPage() {
   return (
@@ -20,11 +22,11 @@ function WhatIsDS() {
   return (
     <section className="flex flex-col gap-4 leading-relaxed">
 
-      <Heading text="What is a Data Structure?" />
+      <Heading>What is a Data Structure?</Heading>
 
       <p>
-        A <Highlight text="data structure" /> is a specific way
-        of <Highlight text="organizing" /> and <Highlight text="storing" /> data so it can be used efficiently.
+        A <Highlight>data structure</Highlight> is a specific way
+        of <Highlight>organizing</Highlight> and <Highlight>storing</Highlight> data so it can be used efficiently.
       </p>
 
       <p>
@@ -46,7 +48,7 @@ function WhyLearnDS() {
   return (
     <section className="flex flex-col gap-5 leading-relaxed">
 
-      <Heading text="Why Learn Data Structures?" />
+      <Heading>Why Learn Data Structures?</Heading>
 
       <p>
         Data structures are the backbone of efficient programming.
@@ -68,13 +70,11 @@ function WhyLearnDS() {
         fast, reliable, and scalable software.
       </p>
 
-      <ListSection
-        title="Learning data structures gives you the ability to:"
-        items={[
-          <>Pick the right model for your data.</>,
-          <>Use the algorithms that work best for that model.</>,
-          <>Design solutions that are both efficient and scalable.</>,
-        ]} />
+      <ListSection title="Learning data structures gives you the ability to:">
+        <li>Pick the right model for your data.</li>
+        <li>Use the algorithms that work best for that model.</li>
+        <li>Design solutions that are both efficient and scalable.</li>
+      </ListSection>
 
     </section>
   );
@@ -85,16 +85,14 @@ function WhyChoosingDSMatters() {
   return (
     <section className="flex flex-col gap-5 leading-relaxed">
 
-      <Heading text="Why Choosing The Right Data Structure Matters" />
+      <Heading>Why Choosing The Right Data Structure Matters</Heading>
 
-      <ListSection
-        title="Every data structure is designed for certain operations and trade-offs:"
-        items={[
-          <>Looking up a user’s account by their ID instantly → <span className="font-semibold">Hash Map</span></>,
-          <>Accessing the 100th frame in a video file directly → <span className="font-semibold">Array</span></>,
-          <>Undoing the last move in a drawing app → <span className="font-semibold">Stack</span></>,
-          <>Processing customer orders in the sequence they were received → <span className="font-semibold">Queue</span></>,
-        ]} />
+      <ListSection title="Every data structure is designed for certain operations and trade-offs:">
+        <li>Looking up a user’s account by their ID instantly → <span className="font-semibold">Hash Map</span></li>
+        <li>Accessing the 100th frame in a video file directly → <span className="font-semibold">Array</span></li>
+        <li>Undoing the last move in a drawing app → <span className="font-semibold">Stack</span></li>
+        <li>Processing customer orders in the sequence they were received → <span className="font-semibold">Queue</span></li>
+      </ListSection>
 
       <p className="border-l-3 border-red-200 pl-4 mb-4">
         Pick the wrong structure, and you might be sorting through
@@ -118,53 +116,14 @@ function WhyChoosingDSMatters() {
 function BottomNav() {
   return (
     <nav className="flex justify-end py-6 px-5 max-w-3xl mx-auto">
-      <Link href={"/lessons/time-space-complexity"}>
+      <Link href={"/lesson/big-o"}>
         <span
           className="text-base underline hover:opacity-80 transition-opacity"
-          style={{ color: accentColor }}
+          style={{ color: ACCENT_COLOR }}
         >
-          Time & Space Complexity →
+          Big-O →
         </span>
       </Link>
     </nav>
-  );
-}
-
-
-function Heading({ text }: { text: string }) {
-  return (
-    <h1
-      className="text-2xl md:text-2xl lg:text-3xl font-bold tracking-wide border-l-4 pl-3 mb-2"
-      style={{ borderColor: accentColor, color: accentColor }}
-    >
-      {text}
-    </h1>
-  );
-}
-
-
-function Highlight({ text }: { text: string }) {
-  return (<span className="bg-blue-50 rounded-xl px-2">{text}</span>);
-}
-
-
-function ListSection({
-  title,
-  items,
-}: {
-  title?: string;
-  items: React.ReactNode[];
-}) {
-  return (
-    <div className="mb-4">
-      {title && (
-        <p className="leading-relaxed mb-2 font-medium">{title}</p>
-      )}
-      <ul className="list-disc pl-8 bg-blue-50 py-4 rounded-xl">
-        {items.map((item, i) => (
-          <li key={i} className="mb-2 pr-4">{item}</li>
-        ))}
-      </ul>
-    </div>
   );
 }

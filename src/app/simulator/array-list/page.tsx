@@ -266,113 +266,114 @@ export default function SimulationArray() {
 
 
   return (
-    <div className="h-full flex flex-col">
+    <div className="h-full bg-gray-50 pt-2 pb-2">
+      <main className="h-full flex flex-col md:max-w-95 m-auto bg-white">
+        {/* Array display */}
 
-      {/* Array display */}
+        <div className="flex-2 flex items-center justify-center px-9 py-4">
+          <VisualArray array={array} />
+        </div>
 
-      <div className="flex-2 flex items-center justify-center bg-gray-100 px-9 py-4">
-        <VisualArray array={array} />
-      </div>
+        {/* Operation type selector - mobile friendly flex */}
 
-      {/* Operation type selector - mobile friendly flex */}
-
-      <div className="flex border-t border-b border-gray-200">
-        {[
-          { type: OperationType.Insertion, label: 'Insertion', bgActive: 'bg-green-100' },
-          { type: OperationType.Deletion, label: 'Deletion', bgActive: 'bg-red-100' },
-          { type: OperationType.Others, label: 'Others', bgActive: 'bg-gray-100' },
-        ].map(({ type, label, bgActive }) => (
-          <button
-            key={type}
-            onClick={() => setOperationType(type)}
-            className={`flex-1 py-3 text-center transition-colors duration-150 ease-in-out
+        <div className="flex border-t border-b border-gray-200">
+          {[
+            { type: OperationType.Insertion, label: 'Insertion', bgActive: 'bg-green-100' },
+            { type: OperationType.Deletion, label: 'Deletion', bgActive: 'bg-red-100' },
+            { type: OperationType.Others, label: 'Others', bgActive: 'bg-gray-100' },
+          ].map(({ type, label, bgActive }) => (
+            <button
+              key={type}
+              onClick={() => setOperationType(type)}
+              className={`flex-1 py-3 text-center transition-colors duration-150 ease-in-out
                       ${operationType === type ? bgActive : 'bg-white'}
                       focus:outline-none`}
-            aria-pressed={operationType === type}
-          >
-            {label}
-          </button>
-        ))}
-      </div>
-
-      {/* Input Fields */}
-
-      <div className="flex-1 p-4 flex flex-col gap-4">
-        {/* Input fields: original two-column grid */}
-        <div className="grid grid-cols-2 gap-4">
-          <div className="flex gap-4 items-center">
-            <label className="text-sm font-medium text-gray-700">Value</label>
-            <input
-              type="number"
-              className="bg-gray-200 rounded-md text-center w-full text-xl"
-              value={inputValue}
-              onChange={(e) => setInputValue(e.target.value)}
-            />
-          </div>
-          <div className="flex gap-4 items-center">
-            <label className="text-sm font-medium text-gray-700">Index</label>
-            <input
-              type="number"
-              className="bg-gray-200 rounded-md text-center w-full text-xl"
-              value={index}
-              onChange={(e) => {
-                const value = Number(e.target.value);
-                if (value >= array.length) {
-                  setIndex(array.length > 0 ? array.length - 1 : 0);
-                } else {
-                  setIndex(value);
-                }
-              }}
-              min={0}
-              max={array.length}
-            />
-          </div>
+              aria-pressed={operationType === type}
+            >
+              {label}
+            </button>
+          ))}
         </div>
 
-        {/* Buttons and stuff */}
+        {/* Input Fields */}
 
-        <div className="flex flex-col gap-4 w-full">
+        <div className="flex-1 p-4 flex flex-col gap-4">
+          {/* Input fields: original two-column grid */}
+          <div className="grid grid-cols-2 gap-4">
+            <div className="flex gap-4 items-center">
+              <label className="text-sm font-medium text-gray-700">Value</label>
+              <input
+                type="number"
+                className="bg-gray-200 rounded-md text-center w-full text-xl"
+                value={inputValue}
+                onChange={(e) => setInputValue(e.target.value)}
+              />
+            </div>
+            <div className="flex gap-4 items-center">
+              <label className="text-sm font-medium text-gray-700">Index</label>
+              <input
+                type="number"
+                className="bg-gray-200 rounded-md text-center w-full text-xl"
+                value={index}
+                onChange={(e) => {
+                  const value = Number(e.target.value);
+                  if (value >= array.length) {
+                    setIndex(array.length > 0 ? array.length - 1 : 0);
+                  } else {
+                    setIndex(value);
+                  }
+                }}
+                min={0}
+                max={array.length}
+              />
+            </div>
+          </div>
 
-          {/* INSERTION */}
+          {/* Buttons and stuff */}
 
-          {operationType === OperationType.Insertion && (
-            <>
-              <ActionButton text="Insert Front" bgColor="#2A9D8F"
-                shadowColor="#18635A" onClick={() => insertFront(createArrayElement(inputValue))} />
-              <ActionButton text="Insert Back" bgColor="#2A9D8F"
-                shadowColor="#18635A" onClick={() => insertBack(createArrayElement(inputValue))} />
-              <ActionButton text="Insert At" bgColor="#2A9D8F"
-                shadowColor="#18635A" onClick={() => insertAt(createArrayElement(inputValue), index)} />
-            </>
-          )}
+          <div className="flex flex-col gap-4 w-full">
 
-          {/* DELETION */}
+            {/* INSERTION */}
 
-          {operationType === OperationType.Deletion && (
-            <>
-              <ActionButton text="Remove Front" bgColor="#C7573B"
-                shadowColor="#8E3E2A" onClick={() => removeFront()} />
-              <ActionButton text="Remove Back" bgColor="#C7573B"
-                shadowColor="#8E3E2A" onClick={() => removeBack()} />
-              <ActionButton text="Remove At" bgColor="#C7573B"
-                shadowColor="#8E3E2A" onClick={() => removeAt(index)} />
-            </>
-          )}
+            {operationType === OperationType.Insertion && (
+              <>
+                <ActionButton text="Insert Front" bgColor="#2A9D8F"
+                  shadowColor="#18635A" onClick={() => insertFront(createArrayElement(inputValue))} />
+                <ActionButton text="Insert Back" bgColor="#2A9D8F"
+                  shadowColor="#18635A" onClick={() => insertBack(createArrayElement(inputValue))} />
+                <ActionButton text="Insert At" bgColor="#2A9D8F"
+                  shadowColor="#18635A" onClick={() => insertAt(createArrayElement(inputValue), index)} />
+              </>
+            )}
 
-          {/* OTHERS */}
+            {/* DELETION */}
 
-          {operationType === OperationType.Others && (
-            <>
-              <ActionButton text="Set At" bgColor="#6C757D"
-                shadowColor="#48525C" onClick={() => setAt(inputValue, index)} />
-              <ActionButton text="Get At" bgColor="#6C757D"
-                shadowColor="#48525C" onClick={() => getAt(Number(index))} />
-              <ActionButton text="Size" bgColor="#ffffff"
-                shadowColor="#ffffff" onClick={() => { }} />
-            </>
-          )}
+            {operationType === OperationType.Deletion && (
+              <>
+                <ActionButton text="Remove Front" bgColor="#C7573B"
+                  shadowColor="#8E3E2A" onClick={() => removeFront()} />
+                <ActionButton text="Remove Back" bgColor="#C7573B"
+                  shadowColor="#8E3E2A" onClick={() => removeBack()} />
+                <ActionButton text="Remove At" bgColor="#C7573B"
+                  shadowColor="#8E3E2A" onClick={() => removeAt(index)} />
+              </>
+            )}
+
+            {/* OTHERS */}
+
+            {operationType === OperationType.Others && (
+              <>
+                <ActionButton text="Set At" bgColor="#6C757D"
+                  shadowColor="#48525C" onClick={() => setAt(inputValue, index)} />
+                <ActionButton text="Get At" bgColor="#6C757D"
+                  shadowColor="#48525C" onClick={() => getAt(Number(index))} />
+                <ActionButton text="Size" bgColor="#ffffff"
+                  shadowColor="#ffffff" onClick={() => { }} />
+              </>
+            )}
+          </div>
         </div>
-      </div>
+      </main>
     </div>
   );
 }
