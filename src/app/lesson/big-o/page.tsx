@@ -5,6 +5,7 @@ import ListSection from "../components/ListSection";
 import Highlight from "../components/Highlight";
 import Heading from "../components/Heading";
 import TableSection from "../components/TableSection";
+import VideoEmbed from "../components/VideoEmbed";
 
 export default function BigO() {
   return (
@@ -15,6 +16,7 @@ export default function BigO() {
         <HowToReadBigO />
         <CommonBigOClasses />
         <WhyThisMatters />
+        <AdditionalResources />
       </main>
       <BottomNav />
     </div>
@@ -24,22 +26,18 @@ export default function BigO() {
 
 function BottomNav() {
   return (
-    <nav className="flex justify-between py-6 px-5 max-w-3xl mx-auto">
+    <nav className="flex justify-between py-4 px-5 max-w-3xl mx-auto mt-12 border-t-2 border-gray-300">
       <Link href={"/lesson/introduction"}>
         <span
-          className="text-base underline hover:opacity-80 transition-opacity"
+          className="text-lg md:text-xl underline hover:opacity-80 transition-opacity font-semibold"
           style={{ color: ACCENT_COLOR }}
-        >
-          ← Introduction
-        </span>
+        >{"<-"} Introduction</span>
       </Link>
       <Link href={"/lesson/arraylist"}>
         <span
-          className="text-base underline hover:opacity-80 transition-opacity"
+          className="text-lg md:text-xl underline hover:opacity-80 transition-opacity font-semibold"
           style={{ color: ACCENT_COLOR }}
-        >
-          Array List →
-        </span>
+        >Array List {"->"}</span>
       </Link>
     </nav>
   );
@@ -159,4 +157,14 @@ function WhyThisMatters() {
 
     </section>
   );
+}
+
+function AdditionalResources() {
+  return (
+    <section className={SECTION_CLASS}>
+      <Heading>Additional Resources</Heading>
+
+      <VideoEmbed embedUrl="https://www.youtube.com/embed/g2o22C3CRfU?si=9cgniOmwWFwCfkpU" title="Big-O Notation in 100 Seconds" />
+    </section>
+  )
 }

@@ -242,40 +242,17 @@ export default function SimulationArray() {
     return newArray[index];
   }
 
-
-  // return array length
-  // const getLength = (): number | undefined => {
-  //   if (isAnimating) return;
-  //   return array.length;
-  // }
-
-  // sort??
-  // find??
-  // BIG MAYBE BUT RN NAH
-
-  /* Layout / UI
-  * static nav on top
-  * visualizer in the middle
-  * control panel at the bottom
-  *
-  * [ ] TODO - The fucking buttons my dude
-  * [ ] TODO - IDK the fucking layout as well
-  * [ ] TODO - the fun buttons animation
-  *
-  * */
-
-
   return (
-    <div className="h-full bg-gray-50 pt-2 pb-2">
+    <div className="h-full bg-gray-5">
       <main className="h-full flex flex-col md:max-w-95 m-auto bg-white">
         {/* Array display */}
 
-        <div className="flex-2 flex items-center justify-center px-9 py-4">
+        <div className="flex-[7] flex items-center justify-center px-9 py-4">
           <VisualArray array={array} />
         </div>
 
+      <div className="flex-[3]">
         {/* Operation type selector - mobile friendly flex */}
-
         <div className="flex border-t border-b border-gray-200">
           {[
             { type: OperationType.Insertion, label: 'Insertion', bgActive: 'bg-green-100' },
@@ -373,6 +350,7 @@ export default function SimulationArray() {
             )}
           </div>
         </div>
+      </div>
       </main>
     </div>
   );
