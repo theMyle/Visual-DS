@@ -37,7 +37,7 @@ const animationVariants: Record<ArrayElementAnimationState, MotionNodeAnimationO
   },
   [ArrayElementAnimationState.Comparing]: {
     initial: { opacity: 1, scale: 1 },
-    animate: { opacity: 1, scale: 1.1, backgroundColor: "#06B6D4" },
+    animate: { opacity: 1, scale: 1.1, backgroundColor: "#7C3AED" },
     transition: { duration: 0.3 }
   },
   [ArrayElementAnimationState.MinElement]: {

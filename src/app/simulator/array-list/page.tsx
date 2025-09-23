@@ -410,8 +410,15 @@ export default function SimulationArray() {
       const midValue = Number(newArray[mid].value);
 
       if (midValue === target) {
-        // Found the target!
-        newArray[mid].animationState = ArrayElementAnimationState.HighlightedGreen;
+        // Found the target! Reset all others to default and highlight only the found element
+        for (let i = 0; i < newArray.length; i++) {
+          if (i === mid) {
+            newArray[i].animationState = ArrayElementAnimationState.HighlightedGreen;
+          } else {
+            newArray[i].animationState = ArrayElementAnimationState.Default;
+          }
+        }
+        setArray([...newArray]);
         found = true;
       } else if (midValue < target) {
         // Target is in right half - show direction with brief red highlight
@@ -458,7 +465,7 @@ export default function SimulationArray() {
       }));
       setArray(resetArray);
       setIsAnimating(false);
-    }, 2500); // Longer display time for final result
+    }, 1200); // Reduced display time for final result
   };
 
   return (
