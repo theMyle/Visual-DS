@@ -12,9 +12,9 @@ export default function VisualStackBox({ element, index }: VisualStackBoxProps) 
     switch (element.animationState) {
       case StackElementAnimationState.NewPushed:
         return {
-          initial: { scale: 0.8, opacity: 0 },
-          animate: { scale: 1, opacity: 1 },
-          transition: { duration: 0.2, ease: "easeOut" as const }
+          initial: { y: -40, opacity: 0 },
+          animate: { y: 0, opacity: 1 },
+          transition: { duration: 0.4, ease: "easeOut" as const }
         };
       case StackElementAnimationState.Popping:
         return {
@@ -56,13 +56,14 @@ export default function VisualStackBox({ element, index }: VisualStackBoxProps) 
     <motion.div
       key={element.id}
       className={`
-        w-24 h-6 md:w-48 md:h-12 
+        min-w-32 max-w-fit h-6 md:min-w-48 md:h-8 
         ${getBackgroundColor()}
-        text-white font-bold text-xs md:text-lg
+        text-white font-bold text-xs md:text-sm
         rounded items-center justify-center
         border-[1.8px] border-black
         flex
         relative
+        px-4
       `}
       {...getAnimationProps()}
     >

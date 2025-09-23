@@ -34,7 +34,7 @@ export default function VisualStack({ stack }: VisualStackProps) {
                 <VisualStackBox
                   key={element.id}
                   element={element}
-                  index={index} // Use direct index - first element (index 0) is the top
+                  index={index}
                 />
               ))}
             </motion.div>

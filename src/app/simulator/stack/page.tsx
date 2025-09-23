@@ -30,9 +30,10 @@ export default function SimulationStack() {
 
   // Push an element onto the stack
   const push = async (value: StackElement) => {
-    // Limit to 7 elements on mobile (screen width < 768px)
+    // Limit to 7 elements on mobile (screen width < 768px), 12 on desktop
     const isMobile = typeof window !== 'undefined' && window.innerWidth < 768;
-    if (isMobile && stack.length >= 7) return;
+    const maxElements = isMobile ? 7 : 12;
+    if (stack.length >= maxElements) return;
     
     value.animationState = StackElementAnimationState.NewPushed;
     setStack(prev => [value, ...prev]); // Add to the beginning (top)
@@ -193,7 +194,7 @@ export default function SimulationStack() {
 
             {/* Stack info - more compact for mobile */}
             <div className="bg-gray-100 p-2 md:p-3 rounded-lg flex-shrink-0">
-              <div className="flex justify-between md:grid md:grid-cols-1 gap-1 text-xs md:text-sm">
+              <div className="flex justify-between gap-1 text-xs md:text-sm">
                 <div className="flex items-center gap-1">
                   <span className="font-medium text-gray-700">Size:</span>
                   <span className="text-blue-600 font-semibold">{stack.length}</span>
