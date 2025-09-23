@@ -139,9 +139,22 @@ export default function SimulationStack() {
 
   // Clear the entire stack
   const clear = async () => {
-    if (isAnimating) return;
-    // Simply clear the stack without complex animations
-    setStack([]);
+    if (isAnimating || stack.length === 0) return;
+    setIsAnimating(true);
+
+    // Get current stack size
+    const stackSize = stack.length;
+    
+    // Call pop for each element with a small delay
+    for (let i = 0; i < stackSize; i++) {
+      // Add small delay between pops for visual effect
+      if (i > 0) {
+        await new Promise(resolve => setTimeout(resolve, 150));
+      }
+      await pop();
+    }
+
+    setIsAnimating(false);
   };
 
   return (

@@ -19,23 +19,22 @@ export default function VisualStack({ stack }: VisualStackProps) {
       
       <div className="flex-1 flex flex-col items-center justify-end w-full max-w-md h-full overflow-hidden">
         <div className="flex-1 flex flex-col justify-end items-center overflow-y-auto h-full py-2 md:py-4">
-          {stack.length === 0 ? (
-            <div className="text-gray-500 text-sm md:text-lg font-medium mb-4 md:mb-8">
-              Stack is empty
-            </div>
-          ) : (
-            <div className="flex flex-col gap-1 md:gap-1.5 items-center w-full">
-              <AnimatePresence>
-                {stack.map((element, index) => (
-                  <VisualStackBox
-                    key={element.id}
-                    element={element}
-                    index={index}
-                  />
-                ))}
-              </AnimatePresence>
-            </div>
-          )}
+          <div className="flex flex-col gap-1 md:gap-1.5 items-center w-full">
+            <AnimatePresence>
+              {stack.map((element, index) => (
+                <VisualStackBox
+                  key={element.id}
+                  element={element}
+                  index={index}
+                />
+              ))}
+            </AnimatePresence>
+            {stack.length === 0 && (
+              <div className="text-gray-500 text-sm md:text-lg font-medium mb-4 md:mb-8">
+                Stack is empty
+              </div>
+            )}
+          </div>
         </div>
         
         {/* Base/Bottom indicator - always at the bottom */}
