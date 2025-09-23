@@ -30,9 +30,6 @@ export default function SimulationStack() {
 
   // Push an element onto the stack
   const push = async (value: StackElement) => {
-    // Check if any animation is in progress
-    if (isAnimating) return;
-    
     // Limit to 7 elements on mobile (screen width < 768px), 12 on desktop
     const isMobile = typeof window !== 'undefined' && window.innerWidth < 768;
     const maxElements = isMobile ? 7 : 12;
@@ -52,16 +49,15 @@ export default function SimulationStack() {
 
   // Pop an element from the stack
   const pop = async () => {
-    if (stack.length === 0 || isPopping || isAnimating) return;
-    // setIsPopping(true);
+    if (stack.length === 0 || isPopping) return;
 
     // Directly remove the element - exit animation will handle the visual effect
     setStack(prev => prev.slice(1));
     
-    // Reset the popping state after animation completes
+    // Reset the popping state after animation completes (0.6s animation + buffer)
     setTimeout(() => {
       setIsPopping(false);
-    }, 400);
+    }, 700);
   };
 
   // Peek at the top element
@@ -71,21 +67,15 @@ export default function SimulationStack() {
 
     const newStack = [...stack];
 
-    // Highlight and move up the top element (first element in array)
+    // Highlight the top element (first element in array)
     newStack[0].animationState = StackElementAnimationState.HighlightedGreen;
     setStack(newStack);
 
-    // Hold the raised position for a moment, then return to default
+    // Return to default state after a brief moment
     setTimeout(() => {
-      newStack[0].animationState = StackElementAnimationState.PeekReturn;
+      newStack[0].animationState = StackElementAnimationState.Default;
       setStack([...newStack]);
-      
-      // After the fast return animation, set back to default
-      setTimeout(() => {
-        newStack[0].animationState = StackElementAnimationState.Default;
-        setStack([...newStack]);
-        setIsAnimating(false);
-      }, 150); // Wait for the fast return animation to complete
+      setIsAnimating(false);
     }, 800);
   };
 
@@ -148,22 +138,9 @@ export default function SimulationStack() {
 
   // Clear the entire stack
   const clear = async () => {
-    if (isAnimating || stack.length === 0) return;
-    setIsAnimating(true);
-
-    // Get current stack size
-    const stackSize = stack.length;
-    
-    // Call pop for each element with a small delay
-    for (let i = 0; i < stackSize; i++) {
-      // Add small delay between pops for visual effect
-      if (i > 0) {
-        await new Promise(resolve => setTimeout(resolve, 150));
-      }
-      await pop();
-    }
-
-    setIsAnimating(false);
+    if (isAnimating) return;
+    // Simply clear the stack without complex animations
+    setStack([]);
   };
 
   return (
@@ -206,12 +183,6 @@ export default function SimulationStack() {
                 className="bg-white border border-gray-200 rounded-lg text-center flex-1 text-sm md:text-lg py-1.5 md:py-2 focus:border-blue-300 focus:outline-none transition-colors"
                 value={inputValue}
                 onChange={(e) => setInputValue(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter') {
-                    e.preventDefault();
-                    push(createStackElement(inputValue || Math.floor(Math.random() * 100)));
-                  }
-                }}
                 placeholder="Enter value"
               />
             </div>

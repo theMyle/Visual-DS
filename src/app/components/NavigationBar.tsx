@@ -42,16 +42,16 @@ export default function NavBar() {
 
                 {/* Desktop Navigation - visible on md and up */}
                 <div className="hidden md:flex items-center space-x-1">
-                    <Link href="/" className="px-4 py-2 text-gray-700 hover:text-gray-900 hover:bg-gray-100 rounded-md transition-colors font-medium">
+                    <Link href="/" className="px-4 py-2 text-gray-700 hover:text-gray-900 hover:bg-gray-100 rounded-md transition-colors font-medium active:transform active:scale-95">
                         Home
                     </Link>
-                    <Link href="/lesson" className="px-4 py-2 text-gray-700 hover:text-gray-900 hover:bg-gray-100 rounded-md transition-colors font-medium">
+                    <Link href="/lesson" className="px-4 py-2 text-gray-700 hover:text-gray-900 hover:bg-gray-100 rounded-md transition-colors font-medium active:transform active:scale-95">
                         Lessons
                     </Link>
-                    <Link href="/simulator" className="px-4 py-2 text-gray-700 hover:text-gray-900 hover:bg-gray-100 rounded-md transition-colors font-medium">
+                    <Link href="/simulator" className="px-4 py-2 text-gray-700 hover:text-gray-900 hover:bg-gray-100 rounded-md transition-colors font-medium active:transform active:scale-95">
                         Simulator
                     </Link>
-                    <Link href="/assessment" className="px-4 py-2 text-gray-700 hover:text-gray-900 hover:bg-gray-100 rounded-md transition-colors font-medium">
+                    <Link href="/assessment" className="px-4 py-2 text-gray-700 hover:text-gray-900 hover:bg-gray-100 rounded-md transition-colors font-medium active:transform active:scale-95">
                         Assessment
                     </Link>
                 </div>
