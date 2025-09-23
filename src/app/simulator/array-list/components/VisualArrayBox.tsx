@@ -50,7 +50,7 @@ export default function VisualArrayBox({ value, animationState }: VisualArrayBox
       exit={exit}
       transition={transition ?? { duration: 0.4 }}
     >
-      <span className={"text-center truncate px-1 text-xl text-black font-bold"}>
+      <span className={"text-center truncate px-1 text-xl text-white font-bold"}>
         {value}
       </span>
     </motion.div>
