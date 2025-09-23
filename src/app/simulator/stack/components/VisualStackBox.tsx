@@ -35,13 +35,19 @@ export default function VisualStackBox({ element, index }: VisualStackBoxProps) 
         return {
           animate: { y: -8 },
           exit: commonExit,
-          transition: { duration: 0.6, ease: "easeInOut" as const }
+          transition: { duration: 0.15, ease: "easeInOut" as const }
         };
       case StackElementAnimationState.HighlightedOrange:
         return {
           animate: { y: -6 },
           exit: commonExit,
           transition: { duration: 0.6, ease: "easeInOut" as const }
+        };
+      case StackElementAnimationState.PeekReturn:
+        return {
+          animate: { scale: 1, y: 0, opacity: 1 },
+          exit: commonExit,
+          transition: { duration: 0.15, ease: "easeInOut" as const }
         };
       default:
         return {
@@ -58,6 +64,8 @@ export default function VisualStackBox({ element, index }: VisualStackBoxProps) 
         return "bg-orange-300";
       case StackElementAnimationState.HighlightedGreen:
         return "bg-green-300";
+      case StackElementAnimationState.PeekReturn:
+        return "bg-[#94A6FF]";
       default:
         return "bg-[#94A6FF]";
     }

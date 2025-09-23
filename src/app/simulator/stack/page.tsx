@@ -30,6 +30,9 @@ export default function SimulationStack() {
 
   // Push an element onto the stack
   const push = async (value: StackElement) => {
+    // Check if any animation is in progress
+    if (isAnimating) return;
+    
     // Limit to 7 elements on mobile (screen width < 768px), 12 on desktop
     const isMobile = typeof window !== 'undefined' && window.innerWidth < 768;
     const maxElements = isMobile ? 7 : 12;
@@ -49,7 +52,7 @@ export default function SimulationStack() {
 
   // Pop an element from the stack
   const pop = async () => {
-    if (stack.length === 0 || isPopping) return;
+    if (stack.length === 0 || isPopping || isAnimating) return;
     // setIsPopping(true);
 
     // Directly remove the element - exit animation will handle the visual effect
@@ -68,15 +71,21 @@ export default function SimulationStack() {
 
     const newStack = [...stack];
 
-    // Highlight the top element (first element in array)
+    // Highlight and move up the top element (first element in array)
     newStack[0].animationState = StackElementAnimationState.HighlightedGreen;
     setStack(newStack);
 
-    // Return to default state after a brief moment
+    // Hold the raised position for a moment, then return to default
     setTimeout(() => {
-      newStack[0].animationState = StackElementAnimationState.Default;
+      newStack[0].animationState = StackElementAnimationState.PeekReturn;
       setStack([...newStack]);
-      setIsAnimating(false);
+      
+      // After the fast return animation, set back to default
+      setTimeout(() => {
+        newStack[0].animationState = StackElementAnimationState.Default;
+        setStack([...newStack]);
+        setIsAnimating(false);
+      }, 150); // Wait for the fast return animation to complete
     }, 800);
   };
 
@@ -197,6 +206,12 @@ export default function SimulationStack() {
                 className="bg-white border border-gray-200 rounded-lg text-center flex-1 text-sm md:text-lg py-1.5 md:py-2 focus:border-blue-300 focus:outline-none transition-colors"
                 value={inputValue}
                 onChange={(e) => setInputValue(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    e.preventDefault();
+                    push(createStackElement(inputValue || Math.floor(Math.random() * 100)));
+                  }
+                }}
                 placeholder="Enter value"
               />
             </div>

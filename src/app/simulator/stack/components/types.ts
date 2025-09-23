@@ -16,4 +16,5 @@ export enum StackElementAnimationState {
     HighlightedOrange,
     HighlightedGreen,
     Popping,
+    PeekReturn,
 }
