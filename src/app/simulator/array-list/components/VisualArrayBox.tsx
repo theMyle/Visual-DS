@@ -35,7 +35,26 @@ const animationVariants: Record<ArrayElementAnimationState, MotionNodeAnimationO
     animate: { opacity: 1, scale: 1.3, backgroundColor: "#4ADE80" },
     transition: { duration: 0.5 }
   },
-
+  [ArrayElementAnimationState.Comparing]: {
+    initial: { opacity: 1, scale: 1 },
+    animate: { opacity: 1, scale: 1.1, backgroundColor: "#06B6D4" },
+    transition: { duration: 0.3 }
+  },
+  [ArrayElementAnimationState.MinElement]: {
+    initial: { opacity: 1, scale: 1 },
+    animate: { opacity: 1, scale: 1.2, backgroundColor: "#F87171" },
+    transition: { duration: 0.3 }
+  },
+  [ArrayElementAnimationState.Sorted]: {
+    initial: { opacity: 1, scale: 1 },
+    animate: { opacity: 1, scale: 1, backgroundColor: "#34D399" },
+    transition: { duration: 0.5 }
+  },
+  [ArrayElementAnimationState.HighlightedGray]: {
+    initial: { opacity: 1, scale: 1 },
+    animate: { opacity: 1, scale: 1.1, backgroundColor: "#9CA3AF" },
+    transition: { duration: 0.3 }
+  },
 }
 
 export default function VisualArrayBox({ value, animationState }: VisualArrayBoxProps) {

@@ -16,4 +16,8 @@ export enum ArrayElementAnimationState {
     NewInserted,
     HighlightedOrange,
     HighlightedGreen,
+    Comparing,
+    MinElement,
+    Sorted,
+    HighlightedGray,
 }

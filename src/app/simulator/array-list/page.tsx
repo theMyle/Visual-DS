@@ -11,6 +11,7 @@ enum OperationType {
   Insertion,
   Deletion,
   Others,
+  Algorithms,
 };
 
 export default function SimulationArray() {
@@ -34,6 +35,18 @@ export default function SimulationArray() {
       return Math.floor(Math.random() * 100).toString();
     }
     return value;
+  };
+
+  // Helper function to check if array is sorted
+  const isArraySorted = (): boolean => {
+    if (array.length <= 1) return true;
+    
+    for (let i = 0; i < array.length - 1; i++) {
+      if (Number(array[i].value) > Number(array[i + 1].value)) {
+        return false;
+      }
+    }
+    return true;
   };
 
   useEffect(() => {
@@ -261,6 +274,193 @@ export default function SimulationArray() {
     return newArray[index];
   }
 
+  // Selection Sort Algorithm
+  const selectionSort = async () => {
+    if (isAnimating || array.length <= 1) return;
+    setIsAnimating(true);
+
+    const newArray = [...array];
+    const n = newArray.length;
+
+    for (let i = 0; i < n - 1; i++) {
+      let minIndex = i;
+      
+      // Highlight current position (start of unsorted portion)
+      newArray[i].animationState = ArrayElementAnimationState.Comparing;
+      setArray([...newArray]);
+      await sleep(delay.interval);
+
+      // Find minimum element in the remaining unsorted array
+      for (let j = i + 1; j < n; j++) {
+        // Highlight element being compared
+        newArray[j].animationState = ArrayElementAnimationState.Comparing;
+        setArray([...newArray]);
+        await sleep(delay.interval);
+
+        // Compare values (convert to numbers for proper comparison)
+        if (Number(newArray[j].value) < Number(newArray[minIndex].value)) {
+          // Reset previous minimum element to default
+          if (minIndex !== i) {
+            newArray[minIndex].animationState = ArrayElementAnimationState.Default;
+          }
+          // Update minimum index and highlight new minimum
+          minIndex = j;
+          newArray[minIndex].animationState = ArrayElementAnimationState.MinElement;
+        } else {
+          // Reset compared element to default
+          newArray[j].animationState = ArrayElementAnimationState.Default;
+        }
+        setArray([...newArray]);
+        await sleep(delay.interval);
+      }
+
+      // Swap the found minimum element with the first element of unsorted portion
+      if (minIndex !== i) {
+        // Highlight both elements that will be swapped
+        newArray[i].animationState = ArrayElementAnimationState.MinElement;
+        newArray[minIndex].animationState = ArrayElementAnimationState.MinElement;
+        setArray([...newArray]);
+        await sleep(delay.focus);
+
+        // Perform the swap - Framer Motion will handle the position animation
+        const tempElement = newArray[i];
+        newArray[i] = newArray[minIndex];
+        newArray[minIndex] = tempElement;
+        setArray([...newArray]);
+        await sleep(delay.focus);
+      }
+
+      // Mark current position as sorted
+      newArray[i].animationState = ArrayElementAnimationState.Sorted;
+      // Reset the other element if it was highlighted
+      if (minIndex !== i) {
+        newArray[minIndex].animationState = ArrayElementAnimationState.Default;
+      }
+      setArray([...newArray]);
+      await sleep(delay.interval);
+    }
+
+    // Mark last element as sorted
+    if (n > 0) {
+      newArray[n - 1].animationState = ArrayElementAnimationState.Sorted;
+      setArray([...newArray]);
+      await sleep(delay.focus);
+    }
+
+    // Reset all to default after a pause
+    setTimeout(() => {
+      const resetArray = newArray.map(element => ({
+        ...element,
+        animationState: ArrayElementAnimationState.Default
+      }));
+      setArray(resetArray);
+      setIsAnimating(false);
+    }, 1500);
+  };
+
+  // Binary Search Algorithm
+  const binarySearch = async (target: number) => {
+    if (isAnimating) return;
+
+    // Check if array is sorted first
+    if (!isArraySorted()) {
+      // Show visual feedback that array is not sorted
+      const newArray = [...array];
+      // Highlight all elements in red to show it's not sorted
+      newArray.forEach(element => {
+        element.animationState = ArrayElementAnimationState.MinElement;
+      });
+      setArray([...newArray]);
+      
+      // Reset after showing error
+      setTimeout(() => {
+        const resetArray = newArray.map(element => ({
+          ...element,
+          animationState: ArrayElementAnimationState.Default
+        }));
+        setArray(resetArray);
+      }, 1500);
+      
+      alert('Array must be sorted before performing binary search!');
+      return;
+    }
+
+    setIsAnimating(true);
+    const newArray = [...array];
+    let left = 0;
+    let right = newArray.length - 1;
+    let found = false;
+
+    while (left <= right && !found) {
+      // Highlight search range in orange
+      for (let i = left; i <= right; i++) {
+        newArray[i].animationState = ArrayElementAnimationState.HighlightedOrange;
+      }
+      setArray([...newArray]);
+      await sleep(delay.focus); // Slower timing
+
+      // Calculate and highlight middle element in blue (Comparing state)
+      const mid = Math.floor((left + right) / 2);
+      
+      // Keep range in orange, highlight middle in blue for distinction
+      newArray[mid].animationState = ArrayElementAnimationState.Comparing;
+      setArray([...newArray]);
+      await sleep(delay.focus + 500); // Even slower for middle element
+
+      const midValue = Number(newArray[mid].value);
+
+      if (midValue === target) {
+        // Found the target!
+        newArray[mid].animationState = ArrayElementAnimationState.HighlightedGreen;
+        found = true;
+      } else if (midValue < target) {
+        // Target is in right half - show direction with brief red highlight
+        newArray[mid].animationState = ArrayElementAnimationState.MinElement;
+        setArray([...newArray]);
+        await sleep(delay.focus);
+        
+        // Fade out left half including middle
+        for (let i = left; i <= mid; i++) {
+          newArray[i].animationState = ArrayElementAnimationState.Default;
+        }
+        left = mid + 1;
+      } else {
+        // Target is in left half - show direction with brief red highlight
+        newArray[mid].animationState = ArrayElementAnimationState.MinElement;
+        setArray([...newArray]);
+        await sleep(delay.focus);
+        
+        // Fade out right half including middle
+        for (let i = mid; i <= right; i++) {
+          newArray[i].animationState = ArrayElementAnimationState.Default;
+        }
+        right = mid - 1;
+      }
+      
+      setArray([...newArray]);
+      await sleep(delay.focus); // Slower between iterations
+    }
+
+    if (!found) {
+      // Target not found - show all elements briefly
+      newArray.forEach(element => {
+        element.animationState = ArrayElementAnimationState.MinElement;
+      });
+      setArray([...newArray]);
+      await sleep(delay.focus);
+    }
+
+    // Reset all to default after showing result
+    setTimeout(() => {
+      const resetArray = newArray.map(element => ({
+        ...element,
+        animationState: ArrayElementAnimationState.Default
+      }));
+      setArray(resetArray);
+      setIsAnimating(false);
+    }, 2500); // Longer display time for final result
+  };
+
   return (
     <div className="h-full bg-gray-50 overflow-hidden">
       <main className="flex flex-col lg:flex-row h-full max-w-7xl mx-auto bg-white">
@@ -280,6 +480,7 @@ export default function SimulationArray() {
               { type: OperationType.Insertion, label: 'Insertion', bgActive: 'bg-green-100' },
               { type: OperationType.Deletion, label: 'Deletion', bgActive: 'bg-red-100' },
               { type: OperationType.Others, label: 'Others', bgActive: 'bg-purple-100' },
+              { type: OperationType.Algorithms, label: 'Algorithms', bgActive: 'bg-blue-100' },
             ].map(({ type, label, bgActive }) => (
               <button
                 key={type}
@@ -301,11 +502,24 @@ export default function SimulationArray() {
               <div className="flex gap-2 md:gap-3 items-center">
                 <label className="text-xs md:text-sm font-medium text-gray-700 min-w-[40px] md:min-w-[50px]">Value:</label>
                 <input
-                  type="text"
+                  type="number"
                   className="bg-white border border-gray-200 rounded-lg text-center flex-1 text-sm md:text-lg py-1.5 md:py-2 focus:border-blue-300 focus:outline-none transition-colors"
                   value={inputValue}
-                  onChange={(e) => setInputValue(e.target.value)}
-                  placeholder="Enter value"
+                  onChange={(e) => {
+                    const value = e.target.value;
+                    // Only allow numbers (including negative numbers and decimals)
+                    if (value === '' || /^-?\d*\.?\d*$/.test(value)) {
+                      setInputValue(value);
+                    }
+                  }}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      e.preventDefault();
+                      insertBack(createArrayElement(getValueOrRandom(inputValue)));
+                      setInputValue(''); // Clear the input after insertion
+                    }
+                  }}
+                  placeholder="Enter number"
                 />
               </div>
               <div className="flex gap-2 md:gap-3 items-center">
@@ -329,7 +543,7 @@ export default function SimulationArray() {
               </div>
             </div>
 
-            {/* Array info - more useful information */}
+            {/* Array info - simplified */}
             <div className="bg-gradient-to-r from-gray-50 to-gray-100 border border-gray-200 p-2 md:p-3 rounded-lg flex-shrink-0">
               <div className="flex justify-between gap-1 text-xs md:text-sm">
                 <div className="flex items-center gap-1">
@@ -337,15 +551,9 @@ export default function SimulationArray() {
                   <span className="text-blue-600 font-bold">{array.length}</span>
                 </div>
                 <div className="flex items-center gap-1">
-                  <span className="font-medium text-gray-700">First:</span>
-                  <span className="text-green-600 font-bold truncate max-w-[60px]">
-                    {array.length > 0 ? array[0].value : 'None'}
-                  </span>
-                </div>
-                <div className="flex items-center gap-1">
-                  <span className="font-medium text-gray-700">Last:</span>
-                  <span className="text-purple-600 font-bold truncate max-w-[60px]">
-                    {array.length > 0 ? array[array.length - 1].value : 'None'}
+                  <span className="font-medium text-gray-700">Sorted:</span>
+                  <span className={`font-bold ${isArraySorted() ? 'text-green-600' : 'text-red-600'}`}>
+                    {isArraySorted() ? 'Yes' : 'No'}
                   </span>
                 </div>
               </div>
@@ -417,11 +625,26 @@ export default function SimulationArray() {
                     shadowColor="#495057" 
                     onClick={() => getAt(Number(index))} 
                   />
+                </>
+              )}
+
+              {/* ALGORITHMS */}
+              {operationType === OperationType.Algorithms && (
+                <>
                   <ActionButton 
-                    text="Size" 
-                    bgColor="#6C757D"
-                    shadowColor="#495057" 
-                    onClick={() => { }} 
+                    text="Selection Sort" 
+                    bgColor="#3B82F6"
+                    shadowColor="#1E40AF" 
+                    onClick={() => selectionSort()} 
+                  />
+                  <ActionButton 
+                    text="Binary Search" 
+                    bgColor="#8B5CF6"
+                    shadowColor="#6D28D9" 
+                    onClick={() => {
+                      const target = Number(inputValue) || Math.floor(Math.random() * 100);
+                      binarySearch(target);
+                    }} 
                   />
                 </>
               )}
