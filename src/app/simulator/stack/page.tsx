@@ -30,9 +30,9 @@ export default function SimulationStack() {
 
   // Push an element onto the stack
   const push = async (value: StackElement) => {
-    // Limit to 7 elements on mobile (screen width < 768px), 12 on desktop
+    // Limit to 10 elements on mobile (screen width < 768px), 12 on desktop
     const isMobile = typeof window !== 'undefined' && window.innerWidth < 768;
-    const maxElements = isMobile ? 7 : 12;
+    const maxElements = isMobile ? 10 : 12;
     if (stack.length >= maxElements) return;
     
     value.animationState = StackElementAnimationState.NewPushed;
@@ -148,12 +148,12 @@ export default function SimulationStack() {
       <main className="flex flex-col lg:flex-row h-full max-w-7xl mx-auto bg-white">
         
         {/* Stack display - Constrained height */}
-        <div className="flex-1 lg:flex-[3] h-full overflow-hidden">
+        <div className="flex-[1.2] lg:flex-[3] h-full overflow-hidden">
           <VisualStack stack={stack} />
         </div>
 
         {/* Controls section */}
-        <div className="flex-1 lg:flex-[2] flex flex-col border-t lg:border-t-0 lg:border-l border-gray-200 h-full overflow-hidden">
+        <div className="flex-[1] lg:flex-[2] flex flex-col border-t lg:border-t-0 lg:border-l border-gray-200 h-full overflow-hidden">
           {/* Operation type selector */}
           <div className="flex border-b border-gray-200 flex-shrink-0">
             {[
@@ -174,7 +174,7 @@ export default function SimulationStack() {
           </div>
 
           {/* Input Fields and Info */}
-          <div className="flex-1 p-2 md:p-4 flex flex-col gap-2 md:gap-3 overflow-y-auto min-h-0 max-h-full">
+          <div className="flex-1 p-2 md:p-4 flex flex-col gap-2 md:gap-3 overflow-y-auto min-h-0 max-h-full ">
             {/* Input field for value - compact on mobile */}
             <div className="flex gap-2 md:gap-3 items-center flex-shrink-0">
               <label className="text-xs md:text-sm font-medium text-gray-700 min-w-[40px] md:min-w-[50px]">Value:</label>
@@ -210,7 +210,7 @@ export default function SimulationStack() {
             </div>
 
             {/* Buttons - more compact */}
-            <div className="flex flex-col gap-2.5 md:gap-2 w-full flex-shrink-0">
+            <div className="flex flex-col gap-3 md:gap-2 w-full flex-shrink-0">
 
               {/* BASIC OPERATIONS */}
               {operationType === OperationType.Basic && (
