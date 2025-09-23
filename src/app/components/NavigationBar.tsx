@@ -31,7 +31,7 @@ export default function NavBar() {
 
     return (
         <div>
-            <nav className="sticky top-0 z-50 w-full h-14 flex items-center justify-between pl-4 border-b-[1.8px] border-gray-300 bg-white">
+            <nav className="sticky top-0 z-50 w-full h-14 flex items-center justify-between pl-4 pr-4 border-b-[1.8px] border-gray-300 bg-white">
                 {/* Logo */}
                 <Link href={"/"}>
                     <div className="flex items-center space-x-2 text-2xl font-bold">
@@ -40,10 +40,26 @@ export default function NavBar() {
                     </div>
                 </Link>
 
-                {/* Menu */}
+                {/* Desktop Navigation - visible on md and up */}
+                <div className="hidden md:flex items-center space-x-1">
+                    <Link href="/" className="px-4 py-2 text-gray-700 hover:text-gray-900 hover:bg-gray-100 rounded-md transition-colors font-medium">
+                        Home
+                    </Link>
+                    <Link href="/lesson" className="px-4 py-2 text-gray-700 hover:text-gray-900 hover:bg-gray-100 rounded-md transition-colors font-medium">
+                        Lessons
+                    </Link>
+                    <Link href="/simulator" className="px-4 py-2 text-gray-700 hover:text-gray-900 hover:bg-gray-100 rounded-md transition-colors font-medium">
+                        Simulator
+                    </Link>
+                    <Link href="/assessment" className="px-4 py-2 text-gray-700 hover:text-gray-900 hover:bg-gray-100 rounded-md transition-colors font-medium">
+                        Assessment
+                    </Link>
+                </div>
+
+                {/* Mobile Hamburger Menu - visible on mobile only */}
                 <button
                     ref={hamburgerButtonRef}
-                    className="flex items-center justify-center w-auto h-full px-5 active:bg-gray-100"
+                    className="md:hidden flex items-center justify-center w-auto h-full px-5 active:bg-gray-100"
                     onClick={() => setMenuOpen(!menuOpen)}
                 >
                     <svg className="w-6 h-6" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
@@ -52,7 +68,7 @@ export default function NavBar() {
                 </button>
             </nav>
 
-            {/* Overlay Menu */}
+            {/* Mobile Overlay Menu - only on mobile */}
             <AnimatePresence>
                 {menuOpen && (
                     <motion.div
@@ -65,9 +81,9 @@ export default function NavBar() {
                             stiffness: 300,
                             damping: 30
                         }}
-                        className="fixed top-14 z-50 left-0 w-full md:left-auto md:right-0 md:w-80 md:bottom-0 bg-white border-l border-gray-300 md:border-l-2 shadow-lg md:shadow-xl"
+                        className="md:hidden fixed top-14 z-50 left-0 w-full bg-white border-l border-gray-300 shadow-lg"
                     >
-                        <div className="md:overflow-y-auto md:h-full">
+                        <div className="overflow-y-auto">
                             <MenuItemButton
                                 text={"Home"}
                                 href={"/"}

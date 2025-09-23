@@ -50,19 +50,15 @@ export default function SimulationStack() {
   // Pop an element from the stack
   const pop = async () => {
     if (stack.length === 0 || isPopping) return;
-    setIsPopping(true);
+    // setIsPopping(true);
 
-    const newStack = [...stack];
+    // Directly remove the element - exit animation will handle the visual effect
+    setStack(prev => prev.slice(1));
     
-    // Animate the popping element (first element is the top)
-    newStack[0].animationState = StackElementAnimationState.Popping;
-    setStack(newStack);
-
-    // Remove it from the stack after animation
+    // Reset the popping state after animation completes
     setTimeout(() => {
-      setStack(prev => prev.slice(1));
       setIsPopping(false);
-    }, 500);
+    }, 400);
   };
 
   // Peek at the top element
@@ -163,13 +159,13 @@ export default function SimulationStack() {
           <div className="flex border-b border-gray-200 flex-shrink-0">
             {[
               { type: OperationType.Basic, label: 'Basic', bgActive: 'bg-blue-100' },
-              { type: OperationType.Advanced, label: 'Advanced', bgActive: 'bg-purple-100' },
+              { type: OperationType.Advanced, label: 'Others', bgActive: 'bg-purple-100' },
             ].map(({ type, label, bgActive }) => (
               <button
                 key={type}
                 onClick={() => setOperationType(type)}
-                className={`flex-1 py-2 text-center text-xs md:text-sm transition-colors duration-150 ease-in-out
-                        ${operationType === type ? bgActive : 'bg-white'}
+                className={`flex-1 py-2 text-center text-xs md:text-sm font-medium transition-colors duration-150 ease-in-out
+                        ${operationType === type ? bgActive + ' text-gray-800' : 'bg-white hover:bg-gray-50 text-gray-600'}
                         focus:outline-none`}
                 aria-pressed={operationType === type}
               >
@@ -185,7 +181,7 @@ export default function SimulationStack() {
               <label className="text-xs md:text-sm font-medium text-gray-700 min-w-[40px] md:min-w-[50px]">Value:</label>
               <input
                 type="text"
-                className="bg-gray-200 rounded-md text-center flex-1 text-sm md:text-lg py-1.5 md:py-2"
+                className="bg-white border border-gray-200 rounded-lg text-center flex-1 text-sm md:text-lg py-1.5 md:py-2 focus:border-blue-300 focus:outline-none transition-colors"
                 value={inputValue}
                 onChange={(e) => setInputValue(e.target.value)}
                 placeholder="Enter value"
@@ -193,21 +189,21 @@ export default function SimulationStack() {
             </div>
 
             {/* Stack info - more compact for mobile */}
-            <div className="bg-gray-100 p-2 md:p-3 rounded-lg flex-shrink-0">
+            <div className="bg-gradient-to-r from-gray-50 to-gray-100 border border-gray-200 p-2 md:p-3 rounded-lg flex-shrink-0">
               <div className="flex justify-between gap-1 text-xs md:text-sm">
                 <div className="flex items-center gap-1">
                   <span className="font-medium text-gray-700">Size:</span>
-                  <span className="text-blue-600 font-semibold">{stack.length}</span>
+                  <span className="text-blue-600 font-bold">{stack.length}</span>
                 </div>
                 <div className="flex items-center gap-1">
                   <span className="font-medium text-gray-700">Top:</span>
-                  <span className="text-green-600 font-semibold">
+                  <span className="text-green-600 font-bold truncate max-w-[60px]">
                     {stack.length > 0 ? stack[0].value : 'None'}
                   </span>
                 </div>
                 <div className="flex items-center gap-1">
                   <span className="font-medium text-gray-700">Empty:</span>
-                  <span className="text-red-600 font-semibold">
+                  <span className="text-red-600 font-bold">
                     {stack.length === 0 ? 'Yes' : 'No'}
                   </span>
                 </div>

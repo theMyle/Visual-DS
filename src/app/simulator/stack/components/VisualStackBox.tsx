@@ -9,32 +9,38 @@ interface VisualStackBoxProps {
 
 export default function VisualStackBox({ element, index }: VisualStackBoxProps) {
   const getAnimationProps = () => {
+    // Define a common exit animation for all states
+    const commonExit = {
+      y: -40,
+      opacity: 0,
+      backgroundColor: "#ef4444"
+    };
+
     switch (element.animationState) {
       case StackElementAnimationState.NewPushed:
         return {
           initial: { y: -40, opacity: 0 },
           animate: { y: 0, opacity: 1 },
+          exit: commonExit,
           transition: { duration: 0.4, ease: "easeOut" as const }
-        };
-      case StackElementAnimationState.Popping:
-        return {
-          animate: { y: -40, opacity: 0 },
-          transition: { duration: 0.5, ease: "easeInOut" as const }
         };
       case StackElementAnimationState.HighlightedGreen:
         return {
           animate: { y: -8 },
-          transition: { duration: 0.3, ease: "easeInOut" as const }
+          exit: commonExit,
+          transition: { duration: 0.6, ease: "easeInOut" as const }
         };
       case StackElementAnimationState.HighlightedOrange:
         return {
           animate: { y: -6 },
-          transition: { duration: 0.3, ease: "easeInOut" as const }
+          exit: commonExit,
+          transition: { duration: 0.6, ease: "easeInOut" as const }
         };
       default:
         return {
           animate: { scale: 1, y: 0, opacity: 1 },
-          transition: { duration: 0.3, ease: "easeInOut" as const }
+          exit: commonExit,
+          transition: { duration: 0.6, ease: "easeInOut" as const }
         };
     }
   };
@@ -45,8 +51,6 @@ export default function VisualStackBox({ element, index }: VisualStackBoxProps) 
         return "bg-orange-300";
       case StackElementAnimationState.HighlightedGreen:
         return "bg-green-300";
-      case StackElementAnimationState.Popping:
-        return "bg-red-400";
       default:
         return "bg-[#94A6FF]";
     }

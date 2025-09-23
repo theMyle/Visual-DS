@@ -1,5 +1,5 @@
 "use client";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { StackElement } from "@/app/simulator/stack/components/types";
 import VisualStackBox from "@/app/simulator/stack/components/VisualStackBox";
 
@@ -24,20 +24,17 @@ export default function VisualStack({ stack }: VisualStackProps) {
               Stack is empty
             </div>
           ) : (
-            <motion.div 
-              className="flex flex-col gap-1 md:gap-1.5 items-center w-full"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ duration: 0.3 }}
-            >
-              {stack.map((element, index) => (
-                <VisualStackBox
-                  key={element.id}
-                  element={element}
-                  index={index}
-                />
-              ))}
-            </motion.div>
+            <div className="flex flex-col gap-1 md:gap-1.5 items-center w-full">
+              <AnimatePresence>
+                {stack.map((element, index) => (
+                  <VisualStackBox
+                    key={element.id}
+                    element={element}
+                    index={index}
+                  />
+                ))}
+              </AnimatePresence>
+            </div>
           )}
         </div>
         
