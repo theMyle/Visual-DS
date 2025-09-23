@@ -24,6 +24,13 @@ export default function VisualStackBox({ element, index }: VisualStackBoxProps) 
           exit: commonExit,
           transition: { duration: 0.4, ease: "easeOut" as const }
         };
+      case StackElementAnimationState.Invisible:
+        return {
+          initial: { opacity: 0, scale: 0 },
+          animate: { opacity: 0, scale: 0 },
+          exit: { opacity: 0, scale: 0 },
+          transition: { duration: 0 }
+        };
       case StackElementAnimationState.HighlightedGreen:
         return {
           animate: { y: -8 },

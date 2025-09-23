@@ -17,7 +17,7 @@ export default function VisualStack({ stack }: VisualStackProps) {
         </h1>
       </div>
       
-      <div className="flex-1 flex flex-col items-center justify-end w-full max-w-md h-full overflow-hidden">
+      <div className="flex-1 flex flex-col items-center justify-end w-full max-w-md h-full overflow-hidden relative">
         <div className="flex-1 flex flex-col justify-end items-center overflow-y-auto h-full py-2 md:py-4">
           <div className="flex flex-col gap-1 md:gap-1.5 items-center w-full">
             <AnimatePresence>
@@ -29,13 +29,26 @@ export default function VisualStack({ stack }: VisualStackProps) {
                 />
               ))}
             </AnimatePresence>
-            {stack.length === 0 && (
-              <div className="text-gray-500 text-sm md:text-lg font-medium mb-4 md:mb-8">
-                Stack is empty
-              </div>
-            )}
+            {/* Invisible placeholder to prevent layout shifts - always present */}
+            <div className="invisible w-32 h-[1px] md:w-48" />
           </div>
         </div>
+        
+        {/* Empty message - absolutely positioned to not affect layout */}
+        <AnimatePresence>
+          {stack.length === 0 && (
+            <motion.div
+              key="empty-message"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.3, delay: 0.2 }}
+              className="absolute bottom-16 left-1/2 transform -translate-x-1/2 text-gray-500 text-sm md:text-lg font-medium pointer-events-none"
+            >
+              Stack is empty
+            </motion.div>
+          )}
+        </AnimatePresence>
         
         {/* Base/Bottom indicator - always at the bottom */}
         <div className="flex flex-col items-center flex-shrink-0">
