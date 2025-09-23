@@ -140,27 +140,27 @@ export default function App() {
           whileInView="show"
           viewport={{ once: true, margin: "-100px" }}
         >
-        <motion.div variants={itemVariants} className="h-full">
+        <div className="h-full">
           <HomeItem
             title="Lessons"
             description="Dive deep into the core of data structures with clear, structured lessons. Learn about the fundamental properties and operations of various structures, forming the essential foundation for your understanding."
             path="/lesson"
           />
-        </motion.div>
-        <motion.div variants={itemVariants} className="h-full">
+        </div>
+        <div className="h-full">
           <HomeItem
             title="Simulator"
             description="Experience data structures in action! Our dedicated simulator allows you to interact directly with different data structures, performing operations and see instant visual feedback."
             path="/simulator"
           />
-        </motion.div>
-        <motion.div variants={itemVariants} className="md:col-span-2 lg:col-span-1 h-full">
+        </div>
+        <div className="md:col-span-2 lg:col-span-1 h-full">
           <HomeItem
             title="Assessment"
             description="Test your knowledge and track your progress. Our self-assessment modules are built to check your understanding and help you move forward with confidence."
             path="/assessment"
           />
-        </motion.div>
+        </div>
         </motion.div>
       </motion.section>
     </div>

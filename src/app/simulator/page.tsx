@@ -8,10 +8,10 @@ export default function SimulatorPage() {
         >
             <p className={""}>Simulator</p>
             <MenuItem title={"Array List - Simulator"} path={"/simulator/array-list"} />
+            <MenuItem title={"Stack - Simulator"} path={"/simulator/stack"} />
 
             {
               /*
-                <MenuItem title={"Stack - Simulator"} path={"/"} />
                 <MenuItem title={"Queue - Simulator"} path={"/"} />
                 <MenuItem title={"Map - Simulator"} path={"/"} />
               * */
