@@ -1,10 +1,15 @@
+import Link from "next/link";
 
 export default function LessonPage() {
-    return(
+    return (
         <div
-            className={"flex items-center justify-center h-full"}
+            className={"flex flex-col gap-5 items-center justify-center h-full"}
         >
             <h1 className={"text-4xl"}>Assessment</h1>
+
+            <Link href={"/assessment/array-list"}>ArrayList</Link>
+            <Link href={"/assessment/stack"}>Stack</Link>
+            <Link href={"/assessment/queue"}>Queue</Link>
         </div>
     )
 }

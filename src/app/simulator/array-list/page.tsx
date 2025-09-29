@@ -27,6 +27,7 @@ export default function SimulationArray() {
   const delay = {
     interval: 200,
     focus: 400,
+    scan: 100, // Faster scanning for selection sort
   }
 
   // Helper function to get value or generate random
@@ -40,7 +41,7 @@ export default function SimulationArray() {
   // Helper function to check if array is sorted
   const isArraySorted = (): boolean => {
     if (array.length <= 1) return true;
-    
+
     for (let i = 0; i < array.length - 1; i++) {
       if (Number(array[i].value) > Number(array[i + 1].value)) {
         return false;
@@ -139,12 +140,12 @@ export default function SimulationArray() {
   // Insert at the end of the array 
   const insertBack = async (value: ArrayElement) => {
     if (isAnimating) return;
-    
+
     // Limit to 20 elements on mobile (screen width < 768px), 50 on desktop
     const isMobile = typeof window !== 'undefined' && window.innerWidth < 768;
     const maxElements = isMobile ? 20 : 50;
     if (array.length >= maxElements) return;
-    
+
     if (array.length == 0) {
       insertFront(value);
       return;
@@ -284,7 +285,7 @@ export default function SimulationArray() {
 
     for (let i = 0; i < n - 1; i++) {
       let minIndex = i;
-      
+
       // Highlight current position (start of unsorted portion)
       newArray[i].animationState = ArrayElementAnimationState.Comparing;
       setArray([...newArray]);
@@ -295,7 +296,7 @@ export default function SimulationArray() {
         // Highlight element being compared
         newArray[j].animationState = ArrayElementAnimationState.Comparing;
         setArray([...newArray]);
-        await sleep(delay.interval);
+        await sleep(delay.scan); // Use faster scan delay
 
         // Compare values (convert to numbers for proper comparison)
         if (Number(newArray[j].value) < Number(newArray[minIndex].value)) {
@@ -311,7 +312,7 @@ export default function SimulationArray() {
           newArray[j].animationState = ArrayElementAnimationState.Default;
         }
         setArray([...newArray]);
-        await sleep(delay.interval);
+        await sleep(delay.scan); // Use faster scan delay for this too
       }
 
       // Swap the found minimum element with the first element of unsorted portion
@@ -371,7 +372,7 @@ export default function SimulationArray() {
         element.animationState = ArrayElementAnimationState.MinElement;
       });
       setArray([...newArray]);
-      
+
       // Reset after showing error
       setTimeout(() => {
         const resetArray = newArray.map(element => ({
@@ -380,7 +381,7 @@ export default function SimulationArray() {
         }));
         setArray(resetArray);
       }, 1500);
-      
+
       alert('Array must be sorted before performing binary search!');
       return;
     }
@@ -401,7 +402,7 @@ export default function SimulationArray() {
 
       // Calculate and highlight middle element in blue (Comparing state)
       const mid = Math.floor((left + right) / 2);
-      
+
       // Keep range in orange, highlight middle in blue for distinction
       newArray[mid].animationState = ArrayElementAnimationState.Comparing;
       setArray([...newArray]);
@@ -425,7 +426,7 @@ export default function SimulationArray() {
         newArray[mid].animationState = ArrayElementAnimationState.MinElement;
         setArray([...newArray]);
         await sleep(delay.focus);
-        
+
         // Fade out left half including middle
         for (let i = left; i <= mid; i++) {
           newArray[i].animationState = ArrayElementAnimationState.Default;
@@ -436,14 +437,14 @@ export default function SimulationArray() {
         newArray[mid].animationState = ArrayElementAnimationState.MinElement;
         setArray([...newArray]);
         await sleep(delay.focus);
-        
+
         // Fade out right half including middle
         for (let i = mid; i <= right; i++) {
           newArray[i].animationState = ArrayElementAnimationState.Default;
         }
         right = mid - 1;
       }
-      
+
       setArray([...newArray]);
       await sleep(delay.focus); // Slower between iterations
     }
@@ -471,7 +472,7 @@ export default function SimulationArray() {
   return (
     <div className="h-full bg-gray-50 overflow-hidden">
       <main className="flex flex-col lg:flex-row h-full max-w-7xl mx-auto bg-white">
-        
+
         {/* Array display - Constrained height */}
         <div className="flex-1 lg:flex-[3] h-full overflow-hidden">
           <div className="flex items-center justify-center px-4 md:px-9 py-4 h-full">
@@ -572,23 +573,23 @@ export default function SimulationArray() {
               {/* INSERTION */}
               {operationType === OperationType.Insertion && (
                 <>
-                  <ActionButton 
-                    text="Insert Front" 
+                  <ActionButton
+                    text="Insert Front"
                     bgColor="#2A9D8F"
-                    shadowColor="#1F7A6B" 
-                    onClick={() => insertFront(createArrayElement(getValueOrRandom(inputValue)))} 
+                    shadowColor="#1F7A6B"
+                    onClick={() => insertFront(createArrayElement(getValueOrRandom(inputValue)))}
                   />
-                  <ActionButton 
-                    text="Insert Back" 
+                  <ActionButton
+                    text="Insert Back"
                     bgColor="#2A9D8F"
-                    shadowColor="#1F7A6B" 
-                    onClick={() => insertBack(createArrayElement(getValueOrRandom(inputValue)))} 
+                    shadowColor="#1F7A6B"
+                    onClick={() => insertBack(createArrayElement(getValueOrRandom(inputValue)))}
                   />
-                  <ActionButton 
-                    text="Insert At" 
+                  <ActionButton
+                    text="Insert At"
                     bgColor="#2A9D8F"
-                    shadowColor="#1F7A6B" 
-                    onClick={() => insertAt(createArrayElement(getValueOrRandom(inputValue)), index)} 
+                    shadowColor="#1F7A6B"
+                    onClick={() => insertAt(createArrayElement(getValueOrRandom(inputValue)), index)}
                   />
                 </>
               )}
@@ -596,23 +597,23 @@ export default function SimulationArray() {
               {/* DELETION */}
               {operationType === OperationType.Deletion && (
                 <>
-                  <ActionButton 
-                    text="Remove Front" 
+                  <ActionButton
+                    text="Remove Front"
                     bgColor="#C7573B"
-                    shadowColor="#A0422E" 
-                    onClick={() => removeFront()} 
+                    shadowColor="#A0422E"
+                    onClick={() => removeFront()}
                   />
-                  <ActionButton 
-                    text="Remove Back" 
+                  <ActionButton
+                    text="Remove Back"
                     bgColor="#C7573B"
-                    shadowColor="#A0422E" 
-                    onClick={() => removeBack()} 
+                    shadowColor="#A0422E"
+                    onClick={() => removeBack()}
                   />
-                  <ActionButton 
-                    text="Remove At" 
+                  <ActionButton
+                    text="Remove At"
                     bgColor="#C7573B"
-                    shadowColor="#A0422E" 
-                    onClick={() => removeAt(index)} 
+                    shadowColor="#A0422E"
+                    onClick={() => removeAt(index)}
                   />
                 </>
               )}
@@ -620,17 +621,17 @@ export default function SimulationArray() {
               {/* OTHERS */}
               {operationType === OperationType.Others && (
                 <>
-                  <ActionButton 
-                    text="Set At" 
+                  <ActionButton
+                    text="Set At"
                     bgColor="#6C757D"
-                    shadowColor="#495057" 
-                    onClick={() => setAt(getValueOrRandom(inputValue), index)} 
+                    shadowColor="#495057"
+                    onClick={() => setAt(getValueOrRandom(inputValue), index)}
                   />
-                  <ActionButton 
-                    text="Get At" 
+                  <ActionButton
+                    text="Get At"
                     bgColor="#6C757D"
-                    shadowColor="#495057" 
-                    onClick={() => getAt(Number(index))} 
+                    shadowColor="#495057"
+                    onClick={() => getAt(Number(index))}
                   />
                 </>
               )}
@@ -638,20 +639,20 @@ export default function SimulationArray() {
               {/* ALGORITHMS */}
               {operationType === OperationType.Algorithms && (
                 <>
-                  <ActionButton 
-                    text="Selection Sort" 
+                  <ActionButton
+                    text="Selection Sort"
                     bgColor="#3B82F6"
-                    shadowColor="#1E40AF" 
-                    onClick={() => selectionSort()} 
+                    shadowColor="#1E40AF"
+                    onClick={() => selectionSort()}
                   />
-                  <ActionButton 
-                    text="Binary Search" 
+                  <ActionButton
+                    text="Binary Search"
                     bgColor="#8B5CF6"
-                    shadowColor="#6D28D9" 
+                    shadowColor="#6D28D9"
                     onClick={() => {
                       const target = Number(inputValue) || Math.floor(Math.random() * 100);
                       binarySearch(target);
-                    }} 
+                    }}
                   />
                 </>
               )}
