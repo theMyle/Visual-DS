@@ -24,7 +24,7 @@ export default function ProgressDots({ current, total, answeredCount, correct }:
     const isCurrentDot = (index: number) => index === current;
 
     return (
-        <div className="flex justify-center gap-3 py-4">
+        <div className="flex justify-center gap-3 pb-2">
             {Array.from({ length: total }, (_, index) => (
                 <div
                     key={index}

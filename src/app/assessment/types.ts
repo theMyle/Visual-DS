@@ -19,8 +19,8 @@ export interface Question {
     text: string;
     image_url?: string;
     type: 'multiple_choice' | 'true_false' | 'short_answer';
-    choices: [Choice, Choice, Choice, Choice];
-    feedback: Feedback;
+    choices: Choice[];
+    feedback: Feedback[];
 }
 
 export interface Assessment {
@@ -34,6 +34,4 @@ export interface Assessment {
         description: string;
     };
     questions: Question[];
-    created_at?: Date;
-    updated_at?: Date;
 }

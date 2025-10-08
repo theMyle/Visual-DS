@@ -10,6 +10,7 @@ export default function LessonPage() {
             <Link href={"/assessment/array-list"}>ArrayList</Link>
             <Link href={"/assessment/stack"}>Stack</Link>
             <Link href={"/assessment/queue"}>Queue</Link>
+            <Link href={"/assessment/test"}>Test</Link>
         </div>
     )
 }
