@@ -8,7 +8,7 @@ import { createArrayElement, createArrayElements } from "@/app/simulator/array-l
 
 
 export default function arrayListAssessment() {
-  // STATES
+  const [questions, setQuestions] = useState([]);
   const [finished, setFinished] = useState(false);
   const total = 10;
   const [current, setCurrent] = useState(0);
@@ -117,12 +117,6 @@ export default function arrayListAssessment() {
               Check
             </button>
           </div>
-
-          {/* Feedback section - show when answered */}
-          {/* <div className="mt-4 p-4 bg-green-100 rounded-xl flex justify-between items-center">
-            <p className="text-green-700 font-medium">Correct!</p>
-            <button className="bg-green-600 text-white px-4 py-2 rounded-lg">Continue</button>
-          </div> */}
         </div>
       </div>
     </div>
