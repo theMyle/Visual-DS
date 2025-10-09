@@ -20,7 +20,7 @@ export interface Question {
     image_url?: string;
     type: 'multiple_choice' | 'true_false' | 'short_answer';
     choices: Choice[];
-    feedback: Feedback[];
+    feedback: Feedback;
 }
 
 export interface Assessment {
