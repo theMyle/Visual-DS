@@ -64,14 +64,14 @@ export default function ArrayListAssessmentPage() {
 
     // determine feedback message from the question.feedback tuple
     let msg = '';
-    if (isCorrect) {
-      // look for a non-empty correct message
-      const fb = q.feedback.find(f => f.correct && f.correct.trim() !== '');
-      msg = fb ? fb.correct : 'Correct!';
-    } else {
-      const fb = q.feedback.find(f => f.incorrect && f.incorrect.trim() !== '');
-      msg = fb ? fb.incorrect : 'Incorrect.';
-    }
+    // if (isCorrect) {
+    //   // look for a non-empty correct message
+    //   const fb = q.feedback.find(f => f.correct && f.correct.trim() !== '');
+    //   msg = fb ? fb.correct : 'Correct!';
+    // } else {
+    //   const fb = q.feedback.find(f => f.incorrect && f.incorrect.trim() !== '');
+    //   msg = fb ? fb.incorrect : 'Incorrect.';
+    // }
 
     setLastAnswerCorrect(isCorrect);
     setFeedbackMessage(msg);

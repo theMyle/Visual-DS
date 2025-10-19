@@ -12,7 +12,7 @@ export const arrayListAssessment: Assessment = {
     questions: [
         {
             id: "q1",
-            text: "How do you access the 5th element (value 5) in this array?",
+            text: "How do you access the value (5) in this array?",
             type: "multiple_choice",
             choices: [
                 { id: "a", text: "array.get(4)", is_correct: true },
@@ -20,10 +20,7 @@ export const arrayListAssessment: Assessment = {
                 { id: "c", text: "array.get(7)", is_correct: false },
                 { id: "d", text: "array.get(5)", is_correct: false },
             ],
-            feedback: [
-                { correct: "Correct — arrays are zero-indexed, so index 4 is the 5th element.", incorrect: "" },
-                { correct: "", incorrect: "Incorrect — arrays are zero-indexed, the 5th element is at index 4." },
-            ],
+            feedback: { correct: "That's right! Number 5 is the fifth element of the array. Since array indices starts at Zero (0). Number 5 is at index 4.", incorrect: "Incorrect — arrays are zero-indexed, the 5th element is at index 4." },
         },
 
         {
@@ -36,10 +33,10 @@ export const arrayListAssessment: Assessment = {
                 { id: "c", text: "array.size", is_correct: false },
                 { id: "d", text: "array.count()", is_correct: false },
             ],
-            feedback: [
-                { correct: "Yes — use the .length property to get array length.", incorrect: "" },
-                { correct: "", incorrect: "No — JavaScript arrays use the .length property." },
-            ],
+            feedback:
+            {
+                correct: "Yes — use the .length property to get array length.", incorrect: "No — JavaScript arrays use the .length property."
+            },
         },
 
         {
@@ -52,10 +49,10 @@ export const arrayListAssessment: Assessment = {
                 { id: "c", text: "Depends on context", is_correct: false },
                 { id: "d", text: "Only in strict mode", is_correct: false },
             ],
-            feedback: [
-                { correct: "Correct — arrays are objects in JavaScript.", incorrect: "" },
-                { correct: "", incorrect: "Incorrect — arrays are implemented as objects in JavaScript." },
-            ],
+            feedback:
+            {
+                correct: "Correct — arrays are objects in JavaScript.", incorrect: "Incorrect — arrays are implemented as objects in JavaScript."
+            },
         },
 
         {
@@ -68,10 +65,10 @@ export const arrayListAssessment: Assessment = {
                 { id: "c", text: "undefined", is_correct: false },
                 { id: "d", text: "null", is_correct: false },
             ],
-            feedback: [
-                { correct: "Correct — indexOf returns -1 when the element is not found.", incorrect: "" },
-                { correct: "", incorrect: "Incorrect — indexOf returns -1 when not found." },
-            ],
+            feedback:
+            {
+                correct: "Correct — indexOf returns -1 when the element is not found.", incorrect: "Incorrect — indexOf returns -1 when not found."
+            },
         },
     ],
 };

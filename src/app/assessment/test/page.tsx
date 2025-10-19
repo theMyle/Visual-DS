@@ -1,9 +1,10 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import ProgressDots from "../components/ProgressDots";
 import { Assessment, Choice, Feedback } from "../types";
 import { arrayListAssessment } from "./questions";
+import Image from "next/image";
 
 export default function Test() {
     const assessment = arrayListAssessment;
@@ -20,8 +21,8 @@ export default function Test() {
     const [correctDots, setCorrectDots] = useState<boolean[]>(() => Array(totalQuestions).fill(false));
 
     // assessment states
-    const [currentIndex, setCurrentIndex] = useState(0);
     const [currentQuestion, setCurrentQuestion] = useState(assessment.questions[0]);
+    const [shuffledChoices, setShuffledChoices] = useState<Choice[]>([]);
 
     const [correctFeedback, setCorrectFeedback] = useState("");
     const [wrongFeedback, setWrongFeedback] = useState("");
@@ -29,23 +30,16 @@ export default function Test() {
     useEffect(() => {
         setCorrectFeedback(currentQuestion.feedback.correct);
         setWrongFeedback(currentQuestion.feedback.incorrect);
+
+        const shuffled = [...currentQuestion.choices].sort(() => Math.random() - 0.5);
+        setShuffledChoices(shuffled);
     }, [currentQuestion]);
 
     const [selectedButton, setSelectedButton] = useState<string | null>(null);
     const [feedbackMode, setFeedbackMode] = useState(false);
     const [answerIsCorrect, setAnswerIsCorrect] = useState(false);
 
-    // Auto-scroll to bottom when feedback appears
-    useEffect(() => {
-        if (feedbackMode) {
-            setTimeout(() => {
-                document.querySelector('.scrollTo')?.scrollIntoView({
-                    behavior: 'smooth',
-                    block: 'end'
-                });
-            }, 100); // Small delay to ensure feedback animation starts
-        }
-    }, [feedbackMode]);
+    const questionDiv = useRef<HTMLDivElement>(null);
 
     // progress dots operations and stuff
     function handleCorrectAnswer() {
@@ -55,57 +49,35 @@ export default function Test() {
             return newCorrectDots;
         });
 
-        setCurrentDot(c => {
-            let nextIndex = c + 1;
-            return nextIndex;
-        });
-
-        setAnsweredCount(c => c + 1);
+        setCurrentDot(c => c + 1);
     }
 
     function handleWrongAnswer() {
         setCurrentDot(c => c + 1);
-        setAnsweredCount(c => c + 1);
     }
 
 
-    function handleNextQuestion() {
-        if (currentIndex < assessment.questions.length - 1) {
-            // Move to next question
-            setCurrentIndex(idx => idx + 1);
-
-            // Reset selection and feedback for next question
-            setSelectedButton(null);
-            setFeedbackMode(false);
-            setAnswerIsCorrect(false);
+    function handleNextQuestion(currentIdx: number) {
+        // check if it's last
+        if (currentIdx === assessment.questions.length) {
+            // todo - show summary
+            alert("done!");
         } else {
-            // Last question reached → show summary
-            // You can navigate, show a modal, or set a state to trigger summary UI
-            console.log("Assessment complete!");
+            // next question
+            setCurrentQuestion(assessment.questions[currentIdx]);
         }
     }
 
 
-    function handleAnswer(isCorrect: boolean) {
-        setCorrectDots(p => {
-            const newDots = [...p];
-            if (isCorrect) newDots[currentIndex] = true;
-            return newDots;
-        });
-
-        setAnsweredCount(c => c + 1);
-
-        setAnswerIsCorrect(isCorrect);
-        setFeedbackMode(true);
-    }
-
-
-    function checkIfLastItem() {
-        // route to summary page or something or just showing a modal for summary?
-    }
-
-    function nextQuestion(idx: number) {
-        setCurrentQuestion(assessment.questions[idx]);
+    function handleNextQuestion2() {
+        // check if it's last
+        if (answeredCount === assessment.questions.length) {
+            // todo - show summary
+            alert("done!");
+        } else {
+            // next question
+            setCurrentQuestion(assessment.questions[answeredCount]);
+        }
     }
 
     function handleCheck() {
@@ -113,16 +85,27 @@ export default function Test() {
         const isCorrect = correctAnswer.id === selectedButton;
 
         setAnswerIsCorrect(isCorrect);
-        setFeedbackMode(true);
+        setFeedbackMode(() => {
+            // small delay - wait for feed back to show up
+            setTimeout(() => {
+                if (questionDiv.current) {
+                    questionDiv.current.scrollTo({
+                        top: 1000,
+                        behavior: "smooth",
+                    })
+                }
+            }, 300)
+            return true;
+        });
+
+        isCorrect ? handleCorrectAnswer() : handleWrongAnswer();
+        setAnsweredCount(c => c + 1);
     }
 
     function handleContinue() {
         setFeedbackMode(false);
-        if (answerIsCorrect) {
-            handleCorrectAnswer();
-        } else {
-            handleWrongAnswer();
-        }
+        setSelectedButton(null);
+        handleNextQuestion2();
     }
 
     // tailwind calculations
@@ -140,33 +123,43 @@ export default function Test() {
     return (
         <>
             <div className="h-full flex flex-col ">
-                <div className="shrink-0 pt-4">
+                <div className="shrink-0">
                     <ProgressDots
                         current={currentDot}
                         total={totalQuestions}
                         answeredCount={answeredCount}
                         correct={correctDots}
                     />
+
+                    {/* test stuff */}
                     {testFlag && <TestButtons rightOnclick={handleCorrectAnswer} wrongOnclick={handleWrongAnswer} />}
+
                 </div>
 
-                <div className="flex-1 flex flex-col overflow-y-auto">
-                    <div className="flex flex-col justify-center gap-10 min-h-full py-4">
+                <div ref={questionDiv} className="flex-1 flex flex-col overflow-y-auto">
+                    <div className="flex flex-col justify-around gap-10 min-h-full py-4">
                         {/* Current question */}
 
-                        <div className="shrink-0 flex flex-col items-center p-8 text-lg gap-4">
+                        <div className="shrink-0 flex flex-col items-center px-8 text-lg">
                             <p>{currentQuestion.text}</p>
-                            <p>
-                                [9,6,3,5,4]
-                            </p>
                         </div>
 
                         {/* Custom image/diagram if present */}
+                        {currentQuestion.image_url &&
+                            <div className="flex justify-center">
+                                <Image
+                                    src={currentQuestion.image_url}
+                                    alt="Image diagram"
+                                    width={300}
+                                    height={0}
+                                />
+                            </div>
+                        }
 
                         {/* Choices render */}
                         <div className="flex justify-center">
                             <div className="grid grid-cols-2 gap-4 max-w-2xl w-full px-4">
-                                {currentQuestion.choices.map((choice: Choice) => {
+                                {shuffledChoices.map((choice: Choice) => {
                                     const isSelected = selectedButton === choice.id;
                                     const isCorrect = choice.is_correct;
 
@@ -203,7 +196,11 @@ export default function Test() {
                         {/* Feedback */}
                         {feedbackMode && (answerIsCorrect ? correctFeedback : wrongFeedback) && (
                             <div className="flex justify-center pb-10 opacity-0 animate-fade-in">
-                                <div className="lg:max-w-160 flex flex-col gap-2 bg-gray-100 p-4 ml-4 mr-4 rounded-2xl">
+                                <div className={`lg:max-w-160 lg:min-w-160 bg-gray-200 flex flex-col gap-2 p-4 ml-4 mr-4 rounded-2xl border-2 border-gray-300 ${(answerIsCorrect ?
+                                    " bg-green-50"
+                                    :
+                                    "bg-red-50"
+                                )}`}>
                                     <h1 className="font-bold">Explanation</h1>
                                     <p>{answerIsCorrect ? correctFeedback : wrongFeedback}</p>
                                 </div>
@@ -231,8 +228,8 @@ export default function Test() {
 
                     {
                         feedbackMode &&
-                        <div className="flex justify-between items-center w-64">
-                            <p className="font-bold text-lg">{answerIsCorrect ? "Correct!" : "Wrong"}</p>
+                        <div className="flex justify-between items-center w-70">
+                            <p className="font-bold text-lg">{answerIsCorrect ? "Correct!" : "Incorrect"}</p>
                             <button
                                 className={` rounded-4xl px-8 py-2 text-white font-bold text-lg ${continueButtonColor}`}
                                 onClick={() => handleContinue()}

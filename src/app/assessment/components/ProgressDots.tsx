@@ -1,7 +1,6 @@
-
 const PROGRESS_COLORS = {
     correct: '#22C55E',     // Green-500 
-    incorrect: '#6B7280',   // Gray-500
+    incorrect: '#6B7280',   // Gray-500 or RED #EF4444
     unanswered: '#E5E7EB',  // Gray-200 
     currentRing: 'ring-indigo-500',
 } as const;
@@ -24,12 +23,21 @@ export default function ProgressDots({ current, total, answeredCount, correct }:
     const isCurrentDot = (index: number) => index === current;
 
     return (
-        <div className="flex justify-center gap-3 pb-2">
+        <div className="flex justify-center gap-2 md:gap-3 p-4 md:p-2 overflow-x-auto" role="list" aria-label="Progress">
             {Array.from({ length: total }, (_, index) => (
                 <div
                     key={index}
-                    className={`w-4 h-4 rounded-full transition-all duration-200 ${isCurrentDot(index) ? `ring-2 ${PROGRESS_COLORS.currentRing} ring-offset-1` : ''
-                        }`}
+                    role="listitem"
+                    title={`Question ${index + 1} • ${index < answeredCount
+                        ? (correct[index] ? 'Correct' : 'Incorrect')
+                        : 'Unanswered'
+                        }${isCurrentDot(index) ? ' (current)' : ''}`}
+                    className={`rounded-full border transition-all duration-200
+                        w-4 h-4 md:w-5 md:h-5
+                        border-gray-300
+                        ${isCurrentDot(index) ? 'ring-2 ring-indigo-500 ring-offset-1 scale-110 shadow-sm' : ''}
+                        ${index < answeredCount ? 'opacity-100' : 'opacity-80'}
+                    `}
                     style={{ backgroundColor: getDotColor(index) }}
                 />
             ))}

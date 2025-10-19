@@ -12,37 +12,39 @@ export const arrayListAssessment: Assessment = {
     questions: [
         {
             id: "q1",
-            text: "How do you access the value (5) in this array?",
+            text: "How do you access the value (5) in this array? [0, 4, 2, 7, 5]",
             type: "multiple_choice",
+            image_url: "/assessment/array-list/q1.png",
             choices: [
-                { id: "a", text: "array.get(4)", is_correct: true },
-                { id: "b", text: "array.get(5)", is_correct: false },
-                { id: "c", text: "array.get(7)", is_correct: false },
+                { id: "a", text: "array.get(2)", is_correct: false },
+                { id: "b", text: "array.get(3)", is_correct: false },
+                { id: "c", text: "array.get(4)", is_correct: true },
                 { id: "d", text: "array.get(5)", is_correct: false },
             ],
-            feedback: { correct: "That's right! Number 5 is the fifth element of the array. Since array indices starts at Zero (0). Number 5 is at index 4.", incorrect: "Incorrect — arrays are zero-indexed, the 5th element is at index 4." },
+            feedback: { correct: "That's right! Number 5 is the fifth element of the array. Since array indices starts at Zero (0). Number 5 is at index 4.", incorrect: "Remember, arrays are zero-indexed, that's why the 5th element is at index 4." },
         },
 
         {
             id: "q2",
-            text: "Which expression retrieves the length of an array in JavaScript?",
+            text: "Given an ArrayList [10, 20, 30, 40], what is the value at index 2?",
             type: "multiple_choice",
             choices: [
-                { id: "a", text: "array.length", is_correct: true },
-                { id: "b", text: "length(array)", is_correct: false },
-                { id: "c", text: "array.size", is_correct: false },
-                { id: "d", text: "array.count()", is_correct: false },
+                { id: "a", text: "40", is_correct: false },
+                { id: "b", text: "30", is_correct: true },
+                { id: "c", text: "20", is_correct: false },
+                { id: "d", text: "10", is_correct: false },
             ],
             feedback:
             {
-                correct: "Yes — use the .length property to get array length.", incorrect: "No — JavaScript arrays use the .length property."
+                correct: "That's right! Indices start at 0, so index 2 refers to the third element (30).",
+                incorrect: "Remember that ArrayLists are zero-indexed. The first element is at index 0."
             },
         },
 
         {
-            id: "q3",
-            text: "True or False: In JavaScript, arrays are a type of object.",
-            type: "true_false",
+            id: "",
+            text: "",
+            type: "multiple_choice",
             choices: [
                 { id: "a", text: "True", is_correct: true },
                 { id: "b", text: "False", is_correct: false },
@@ -52,22 +54,6 @@ export const arrayListAssessment: Assessment = {
             feedback:
             {
                 correct: "Correct — arrays are objects in JavaScript.", incorrect: "Incorrect — arrays are implemented as objects in JavaScript."
-            },
-        },
-
-        {
-            id: "q4",
-            text: "What is the result of array.indexOf(5) when 5 is not present?",
-            type: "multiple_choice",
-            choices: [
-                { id: "a", text: "-1", is_correct: true },
-                { id: "b", text: "0", is_correct: false },
-                { id: "c", text: "undefined", is_correct: false },
-                { id: "d", text: "null", is_correct: false },
-            ],
-            feedback:
-            {
-                correct: "Correct — indexOf returns -1 when the element is not found.", incorrect: "Incorrect — indexOf returns -1 when not found."
             },
         },
     ],
