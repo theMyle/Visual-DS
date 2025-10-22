@@ -3,6 +3,7 @@ import Heading from "../components/Heading";
 import Highlight from "../components/Highlight";
 import ListSection from "../components/ListSection";
 import { ACCENT_COLOR } from "@/app/lib/constants";
+import BottomNav from "../components/BottomNav";
 
 export default function IntroductionPage() {
   return (
@@ -12,7 +13,9 @@ export default function IntroductionPage() {
         <WhyLearnDS />
         <WhyChoosingDSMatters />
       </main>
-      <BottomNav />
+      <BottomNav
+        next={{ href: "/lesson/big-o", label: "Big-O" }}
+      />
     </div>
   );
 }
@@ -113,17 +116,17 @@ function WhyChoosingDSMatters() {
 }
 
 
-function BottomNav() {
-  return (
-    <nav className="flex justify-end py-6 px-5 max-w-3xl mx-auto">
-      <Link href={"/lesson/big-o"}>
-        <span
-          className="text-base underline hover:opacity-80 transition-opacity"
-          style={{ color: ACCENT_COLOR }}
-        >
-          Big-O →
-        </span>
-      </Link>
-    </nav>
-  );
-}
+// function BottomNav() {
+//   return (
+//     <nav className="flex justify-end py-6 px-5 max-w-3xl mx-auto">
+//       <Link href={"/lesson/big-o"}>
+//         <span
+//           className="text-base underline hover:opacity-80 transition-opacity"
+//           style={{ color: ACCENT_COLOR }}
+//         >
+//           Big-O →
+//         </span>
+//       </Link>
+//     </nav>
+//   );
+// }

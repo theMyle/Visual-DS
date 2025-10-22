@@ -22,3 +22,7 @@ body {
 .animate-fade-in {
     animation: fade-in 0.3s ease-out forwards;
 }
+
+p {
+    @apply text-slate-800 leading-[1.7] md:text-[1.05rem] md:leading-[1.8];
+}

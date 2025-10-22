@@ -1,11 +1,10 @@
-import Link from "next/link";
-import { ACCENT_COLOR } from "@/app/lib/constants";
 import { SECTION_CLASS } from "../components/constants";
 import ListSection from "../components/ListSection";
 import Highlight from "../components/Highlight";
 import Heading from "../components/Heading";
 import TableSection from "../components/TableSection";
 import VideoEmbed from "../components/VideoEmbed";
+import BottomNav from "../components/BottomNav";
 
 export default function BigO() {
   return (
@@ -14,32 +13,16 @@ export default function BigO() {
         <BigONotation />
         <WhatDoesNAndWorkMean />
         <HowToReadBigO />
+        <FirstExample />
         <CommonBigOClasses />
         <WhyThisMatters />
         <AdditionalResources />
       </main>
-      <BottomNav />
+      <BottomNav
+        prev={{ href: "/lesson/introduction", label: "Introduction" }}
+        next={{ href: "/lesson/arraylist", label: "Array List" }}
+      />
     </div>
-  );
-}
-
-
-function BottomNav() {
-  return (
-    <nav className="flex justify-between py-4 px-5 max-w-3xl mx-auto mt-12 border-t-2 border-gray-300">
-      <Link href={"/lesson/introduction"}>
-        <span
-          className="text-lg md:text-xl underline hover:opacity-80 transition-opacity font-semibold"
-          style={{ color: ACCENT_COLOR }}
-        >{"<-"} Introduction</span>
-      </Link>
-      <Link href={"/lesson/arraylist"}>
-        <span
-          className="text-lg md:text-xl underline hover:opacity-80 transition-opacity font-semibold"
-          style={{ color: ACCENT_COLOR }}
-        >Array List {"->"}</span>
-      </Link>
-    </nav>
   );
 }
 
@@ -78,22 +61,37 @@ function BigONotation() {
 function WhatDoesNAndWorkMean() {
   return (
     <section className={SECTION_CLASS}>
-      <Heading>What Does 'n' and 'work' Mean</Heading>
+      <Heading>What do 'n' and 'work' mean?</Heading>
 
       <p>
-        <Highlight>n</Highlight> is size of the input like items in a list or collection.
+        <Highlight>n</Highlight> is the size of the input. Think: how many things are we operating on?
       </p>
 
+      <ListSection title="Examples of n">
+        <li>Array length (number of elements)</li>
+        <li>String length (number of characters)</li>
+        <li>Number of nodes in a tree/graph</li>
+        <li>For matrices, sometimes <em>n</em> is one dimension (e.g., n×n)</li>
+      </ListSection>
+
       <p>
-        <Highlight>work</Highlight> is the count of basic operations an algorithm performs like reading/writing to memory, accessign and item/element and so on.
+        <Highlight>work</Highlight> is the count of basic operations an algorithm performs (its “steps”).
       </p>
+
+      <ListSection title="Examples of work (primitive steps)">
+        <li>Reading or writing a value</li>
+        <li>Comparing two values</li>
+        <li>Simple arithmetic (add, subtract, multiply, divide)</li>
+        <li>Following a pointer/reference</li>
+      </ListSection>
 
       <p>
         Big-O asks: <Highlight>"If n changes, how does the work change?"</Highlight>
       </p>
 
       <p>
-        Big-O tells you the general trend of how work grows as <Highlight>n</Highlight> increases.
+        Big-O tells you the trend of how work grows as <Highlight>n</Highlight> increases. We ignore
+        constants and lower-order terms and focus on the dominant growth.
       </p>
     </section>
   );
@@ -119,6 +117,50 @@ function HowToReadBigO() {
         <li>Keep only the dominant term: O(n² + n) → O(n²)</li>
       </ListSection>
 
+    </section>
+  );
+}
+
+
+function FirstExample() {
+  return (
+    <section className={SECTION_CLASS}>
+      <Heading>A first Big-O example</Heading>
+
+      <p>Suppose we want the sum of all numbers in an array:</p>
+
+      <pre className="rounded-xl bg-slate-900 text-slate-100 p-4 overflow-x-auto text-sm">
+        <code>{`function sum(arr: number[]) {
+  let total = 0;
+  for (let i = 0; i < arr.length; i++) {
+    total += arr[i];
+  }
+  return total;
+}`}</code>
+      </pre>
+
+      <p className="italic text-slate-700">Question: What is the running time of this algorithm?</p>
+
+      <p>
+        It goes through the array once. If there are <Highlight>n</Highlight> items, it does about <Highlight>n</Highlight> steps. That means the running time grows in a straight line with n. This is <strong>O(n)</strong>.
+      </p>
+
+      <ListSection title="Quick intuition">
+        <li>The loop runs n times. (n is the size of the array)</li>
+        <li>Each pass does a tiny, fixed amount of work.</li>
+        <li>More items → proportionally more work → O(n).</li>
+      </ListSection>
+
+      <p>
+        Another way to say it: the loop goes from index <code>0</code> up to <code>n - 1</code> and
+        touches every element once. If there are <Highlight>n</Highlight> elements, there are <Highlight>n</Highlight> visits. Work grows in direct proportion to how many elements we
+        touch, so we call that <strong>O(n)</strong>.
+      </p>
+
+      <p>
+        In Big-O, we ignore constants and lower-order terms. Different machines or languages may
+        change the constants, but the <em>shape</em> of growth stays linear for this algorithm.
+      </p>
     </section>
   );
 }

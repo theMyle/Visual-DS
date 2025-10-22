@@ -1,89 +1,79 @@
+import Image from "next/image"
 import { SECTION_CLASS } from "../components/constants"
 import Heading from "../components/Heading"
 import Highlight from "../components/Highlight"
 import ListSection from "../components/ListSection"
+import TableSection from "../components/TableSection"
+import Callout from "../components/Callout"
+import Advantages from "../components/Advantages"
+import Drawbacks from "../components/Drawbacks"
+import BottomNav from "../components/BottomNav"
 
 export default function ArrayList() {
     return (
         <div>
             <main className="flex flex-col gap-16 px-4 pt-8 text-base md:text-lg max-w-3xl mx-auto">
-                <Introduction />
                 <Array />
                 <Array_List />
-
-                {/* 
-                <Operations />
-                <Drawbacks /> 
-                */}
+                <CommonOperations />
             </main>
+            <BottomNav
+                prev={{ href: "/lesson/big-o", label: "Big-O" }}
+            />
         </div>
-    )
-}
-
-function Introduction() {
-    return (
-        <section className={SECTION_CLASS}>
-            <Heading>Introduction</Heading>
-            <p>
-                An <Highlight>ArrayList</Highlight> is one of the most common and versatile data structures in modern programming. It appears under different names in different languages:
-            </p>
-
-            <ListSection>
-                <li>C++ → <strong>vector</strong></li>
-                <li>JavaScript → <strong>array</strong></li>
-                <li>Python → <strong>list</strong></li>
-                <li>Java & C# → <strong>ArrayList</strong></li>
-            </ListSection>
-
-            <p>
-                In fact, in many modern languages, the terms <Highlight>array</Highlight> and <Highlight>ArrayList</Highlight> are often used interchangeably because their built-in implementations behave like dynamic arrays by default.
-            </p>
-
-            <p>
-                At its core, an ArrayList is a type of <Highlight>list data structure</Highlight>.
-            </p>
-
-            <p>
-                A <Highlight>list</Highlight> is a collection of elements arranged in order. Each element has a position, and you can access, add, or remove elements based on that order. Lists are one of the most fundamental data structures because they allow us to group data and work with it as a sequence.
-            </p>
-
-            <ListSection title="Lists come in two main forms:">
-                <li>Static lists → fixed in size (commonly implemented as <strong>Arrays</strong>).</li>
-                <li>Dynamic lists → can grow or shrink as needed (commonly implemented as <strong>ArrayLists</strong>).</li>
-            </ListSection>
-
-            <p>
-                This distinction between <Highlight>static</Highlight> and <Highlight>dynamic</Highlight> lists is the foundation for understanding how arrays and ArrayLists work.
-            </p>
-
-        </section>
     )
 }
 
 function Array() {
     return (
         <section className={SECTION_CLASS}>
+
             <Heading>Array</Heading>
-
             <p>
-                An <Highlight>array</Highlight> is a collection of items stored in <Highlight>contiguous (side-by-side) memory locations</Highlight>. Each item in an array is called an <Highlight>element</Highlight>, and every element can be accessed directly using its <Highlight>index</Highlight> (a number that represents its position in the array).
+                An <Highlight>array</Highlight> is one of the simplest and most widely used data structures. It stores a collection of elements in <Highlight>contiguous memory locations</Highlight>, and each element can be accessed directly by its <Highlight>index</Highlight>. This makes arrays very fast for lookups: if you know the index, you can jump straight to the element without scanning everything before it.
             </p>
 
-            <p>
-                INSERT IMAGE HERE
+            <p className="text-slate-600">
+                Array indices are <Highlight>zero-based</Highlight>, meaning the first element starts at index 0. A common mistake, even among experienced programmers, is the <Highlight>off-by-one error</Highlight>, which happens when this is overlooked.
             </p>
 
-            <ListSection title="Arrays are useful because they:">
-                <li><strong>Keep data organized</strong> - in a single variable instead of many separate ones.</li>
-                <li><strong>Provide fast access</strong> - since the index can directly calculate the memory address of an element.</li>
-                <li><strong>Store elements of the same type</strong> - making them efficient and predictable.</li>
+            <div className="flex justify-center p-4">
+                <Image
+                    src={"/lessons/array-list/array-diagram.png"}
+                    alt="Array in memory diagram"
+                    width={600}
+                    height={100}
+                />
+            </div>
+
+            <p>
+                Arrays can store many kinds of data, such as numbers, strings, or even objects, but the important part is that each element has a specific position. Think of an <Highlight>Advent calendar</Highlight> (a holiday countdown calendar with numbered doors you open one per day with hidden surprises inside): each drawer is like an array index. You open drawer 1, 2, 3, and so on by number, you can't ask the calendar, “Find the one with the lollipop.” You can only open a drawer by its number, and you won't know what's inside until you open it.
+            </p>
+
+            <div className="flex justify-center p-4">
+                <Image
+                    src={"/lessons/array-list/advent-calendar.png"}
+                    alt="Array in memory diagram"
+                    width={400}
+                    height={100}
+                />
+            </div>
+
+            <ListSection title="Key characteristics of an Array">
+                <li>Stores a collection of elements in order.</li>
+                <li>Access each element by its index.</li>
+                <li>Direct (or random) access is possible, so the 10th element can be retrieved instantly without touching the first 9.</li>
             </ListSection>
 
-            <p>
-                The main limitation of arrays is that their size is <Highlight>fixed when created</Highlight>. If you need more space or fewer elements, you cannot simply resize the array, you would need to make a new one.
-            </p>
+            <Advantages title="Advantages of arrays">
+                <li>Keeps related data organized in one variable.</li>
+                <li>Very fast element access through indexing.</li>
+                <li>Efficient storage for same-typed elements.</li>
+            </Advantages>
 
-
+            <Callout variant="warning" title="Limitation">
+                Size is <Highlight>fixed</Highlight> once created. To grow, allocate a new array and copy the data.
+            </Callout>
 
         </section>
     )
@@ -93,32 +83,89 @@ function Array_List() {
     return (
         <section className={SECTION_CLASS}>
             <Heading>Array List</Heading>
-            <p>
-                An <Highlight>ArrayList</Highlight> is a type of <Highlight>dynamic array</Highlight>. It is a collection that can automatically <Highlight>grow</Highlight> or <Highlight>shrink</Highlight> as you add or remove elements.
-            </p>
 
             <p>
-                INSERT IMAGE HERE
+                Many programming languages also provide <Highlight>dynamic lists</Highlight> (often called <em>ArrayList</em>, <em>vector</em>, <em>list</em>, or simply <em>array</em>). Unlike static arrays, they can <Highlight>grow or shrink</Highlight> as needed. You can think of them as an enhanced version of arrays with extra built-in operations.
             </p>
 
-            <ListSection title="The key difference between a regular array and a dynamic array is:">
-                <li><strong>Regular arrays</strong> - have a fixed size. Once created, their length cannot change.</li>
-                <li><strong>Dynamic arrays</strong> - can adjust their size automatically, which makes them more flexible.</li>
+            <ListSection title="Examples:">
+                <li>C++ → Vector</li>
+                <li>Javascript → Array</li>
+                <li>Python → List</li>
+                <li>C# → ArrayList</li>
             </ListSection>
 
             <p>
-                Because of this, an ArrayList combines the <Highlight>fast access</Highlight> of arrays with the <Highlight>flexibility</Highlight> of automatically resizing when needed.
+                Dynamic lists give you flexibility: you can add, remove, and resize without worrying about the underlying memory. But under the hood, they are still built on top of arrays, with extra logic to handle resizing.
             </p>
 
-            <p>
-                This makes ArrayLists one of the most commonly used data structures in programming, especially when you do not know in advance how many items you will need to store.
-            </p>
+            <ListSection title="Key characteristics of an ArrayList">
+                <li>Store elements in order, accessible by index.</li>
+                <li> <Highlight>Resizable</Highlight>: can grow or shrink automatically as elements are added or removed.</li>
+                <li>Allow random access (fast lookups using index), just like arrays.</li>
+            </ListSection>
+
+            <Advantages title="Advantages">
+                <li>Flexible size: no need to know the exact number of elements ahead of time.</li>
+                <li>Built-in operations for adding, removing, inserting, or searching.</li>
+                <li>Convenient for most everyday programming tasks.</li>
+            </Advantages>
+
+            <Drawbacks title="Limitations">
+                <li>Resizing has a cost: when the underlying array is full, a new larger array is created and all elements are copied over.</li>
+                <li>Inserting or removing elements in the middle is slower than at the end (requires shifting elements).</li>
+                <li>Slightly more memory overhead compared to a static array.</li>
+            </Drawbacks>
 
         </section>
     );
 }
-function CommonOperations() { }
-function Drawbacks() { }
+
+function CommonOperations() {
+    return (
+        <section className={SECTION_CLASS}>
+            <Heading>Array operations</Heading>
+
+            <p>
+                From here on, we'll use the term <Highlight>array</Highlight> to also refer to
+                <Highlight> dynamic arrays</Highlight> (ArrayLists, vectors, lists, etc.), since they
+                provide the practical operations most programmers rely on.
+            </p>
+
+            <p>
+                A plain static array only supports the basics: creating it with a fixed size,
+                accessing elements by index, and updating values. The richer operations we usually
+                associate with arrays—such as inserting, deleting, or resizing—come from
+                <Highlight> dynamic arrays</Highlight>, which are built on top of static arrays.
+            </p>
+
+            <TableSection
+                title="Operation costs"
+                headers={["Operation", "Time Complexity", "Description"]}
+                rows={[
+                    ["Access by index", "O(1)", "Directly access element by index"],
+                    ["Update by index", "O(1)", "Replace value at an index"],
+                    ["Insert at end", "Amortized O(1)", "Resize and/or insert at back"],
+                    ["Insert middle", "O(n)", "Requires shifting elements"],
+                    ["Insert front", "O(n)", "All elements shift to the right"],
+                    ["Remove end", "O(1)", "Reduce the internal size counter"],
+                    ["Remove middle", "O(n)", "Requires shifting elements"],
+                    ["Remove front", "O(n)", "Requires shifting elements"],
+                    ["Search (unsorted)", "O(n)", "Must scan linearly"],
+                    ["Search (sorted)", "O(log n)", "Binary search possible"],
+                ]}
+            />
+
+            <Advantages title="We can see that arrays shine in four operations">
+                <li>Random access (including updating content)</li>
+                <li>Insertion at the end</li>
+                <li>Deletion at the end</li>
+                <li>Searching when the array is sorted</li>
+            </Advantages>
+        </section>
+    )
+}
+
 function UseCase() { }
 function Examples() { }
 function Why() { }

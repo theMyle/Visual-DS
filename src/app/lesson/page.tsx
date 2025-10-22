@@ -9,7 +9,6 @@ export default function LessonPage() {
       <MenuItem title={"Introduction to Data Structures"} path={"/lesson/introduction"} />
       <MenuItem title={"Big-O"} path={"/lesson/big-o"} />
       <MenuItem title={"Array List"} path={"/lesson/arraylist"} />
-      <MenuItem title={"Array List v2"} path={"/lesson/arraylist-v2"} />
 
       {
         /*
@@ -18,6 +17,7 @@ export default function LessonPage() {
         <MenuItem title={"Map"} path={"/"} />
         * */
       }
+
     </div>
   )
 }
