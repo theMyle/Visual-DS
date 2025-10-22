@@ -7,11 +7,11 @@ export default function ListSection({
   children: React.ReactNode;
 }) {
   return (
-    <div className="mb-4">
+    <div className="mb-4 md:mb-6">
       {title && (
-        <p className="leading-relaxed mb-2 font-medium">{title}</p>
+        <p className="mb-2 text-base md:text-lg font-semibold text-slate-900 leading-snug">{title}</p>
       )}
-      <ul className="list-disc pl-8 bg-blue-50 py-4 rounded-xl">
+      <ul className="list-disc pl-6 md:pl-7 space-y-2 marker:text-slate-400 text-slate-800 leading-[1.7]">
         {children}
       </ul>
     </div>

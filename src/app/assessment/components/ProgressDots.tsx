@@ -7,9 +7,9 @@ const PROGRESS_COLORS = {
 
 interface ProgressDotsProps {
     current: number;
-    total: number;
     answeredCount: number;
-    correct: boolean[];    // Track which answers were correct
+    total: number;
+    correct: boolean[];
 }
 
 export default function ProgressDots({ current, total, answeredCount, correct }: ProgressDotsProps) {
