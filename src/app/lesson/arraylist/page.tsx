@@ -135,7 +135,7 @@ function CommonOperations() {
             <p>
                 A plain static array only supports the basics: creating it with a fixed size,
                 accessing elements by index, and updating values. The richer operations we usually
-                associate with arrays—such as inserting, deleting, or resizing—come from
+                associate with arrays such as inserting, deleting, or resizing come from
                 <Highlight> dynamic arrays</Highlight>, which are built on top of static arrays.
             </p>
 
@@ -169,6 +169,7 @@ function CommonOperations() {
 function UseCase() { }
 function Examples() { }
 function Why() { }
+
 function Resources() {
     return (
         <section className={SECTION_CLASS}>
