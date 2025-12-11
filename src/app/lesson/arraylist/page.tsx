@@ -17,6 +17,7 @@ export default function ArrayList() {
                 <Array />
                 <Array_List />
                 <CommonOperations />
+                <Examples />
                 <Resources />
             </main>
             <BottomNav
@@ -162,13 +163,50 @@ function CommonOperations() {
                 <li>Deletion at the end</li>
                 <li>Searching when the array is sorted</li>
             </Advantages>
+
+            <Callout>
+                <p>
+                    Arrays may slow down when inserting or removing elements at the front or middle, since other elements need to shift.
+                    <strong> However</strong>, for small collections (like a few dozen or even a few hundred items) this slowdown is <strong>negligible</strong>.
+                </p>
+            </Callout>
+
+            <p>
+                Modern computers handle such operations extremely fast, and you'll only notice performance issues when working with tens of thousands of elements or doing these operations very frequently.
+            </p>
+
+            <p>
+                So for most everyday use cases, even those “slow” array operations are perfectly fine.
+            </p>
+
         </section>
     )
 }
 
 function UseCase() { }
-function Examples() { }
-function Why() { }
+function Examples() {
+    return (
+        <section className={SECTION_CLASS}>
+            <Heading>Use cases</Heading>
+            <p>
+                So remember, you use arrays whenever you need to store and organize multiple pieces of related information in a specific order.
+            </p>
+
+            <p>
+                One simple example is the <Highlight>shopping cart in online stores</Highlight>. Every time you add an item, it's placed into a list, just like adding an element to an array. You can view, remove, or update items by their position in the list, and when you check out, the program goes through each item in order to calculate the total. Arrays make this process efficient and organized, ensuring every item is tracked and accessed easily.
+            </p>
+
+            <p>
+                Another good example is an <Highlight>Excel spreadsheet</Highlight>. Each cell in a row or column can be thought of as an element in an array. You can quickly access, update, or calculate values based on their position, like summing a column of numbers or retrieving a specific row. Arrays make these operations fast and straightforward, helping users organize and manipulate data efficiently.
+            </p>
+
+            <p>
+                These examples show that arrays are ideal whenever you need <Highlight>ordered storage</Highlight> and <Highlight>quick access by position</Highlight>, whether it's for shopping items, spreadsheet data, or any list of related information.
+            </p>
+
+        </section>
+    )
+}
 
 function Resources() {
     return (
