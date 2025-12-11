@@ -1,0 +1,293 @@
+[33mcommit 44ddc4ce9dce9d16e0bf2db28de3bb45acd63ee4[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mmain[m[33m, [m[1;31mVisual-DS/main[m[33m)[m
+Author: cassy-deladia <cassydeladia333@gmail.com>
+Date:   Thu Oct 23 20:45:22 2025 +0800
+
+    fix: Improve clarity in CommonOperations description and add spacing in Resources function
+
+[33mcommit 34b9fa854664fd75ee94cc24b1674ff4448bc0ab[m
+Author: cassy-deladia <cassydeladia333@gmail.com>
+Date:   Thu Oct 23 20:39:57 2025 +0800
+
+    Refactor array list assessment questions and remove deprecated test components
+    
+    - Updated questions in array list assessment to improve clarity and accuracy.
+    - Added new questions regarding array access, insertion, and memory management.
+    - Removed the test page and associated questions as they are no longer needed.
+    - Updated lesson page to include additional resources and video embeds.
+    - Adjusted bottom navigation styles for better alignment.
+    - Enhanced introduction section with references and improved text formatting.
+
+[33mcommit b2ebd8b6f8c44f6d1ca8995224cd163901932c63[m
+Author: John Kyle Desamparo <99082612+theMyle@users.noreply.github.com>
+Date:   Wed Oct 22 21:12:55 2025 +0800
+
+    feat: Revamp ArrayList and Big-O lessons with enhanced content and navigation
+
+[33mcommit 191352ba7eacb1b24c4c2a587c12a61551e75b50[m
+Author: John Kyle Desamparo <99082612+theMyle@users.noreply.github.com>
+Date:   Wed Oct 22 11:58:22 2025 +0800
+
+    feat: Add Array and ArrayList components with detailed explanations and examples
+    
+    - Implemented Array component to explain the concept of arrays, their characteristics, advantages, and limitations.
+    - Created Array_List component to describe dynamic lists (ArrayLists) and their benefits over static arrays.
+    - Added CommonOperations component to outline various operations on arrays with their time complexities.
+    - Developed reusable Advantages and Drawbacks components for listing pros and cons.
+    - Introduced Callout component for highlighting important notes and warnings.
+    - Created Paragraph component for consistent text styling across the application.
+    - Included images and diagrams to enhance understanding of array concepts.
+
+[33mcommit e11de4d4833f79db7c1efe924e8094f99dd71afa[m
+Author: John Kyle Desamparo <99082612+theMyle@users.noreply.github.com>
+Date:   Sun Oct 19 23:55:23 2025 +0800
+
+    refactor: update assessment questions and feedback structure, enhance progress dots component
+
+[33mcommit f131bb34b464ff0113bcae8149d738fab0c85383[m
+Author: John Kyle Desamparo <99082612+theMyle@users.noreply.github.com>
+Date:   Fri Oct 10 07:23:02 2025 +0800
+
+    quiz flow
+
+[33mcommit 8337cde50faad53d50e47f76b7f26b15a699ba7f[m
+Author: John Kyle Desamparo <99082612+theMyle@users.noreply.github.com>
+Date:   Thu Oct 9 23:04:05 2025 +0800
+
+    polished assessment, working animations and color transitions
+
+[33mcommit 91b557aa232f8962b732ab2617930f62483484ae[m
+Author: John Kyle Desamparo <99082612+theMyle@users.noreply.github.com>
+Date:   Wed Oct 8 22:52:14 2025 +0800
+
+    assessment structure rewrite
+
+[33mcommit 62333a326db7b2e4c23a3e6e67900499a2faa197[m
+Author: John Kyle Desamparo <99082612+theMyle@users.noreply.github.com>
+Date:   Wed Oct 8 14:29:08 2025 +0800
+
+    idk
+
+[33mcommit 6c48762cb21e9cf0fbd406fc6091a04c156ee1d1[m
+Author: John Kyle Desamparo <99082612+theMyle@users.noreply.github.com>
+Date:   Tue Sep 30 10:13:12 2025 +0800
+
+    prototype assessment layout
+
+[33mcommit eb949d29679c5f73d65dfba1ae2fd1088321139f[m
+Merge: 1384749 ccb5e6f
+Author: John Kyle Desamparo <99082612+theMyle@users.noreply.github.com>
+Date:   Mon Sep 29 19:08:58 2025 +0800
+
+    Merge branch 'main' of github.com:theMyle/Visual-DS
+
+[33mcommit 1384749cbc3e7a747f56a0f138a87e816b1ee235[m
+Author: John Kyle Desamparo <99082612+theMyle@users.noreply.github.com>
+Date:   Mon Sep 29 19:03:40 2025 +0800
+
+    chore: trigger vercel redeploy
+
+[33mcommit ab0b9563954ca8bb69e3f71813a8ca3740ff3782[m
+Author: John Kyle Desamparo <99082612+theMyle@users.noreply.github.com>
+Date:   Mon Sep 29 18:40:00 2025 +0800
+
+    prototype progress dot
+
+[33mcommit ccb5e6f2eb2c7b0480fa56920dfd680a0506da9d[m
+Author: John Kyle Desamparo <99082612+theMyle@users.noreply.github.com>
+Date:   Mon Sep 29 18:40:00 2025 +0800
+
+    prototype progress dot
+
+[33mcommit 5c8ed001fad309d9d3f1017ebf8e5b719927db9e[m
+Author: John Kyle Desamparo <99082612+theMyle@users.noreply.github.com>
+Date:   Tue Sep 23 12:26:10 2025 +0800
+
+    Improve binary search animation colors and timing
+    
+    - Changed selected middle element to darker purple (#7C3AED) for better contrast
+    - Optimized animation timing (reduced green highlight duration to 1.2s)
+    - Enhanced visual clarity: only found element highlighted green, others reset to normal
+    - Removed unused Size button from array list simulator
+    - Added HighlightedGray animation state for future use
+
+[33mcommit faf6f451fc484bbfc99cd8773d251a3ccf44b42e[m
+Author: John Kyle Desamparo <99082612+theMyle@users.noreply.github.com>
+Date:   Tue Sep 23 12:21:34 2025 +0800
+
+    array simulator: selection sort and binary search
+
+[33mcommit 9fee42fd7d8e66a4c20857ef312e0c72d73cd476[m
+Author: John Kyle Desamparo <99082612+theMyle@users.noreply.github.com>
+Date:   Tue Sep 23 11:50:12 2025 +0800
+
+    array list simulator redesign
+
+[33mcommit f920b1d83af7d4a3cf9beee0168fea771e8933a2[m
+Author: John Kyle Desamparo <99082612+theMyle@users.noreply.github.com>
+Date:   Tue Sep 23 11:36:57 2025 +0800
+
+    stack simulator improved mobile accessibility
+
+[33mcommit 297e53ba6031c649e44b6a193056ef7c5405bd0d[m
+Author: John Kyle Desamparo <99082612+theMyle@users.noreply.github.com>
+Date:   Tue Sep 23 11:24:03 2025 +0800
+
+    nav desktop improved with onlick animation
+
+[33mcommit c01052d44e12e680b1d173f301bebf3fac86de11[m
+Author: John Kyle Desamparo <99082612+theMyle@users.noreply.github.com>
+Date:   Tue Sep 23 11:07:32 2025 +0800
+
+    peek animation fixed + lock during animations
+
+[33mcommit 5e7c4d7ac84021f351a504fdb27621e5a3d5f80c[m
+Author: John Kyle Desamparo <99082612+theMyle@users.noreply.github.com>
+Date:   Tue Sep 23 10:55:21 2025 +0800
+
+    stack animation fixed using absolute positioning for the message 'stack is empty'
+
+[33mcommit a1764f0459c9e13da2e417d56f17760a692a28bc[m
+Author: John Kyle Desamparo <99082612+theMyle@users.noreply.github.com>
+Date:   Tue Sep 23 10:40:51 2025 +0800
+
+    stack clear animation
+
+[33mcommit c1b38452cef27da724abab5e0c3f447bdc43cb2f[m
+Author: John Kyle Desamparo <99082612+theMyle@users.noreply.github.com>
+Date:   Tue Sep 23 10:22:36 2025 +0800
+
+    stack operations animation pop fixed - smoother
+
+[33mcommit 682b5d41a85b6e8842da349ddaab0cc79593469e[m
+Author: John Kyle Desamparo <99082612+theMyle@users.noreply.github.com>
+Date:   Tue Sep 23 09:55:39 2025 +0800
+
+    stack improvements; set limit for desktop and made boxes smaller
+
+[33mcommit 15767c309d7302a2035f915c7df3d2fd1bda093d[m
+Author: John Kyle Desamparo <99082612+theMyle@users.noreply.github.com>
+Date:   Tue Sep 23 09:44:53 2025 +0800
+
+    stack ds simulator done
+
+[33mcommit 8f4fdd5577f758388385f634252bce8bc5be9262[m
+Author: John Kyle Desamparo <99082612+theMyle@users.noreply.github.com>
+Date:   Sat Sep 20 18:37:17 2025 +0800
+
+    landing page tweak with AI things
+
+[33mcommit 6f4e7e3820e4e797c6d0e3b8d051e423c19260db[m
+Author: John Kyle Desamparo <99082612+theMyle@users.noreply.github.com>
+Date:   Tue Sep 9 15:40:32 2025 +0800
+
+    started array list lesson
+    
+    Decoupled certain components. Fixed arraylist simulator desktop layout.
+    Polished big-O lesson a bit.
+
+[33mcommit 5914d2faedd5abffb3fc4b536a84ca12947e0bbb[m
+Merge: 02eff7b 6fd8947
+Author: John Kyle Desamparo <99082612+theMyle@users.noreply.github.com>
+Date:   Sat Aug 16 18:31:49 2025 +0800
+
+    Merge pull request #1 from theMyle/fix-branch
+    
+    introduction lesson updated
+
+[33mcommit 6fd89478fce679e4bae21598f207f3346ae7e699[m[33m ([m[1;31mVisual-DS/fix-branch[m[33m)[m
+Author: John Kyle Desamparo <99082612+theMyle@users.noreply.github.com>
+Date:   Sat Aug 16 18:28:36 2025 +0800
+
+    introduction lesson updated
+
+[33mcommit 02eff7b701f51a00ac925adcf65764d1f50a296e[m
+Author: John Kyle Desamparo <99082612+theMyle@users.noreply.github.com>
+Date:   Sat Aug 9 18:06:34 2025 +0800
+
+    polished UI & UX design
+
+[33mcommit c63864254f0fe50670c6805612841a934624e173[m
+Author: John Kyle Desamparo <99082612+theMyle@users.noreply.github.com>
+Date:   Sat Aug 9 16:21:16 2025 +0800
+
+    good ui changes
+
+[33mcommit e5d044e21054e0d9ee0e17f4fd9ced14e6e98caa[m
+Author: John Kyle Desamparo <99082612+theMyle@users.noreply.github.com>
+Date:   Fri Aug 8 12:22:00 2025 +0800
+
+    button layout good ish
+
+[33mcommit a9e580061522d48510d0caabe30b1363d09f1390[m
+Author: John Kyle Desamparo <99082612+theMyle@users.noreply.github.com>
+Date:   Tue Aug 5 17:58:35 2025 +0800
+
+    forgot to add the stupid fucking type
+
+[33mcommit 4c810108d620676a129ca2277287e2b93564c602[m
+Author: John Kyle Desamparo <99082612+theMyle@users.noreply.github.com>
+Date:   Tue Aug 5 17:42:23 2025 +0800
+
+    removed required field that I didn't even fucking need
+
+[33mcommit fa5488d7438243431bc61563be01ce9018fdc235[m
+Author: John Kyle Desamparo <99082612+theMyle@users.noreply.github.com>
+Date:   Tue Aug 5 17:34:35 2025 +0800
+
+    finished the stupid array-list functionality - only button layout to fix
+    
+    created the page for introduction lesson about ds
+
+[33mcommit 67876bff15564a524358c9a92ba0d4cc5cf8380b[m
+Author: John Kyle Desamparo <99082612+theMyle@users.noreply.github.com>
+Date:   Mon Aug 4 15:57:42 2025 +0800
+
+    remove front bug, not checking empty array
+
+[33mcommit 3c403b5897578ca620b4233a5032b2b3deecdafe[m
+Author: John Kyle Desamparo <99082612+theMyle@users.noreply.github.com>
+Date:   Mon Aug 4 15:33:38 2025 +0800
+
+    array list operations almost done
+
+[33mcommit bd62dda15f2cd003832cfc319f735d6e24ac55be[m
+Author: John Kyle Desamparo <99082612+theMyle@users.noreply.github.com>
+Date:   Fri Aug 1 11:10:26 2025 +0800
+
+    removed stupid story
+
+[33mcommit c7c95eb5d1bf382cd842962c382df66fa249ce5c[m
+Author: John Kyle Desamparo <99082612+theMyle@users.noreply.github.com>
+Date:   Fri Aug 1 11:07:42 2025 +0800
+
+    finished routes except assessment
+
+[33mcommit e3e0d4c51843027d3416eef207cd6f595053cb00[m
+Author: John Kyle Desamparo <99082612+theMyle@users.noreply.github.com>
+Date:   Thu Jul 31 17:05:08 2025 +0800
+
+    stupid eslint fix with quotes
+
+[33mcommit db094aa88131256d331fc843c6c128c4d4bffaf5[m
+Author: John Kyle Desamparo <99082612+theMyle@users.noreply.github.com>
+Date:   Thu Jul 31 16:52:38 2025 +0800
+
+    minor fix: excluded storybook
+
+[33mcommit afa6f041304a1a67ce319a120c2a54821c1a3931[m
+Author: John Kyle Desamparo <99082612+theMyle@users.noreply.github.com>
+Date:   Thu Jul 31 16:31:23 2025 +0800
+
+    landing page mostly done
+
+[33mcommit 5a6dceea2545d3a57f289b8409380d3faa526190[m[33m ([m[1;31mVisual-DS/master[m[33m)[m
+Author: John Kyle Desamparo <99082612+theMyle@users.noreply.github.com>
+Date:   Tue Jul 29 16:43:14 2025 +0800
+
+    initial
+
+[33mcommit fe72c753a2af72306f7ffb0995e5804d94aa4338[m
+Author: John Kyle Desamparo <99082612+theMyle@users.noreply.github.com>
+Date:   Tue Jul 29 10:03:05 2025 +0800
+
+    Initial commit from Create Next App
