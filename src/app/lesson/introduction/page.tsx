@@ -30,17 +30,20 @@ function WhatIsDS() {
       <p>
         A <Highlight>data structure</Highlight> is a specific way
         of <Highlight>organizing</Highlight> and <Highlight>storing</Highlight> data so it can be used efficiently.
+        <sup className="text-xs text-gray-500 ml-1">[1]</sup>
       </p>
 
       <p>
         In programming, different data structures such as arrays, stacks, queues, and trees
         are designed for different ways of finding, adding,
         or removing items.
+        <sup className="text-xs text-gray-500 ml-1">[1]</sup>
       </p>
 
-      <p className="mb-4 bg-blue-50 rounded-xl p-2">
+      <p className="mb-4 bg-blue-50 rounded-xl p-4">
         The choice of data structure directly affects how fast
         and efficiently you can work with your data.
+        <sup className="text-xs text-gray-500 ml-1">[1]</sup>
       </p>
     </section>
   );
@@ -56,16 +59,19 @@ function WhyLearnDS() {
       <p>
         Data structures are the backbone of efficient programming.
         They define how your data is arranged in memory and how algorithms interact with it.
+        <sup className="text-xs text-gray-500 ml-1">[1]</sup>
       </p>
 
       <p>
         The same algorithm can run quickly or painfully slowly
         depending on the structure it works with and some algorithms
         can only be applied to specific types of structures.
+        <sup className="text-xs text-gray-500 ml-1">[1]</sup>
       </p>
 
       <p>
         Each data structure models data in its own way, with its own strengths and weaknesses.
+        <sup className="text-xs text-gray-500 ml-1">[1]</sup>
       </p>
 
       <p>
@@ -100,33 +106,27 @@ function WhyChoosingDSMatters() {
       <p className="border-l-3 border-red-200 pl-4 mb-4">
         Pick the wrong structure, and you might be sorting through
         thousands of records when you could have jumped straight to the answer.
+        <sup className="text-xs text-gray-500 ml-1">[1]</sup>
       </p>
 
       <p className="border-l-3 border-green-200 pl-4 mb-4">
         Pick the right one, and your program runs faster, uses less memory,
         and scales more easily as your data grows.
+        <sup className="text-xs text-gray-500 ml-1">[1]</sup>
       </p>
 
       <p className="mb-4 bg-blue-50 rounded-xl p-4">
-        Learning data structures isn’t about memorizing names,
-        it’s about matching the right tool to the real-world problem you’re solving.
+        Learning data structures isn't about memorizing names,
+        it's about matching the right tool to the real-world problem you're solving.
       </p>
+
+      <div className="mt-8 pt-4 border-t border-gray-200 text-sm text-gray-600">
+        <p className="leading-relaxed">
+          <strong>References:</strong><br />
+          [1] Cormen, T. H., Leiserson, C. E., Rivest, R. L., & Stein, C. (2022).
+          <em> Introduction to Algorithms</em> (4th ed.). MIT Press. Chapter 10: Elementary Data Structures.
+        </p>
+      </div>
     </section>
   );
 }
-
-
-// function BottomNav() {
-//   return (
-//     <nav className="flex justify-end py-6 px-5 max-w-3xl mx-auto">
-//       <Link href={"/lesson/big-o"}>
-//         <span
-//           className="text-base underline hover:opacity-80 transition-opacity"
-//           style={{ color: ACCENT_COLOR }}
-//         >
-//           Big-O →
-//         </span>
-//       </Link>
-//     </nav>
-//   );
-// }

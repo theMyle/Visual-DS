@@ -8,9 +8,9 @@ export default function LessonPage() {
             <h1 className={"text-4xl"}>Assessment</h1>
 
             <Link href={"/assessment/array-list"}>ArrayList</Link>
-            <Link href={"/assessment/stack"}>Stack</Link>
+            {/* <Link href={"/assessment/stack"}>Stack</Link>
             <Link href={"/assessment/queue"}>Queue</Link>
-            <Link href={"/assessment/test"}>Test</Link>
+            <Link href={"/assessment/test"}>Test</Link> */}
         </div>
     )
 }

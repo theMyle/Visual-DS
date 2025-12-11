@@ -1,207 +1,265 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
-import Assessment from "../components/Assessment";
+import { useEffect, useRef, useState } from "react";
 import ProgressDots from "../components/ProgressDots";
-import VisualArray from "@/app/simulator/array-list/components/VisualArray";
-import { createArrayElement, createArrayElements } from "@/app/simulator/array-list/components/utils";
+import { Assessment, Choice, Feedback } from "../types";
 import { arrayListAssessment } from "./questions";
+import Image from "next/image";
 
+export default function Test() {
+    // Shuffle questions once on mount
+    const [assessment] = useState(() => ({
+        ...arrayListAssessment,
+        questions: [...arrayListAssessment.questions].sort(() => Math.random() - 0.5)
+    }));
 
-export default function ArrayListAssessmentPage() {
-  const [questions, setQuestions] = useState(() => arrayListAssessment.questions);
-  const [finished, setFinished] = useState(false);
-  const total = questions.length;
-  const [current, setCurrent] = useState(0);
-  const [answeredCount, setAnsweredCount] = useState(0);
-  const [correct, setCorrect] = useState<boolean[]>(() => Array(questions.length).fill(false));
+    // REMOVE THIS LATER
+    const [testFlag, setTestFlag] = useState(false);
 
-  const [testArray] = useState(createArrayElements(0, 2, 1, 3, 5));
-  const [selectedChoice, setSelectedChoice] = useState<string>('');
-  const [showFeedback, setShowFeedback] = useState(false);
-  const [lastAnswerCorrect, setLastAnswerCorrect] = useState<boolean | null>(null);
-  const [feedbackMessage, setFeedbackMessage] = useState<string>('');
-  const feedbackRef = useRef<HTMLDivElement | null>(null);
+    // stuff for progress dots
+    const totalQuestions = assessment.questions.length;
 
-  // check if it was the last item
-  const isLastItem = () => {
-    if (current == total - 1) {
-      setFinished(true);
-      return true;
+    // states for progress dots
+    const [currentDot, setCurrentDot] = useState(0);
+    const [answeredCount, setAnsweredCount] = useState(0);
+    const [correctDots, setCorrectDots] = useState<boolean[]>(() => Array(totalQuestions).fill(false));
+
+    // assessment states
+    const [currentQuestion, setCurrentQuestion] = useState(assessment.questions[0]);
+    const [shuffledChoices, setShuffledChoices] = useState<Choice[]>([]);
+
+    const [correctFeedback, setCorrectFeedback] = useState("");
+    const [wrongFeedback, setWrongFeedback] = useState("");
+
+    useEffect(() => {
+        setCorrectFeedback(currentQuestion.feedback.correct);
+        setWrongFeedback(currentQuestion.feedback.incorrect);
+
+        const shuffled = [...currentQuestion.choices].sort(() => Math.random() - 0.5);
+        setShuffledChoices(shuffled);
+    }, [currentQuestion]);
+
+    const [selectedButton, setSelectedButton] = useState<string | null>(null);
+    const [feedbackMode, setFeedbackMode] = useState(false);
+    const [answerIsCorrect, setAnswerIsCorrect] = useState(false);
+
+    const questionDiv = useRef<HTMLDivElement>(null);
+
+    // progress dots operations and stuff
+    function handleCorrectAnswer() {
+        setCorrectDots(p => {
+            let newCorrectDots = [...p];
+            newCorrectDots[currentDot] = true;
+            return newCorrectDots;
+        });
+
+        setCurrentDot(c => c + 1);
     }
 
-    return false;
-  }
-
-  // triggers when answer is correct
-  const handleCorrect = () => {
-    setCurrent(c => c + 1);
-    setAnsweredCount(c => c + 1);
-    setCorrect(prev => {
-      const newCorrect = [...prev];
-      newCorrect[current] = true;
-      return newCorrect
-    });
-
-    if (isLastItem()) return;
-  }
-
-  // triggers when answer is wrong
-  const handleWrong = () => {
-    setCurrent(c => c + 1);
-    setAnsweredCount(c => c + 1);
-
-    if (isLastItem()) return;
-  }
-
-  const handleCheck = () => {
-    if (!selectedChoice) return;
-
-    const q = questions[current];
-    // find matching choice by text
-    const found = q.choices.find(c => c.text === selectedChoice);
-    const isCorrect = !!found && found.is_correct;
-
-    // determine feedback message from the question.feedback tuple
-    let msg = '';
-    // if (isCorrect) {
-    //   // look for a non-empty correct message
-    //   const fb = q.feedback.find(f => f.correct && f.correct.trim() !== '');
-    //   msg = fb ? fb.correct : 'Correct!';
-    // } else {
-    //   const fb = q.feedback.find(f => f.incorrect && f.incorrect.trim() !== '');
-    //   msg = fb ? fb.incorrect : 'Incorrect.';
-    // }
-
-    setLastAnswerCorrect(isCorrect);
-    setFeedbackMessage(msg);
-    setShowFeedback(true);
-  }
-
-  // Scroll feedback into view after it becomes visible (run after DOM updates)
-  useEffect(() => {
-    if (showFeedback) {
-      // small timeout to allow layout & CSS transitions to start
-      const id = window.setTimeout(() => {
-        feedbackRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
-      }, 40);
-      return () => window.clearTimeout(id);
-    }
-    return;
-  }, [showFeedback]);
-
-  const handleContinue = () => {
-    // apply the result to state and move to next question
-    if (lastAnswerCorrect) {
-      // mark correct and advance
-      setCorrect(prev => {
-        const next = [...prev];
-        next[current] = true;
-        return next;
-      });
+    function handleWrongAnswer() {
+        setCurrentDot(c => c + 1);
     }
 
-    // increment answered count and current index
-    setAnsweredCount(c => c + 1);
-    setCurrent(c => c + 1);
 
-    // reset selection and feedback UI
-    setSelectedChoice('');
-    setShowFeedback(false);
-    setLastAnswerCorrect(null);
-    setFeedbackMessage('');
-  }
+    function handleNextQuestion(currentIdx: number) {
+        // check if it's last
+        if (currentIdx === assessment.questions.length) {
+            // todo - show summary
+            alert("done!");
+        } else {
+            // next question
+            setCurrentQuestion(assessment.questions[currentIdx]);
+        }
+    }
 
-  return (
-    <div className="h-full flex flex-col"> {/* Use h-full to fill parent, not min-h-screen */}
-      {/* Static top - Progress (does not scroll) */}
-      <div className="shrink-0 pt-4">
-        <ProgressDots
-          current={current}
-          total={total}
-          answeredCount={answeredCount}
-          correct={correct}
-        />
-      </div>
 
-      {/* Scrollable content area */}
-      <div className="flex-1 overflow-y-auto">
-        <div className="p-4">
+    function handleNextQuestion2() {
+        // check if it's last
+        if (answeredCount === assessment.questions.length) {
+            // todo - show summary
+            alert("done!");
+        } else {
+            // next question
+            setCurrentQuestion(assessment.questions[answeredCount]);
+        }
+    }
 
-          {/* Question */}
-          <div className="flex flex-col items-center gap-10">
-            <div className="">
-              <p>How do you access/get the value "5" in this array?</p>
-            </div>
+    function handleCheck() {
+        const correctAnswer = currentQuestion.choices.find(choice => choice.is_correct)!;
+        const isCorrect = correctAnswer.id === selectedButton;
 
-            {/* Visualization */}
-            <VisualArray array={testArray} />
+        setAnswerIsCorrect(isCorrect);
+        setFeedbackMode(() => {
+            // small delay - wait for feed back to show up
+            setTimeout(() => {
+                if (questionDiv.current) {
+                    questionDiv.current.scrollTo({
+                        top: 1000,
+                        behavior: "smooth",
+                    })
+                }
+            }, 300)
+            return true;
+        });
 
-            {/* Buttons/Choices */}
-            <div className="grid grid-cols-2 gap-4 w-full max-w-md">
-              {questions[current].choices.map((choice, index) => (
-                <label
-                  key={choice.id}
-                  className={`
-            cursor-pointer px-3 py-3 rounded-xl text-center border-2 border-gray-300 transition-all
-            ${selectedChoice === choice.text
-                      ? 'bg-indigo-50 text-indigo-600 border-indigo-400'
-                      : 'text-black'
-                    }
-          `}
-                >
-                  <input
-                    type="radio"
-                    name="answer"
-                    value={choice.text}
-                    checked={selectedChoice === choice.text}
-                    onChange={(e) => setSelectedChoice(e.target.value)}
-                    className="sr-only"
-                  />
-                  {choice.text}
-                </label>
-              ))}
-            </div>
+        isCorrect ? handleCorrectAnswer() : handleWrongAnswer();
+        setAnsweredCount(c => c + 1);
+    }
 
-            {/* Feedback panel (animates height) */}
-            <div className="w-full max-w-md mt-4 flex justify-center">
-              <div
-                ref={feedbackRef}
-                className={`w-full rounded-lg overflow-hidden transition-[max-height,opacity] duration-300 ${showFeedback ? 'max-h-40 opacity-100' : 'max-h-0 opacity-0'} `}
-                style={{ backgroundColor: showFeedback ? (lastAnswerCorrect ? '#ECFDF5' : '#FEF3F2') : 'transparent' }}
-              >
-                <div className={`p-4 transform transition-transform duration-200 ${showFeedback ? 'translate-y-0' : '-translate-y-2'}`}>
-                  <p className={`${lastAnswerCorrect ? 'text-green-700' : 'text-red-700'} font-medium`}>{feedbackMessage}</p>
+    function handleContinue() {
+        setFeedbackMode(false);
+        setSelectedButton(null);
+        handleNextQuestion2();
+    }
+
+    // tailwind calculations
+    // bottom nav background
+    let bottomNavBackground = "bg-white";
+    let continueButtonColor = "bg-green-400 active:bg-green-600 hover:bg-green-500"
+    if (feedbackMode && answerIsCorrect) {
+        bottomNavBackground = "bg-green-50"
+    } else if (feedbackMode && !answerIsCorrect) {
+        bottomNavBackground = "bg-red-50"
+        continueButtonColor = "bg-gray-400 active:bg-gray-600 hover:bg-gray-500"
+    }
+
+    // button choices
+    return (
+        <>
+            <div className="h-full flex flex-col ">
+                <div className="shrink-0">
+                    <ProgressDots
+                        current={currentDot}
+                        total={totalQuestions}
+                        answeredCount={answeredCount}
+                        correct={correctDots}
+                    />
+
+                    {/* test stuff */}
+                    {testFlag && <TestButtons rightOnclick={handleCorrectAnswer} wrongOnclick={handleWrongAnswer} />}
+
                 </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
 
-      {/* FIXED BOTTOM - Check Button */}
-      <div className="shrink-0 w-full border-t-2 border-gray-400 bg-white">
-        <div className="w-full max-w-md mx-auto p-4">
-          <div className="flex justify-center items-center">
-            {!showFeedback ? (
-              <button
-                className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-4 px-6 rounded-xl active:bg-indigo-800 disabled:bg-gray-300 disabled:text-gray-500"
-                onClick={handleCheck}
-                disabled={!selectedChoice}
-              >
-                Check
-              </button>
-            ) : (
-              <button
-                className="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-4 px-6 rounded-xl active:bg-green-800"
-                onClick={handleContinue}
-              >
-                Continue
-              </button>
-            )}
-          </div>
+                <div ref={questionDiv} className="flex-1 flex flex-col overflow-y-auto">
+                    <div className="flex flex-col justify-around gap-10 min-h-full py-4">
+                        {/* Current question */}
+
+                        <div className="shrink-0 flex flex-col items-center px-8 text-lg">
+                            <p>{currentQuestion.text}</p>
+                        </div>
+
+                        {/* Custom image/diagram if present */}
+                        {currentQuestion.image_url &&
+                            <div className="flex justify-center">
+                                <Image
+                                    src={currentQuestion.image_url}
+                                    alt="Image diagram"
+                                    width={300}
+                                    height={0}
+                                />
+                            </div>
+                        }
+
+                        {/* Choices render */}
+                        <div className="flex justify-center">
+                            <div className="grid grid-cols-2 gap-4 max-w-2xl w-full px-4">
+                                {shuffledChoices.map((choice: Choice) => {
+                                    const isSelected = selectedButton === choice.id;
+                                    const isCorrect = choice.is_correct;
+
+                                    let buttonClass = `
+        cursor-pointer px-3 py-3 rounded-xl text-center border-2 border-gray-300 transition-all duration-200
+    `;
+
+                                    if (isSelected && !feedbackMode) {
+                                        buttonClass += " bg-indigo-50 text-indigo-600 border-indigo-400";
+                                    } else if (isSelected && feedbackMode && isCorrect) {
+                                        buttonClass += " bg-green-200 text-green-900 border-green-400";
+                                    } else if (isSelected && feedbackMode && !isCorrect) {
+                                        buttonClass += " bg-red-200 text-red-800 border-red-400";
+                                    } else {
+                                        buttonClass += " text-black";
+                                    }
+
+                                    return (
+                                        <button
+                                            key={choice.id}
+                                            className={buttonClass}
+                                            onClick={() => setSelectedButton(choice.id)}
+                                            disabled={feedbackMode}
+                                        >
+                                            {choice.text}
+                                        </button>
+                                    );
+                                })}
+
+                            </div>
+                        </div>
+
+
+                        {/* Feedback */}
+                        {feedbackMode && (answerIsCorrect ? correctFeedback : wrongFeedback) && (
+                            <div className="flex justify-center pb-10 opacity-0 animate-fade-in">
+                                <div className={`lg:max-w-160 lg:min-w-160 bg-gray-200 flex flex-col gap-2 p-4 ml-4 mr-4 rounded-2xl border-2 border-gray-300 ${(answerIsCorrect ?
+                                    " bg-green-50"
+                                    :
+                                    "bg-red-50"
+                                )}`}>
+                                    <h1 className="font-bold">Explanation</h1>
+                                    <p>{answerIsCorrect ? correctFeedback : wrongFeedback}</p>
+                                </div>
+                            </div>
+                        )}
+                    </div>
+                </div>
+
+                {/* Check Button */}
+                <div
+                    className={
+                        `shrink-0 w-full border-t-2 border-gray-400 p-4 flex justify-center h-24 ${bottomNavBackground}`
+                    }
+                >
+                    {
+                        !feedbackMode &&
+                        <button
+                            className="w-full md:w-sm bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl active:bg-indigo-800 disabled:bg-gray-300 disabled:text-gray-500"
+                            onClick={() => handleCheck()}
+                            disabled={!selectedButton}
+                        >
+                            Check
+                        </button>
+                    }
+
+                    {
+                        feedbackMode &&
+                        <div className="flex justify-between items-center w-70">
+                            <p className="font-bold text-lg">{answerIsCorrect ? "Correct!" : "Incorrect"}</p>
+                            <button
+                                className={` rounded-4xl px-8 py-2 text-white font-bold text-lg ${continueButtonColor}`}
+                                onClick={() => handleContinue()}
+                            >Contiue</button>
+                        </div>
+                    }
+                </div>
+            </div>
+
+        </>
+    )
+}
+
+
+// testing stuff
+type TestButtonsProps = {
+    wrongOnclick: () => void;
+    rightOnclick: () => void;
+}
+
+function TestButtons({ wrongOnclick, rightOnclick }: TestButtonsProps) {
+    return (
+        <div className="flex justify-center gap-5">
+            {/* buttons for testing */}
+            <button className="p-2 bg-blue-200 rounded-lg" onClick={wrongOnclick}>Incorrect</button>
+            <button className="p-2 bg-blue-200 rounded-lg" onClick={rightOnclick}>Correct</button>
         </div>
-      </div>
-    </div>
-  )
+    )
 }

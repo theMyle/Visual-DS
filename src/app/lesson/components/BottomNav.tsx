@@ -27,7 +27,7 @@ export default function BottomNav({
             aria-label="Lesson navigation"
             className={`max-w-3xl mx-auto py-6 px-5 ${className}`}
         >
-            <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+            <div className="flex flex-row items-center justify-between gap-3">
                 {prev && (
                     <Link
                         href={prev.href}
@@ -42,7 +42,7 @@ export default function BottomNav({
                 {next && (
                     <Link
                         href={next.href}
-                        className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm transition-all hover:opacity-80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-1 ${onlyNext ? "md:ml-auto" : ""
+                        className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm transition-all hover:opacity-80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-1 ${onlyNext ? "ml-auto" : ""
                             }`}
                         style={{ backgroundColor: ACCENT_COLOR, color: "#ffffff" }}
                     >

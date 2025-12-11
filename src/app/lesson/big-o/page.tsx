@@ -206,7 +206,15 @@ function AdditionalResources() {
     <section className={SECTION_CLASS}>
       <Heading>Additional Resources</Heading>
 
-      <VideoEmbed embedUrl="https://www.youtube.com/embed/g2o22C3CRfU?si=9cgniOmwWFwCfkpU" title="Big-O Notation in 100 Seconds" />
+      <VideoEmbed
+        embedUrl="https://www.youtube.com/embed/g2o22C3CRfU?si=9cgniOmwWFwCfkpU" title="Big-O Notation in 100 Seconds"
+      />
+
+      <VideoEmbed
+        embedUrl="https://www.youtube.com/embed/D6xkbGLQesk?si=5hOqDQxruMRmzNdk"
+        title="Introduction to Big O Notation and Time Complexity "
+      />
+
     </section>
   )
 }

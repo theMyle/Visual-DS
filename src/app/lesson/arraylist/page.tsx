@@ -8,6 +8,7 @@ import Callout from "../components/Callout"
 import Advantages from "../components/Advantages"
 import Drawbacks from "../components/Drawbacks"
 import BottomNav from "../components/BottomNav"
+import VideoEmbed from "../components/VideoEmbed"
 
 export default function ArrayList() {
     return (
@@ -16,6 +17,7 @@ export default function ArrayList() {
                 <Array />
                 <Array_List />
                 <CommonOperations />
+                <Resources />
             </main>
             <BottomNav
                 prev={{ href: "/lesson/big-o", label: "Big-O" }}
@@ -30,11 +32,7 @@ function Array() {
 
             <Heading>Array</Heading>
             <p>
-                An <Highlight>array</Highlight> is one of the simplest and most widely used data structures. It stores a collection of elements in <Highlight>contiguous memory locations</Highlight>, and each element can be accessed directly by its <Highlight>index</Highlight>. This makes arrays very fast for lookups: if you know the index, you can jump straight to the element without scanning everything before it.
-            </p>
-
-            <p className="text-slate-600">
-                Array indices are <Highlight>zero-based</Highlight>, meaning the first element starts at index 0. A common mistake, even among experienced programmers, is the <Highlight>off-by-one error</Highlight>, which happens when this is overlooked.
+                An <Highlight>array</Highlight> is one of the simplest and most widely used data structures. It stores a collection of elements in <Highlight>contiguous memory</Highlight>, where each element has a fixed position called its <Highlight>index</Highlight>. This lets you access any element instantly if you know its index, without checking every other item.
             </p>
 
             <div className="flex justify-center p-4">
@@ -47,7 +45,9 @@ function Array() {
             </div>
 
             <p>
-                Arrays can store many kinds of data, such as numbers, strings, or even objects, but the important part is that each element has a specific position. Think of an <Highlight>Advent calendar</Highlight> (a holiday countdown calendar with numbered doors you open one per day with hidden surprises inside): each drawer is like an array index. You open drawer 1, 2, 3, and so on by number, you can't ask the calendar, “Find the one with the lollipop.” You can only open a drawer by its number, and you won't know what's inside until you open it.
+                Arrays can hold many kinds of data (numbers, words, even objects) but what matters most is that every element has a specific position.
+
+                Think of an <Highlight>Advent calendar</Highlight>: each numbered door is like an array index. You open door 1, then 2, then 3, always by number. You can't ask, “Which door has the candy?” You have to open the door by its number to see what's inside.
             </p>
 
             <div className="flex justify-center p-4">
@@ -169,4 +169,13 @@ function CommonOperations() {
 function UseCase() { }
 function Examples() { }
 function Why() { }
-function Resources() { }
+function Resources() {
+    return (
+        <section className={SECTION_CLASS}>
+            <Heading>Additional Resources</Heading>
+            <VideoEmbed
+                embedUrl="https://www.youtube.com/embed/QJNwK2uJyGs?si=fJNEhddFoCLpVQxl"
+            />
+        </section>
+    )
+}
