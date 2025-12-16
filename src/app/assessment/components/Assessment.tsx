@@ -1,7 +1,7 @@
 
 // takes in:
 
-import ProgressDots from "./ProgressDots";
+// import ProgressDots from "./ProgressDots";
 
 // question
 // optional visualization
@@ -10,11 +10,9 @@ import ProgressDots from "./ProgressDots";
 
 // callback function for answer
 
-interface AssessmentProps {
-    question: string;
-
-}
-
+// interface AssessmentProps {
+//     question: string;
+// }
 
 export default function Assessment() {
     return (

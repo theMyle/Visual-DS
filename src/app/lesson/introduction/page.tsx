@@ -1,8 +1,6 @@
-import Link from "next/link";
 import Heading from "../components/Heading";
 import Highlight from "../components/Highlight";
 import ListSection from "../components/ListSection";
-import { ACCENT_COLOR } from "@/app/lib/constants";
 import BottomNav from "../components/BottomNav";
 
 export default function IntroductionPage() {
@@ -116,8 +114,8 @@ function WhyChoosingDSMatters() {
       </p>
 
       <p className="mb-4 bg-blue-50 rounded-xl p-4">
-        Learning data structures isn't about memorizing names,
-        it's about matching the right tool to the real-world problem you're solving.
+        Learning data structures isn’t about memorizing names,
+        it’s about matching the right tool to the real-world problem you’re solving.
       </p>
 
       <div className="mt-8 pt-4 border-t border-gray-200 text-sm text-gray-600">

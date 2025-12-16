@@ -1,4 +1,3 @@
-import Link from "next/link";
 import MenuItem from "../components/MenuItem";
 
 export default function LessonPage() {

@@ -48,7 +48,7 @@ function Array() {
             <p>
                 Arrays can hold many kinds of data (numbers, words, even objects) but what matters most is that every element has a specific position.
 
-                Think of an <Highlight>Advent calendar</Highlight>: each numbered door is like an array index. You open door 1, then 2, then 3, always by number. You can't ask, “Which door has the candy?” You have to open the door by its number to see what's inside.
+                Think of an <Highlight>Advent calendar</Highlight>: each numbered door is like an array index. You open door 1, then 2, then 3, always by number. You can’t ask, “Which door has the candy?” You have to open the door by its number to see what’s inside.
             </p>
 
             <div className="flex justify-center p-4">
@@ -128,7 +128,7 @@ function CommonOperations() {
             <Heading>Array operations</Heading>
 
             <p>
-                From here on, we'll use the term <Highlight>array</Highlight> to also refer to
+                From here on, we’ll use the term <Highlight>array</Highlight> to also refer to
                 <Highlight> dynamic arrays</Highlight> (ArrayLists, vectors, lists, etc.), since they
                 provide the practical operations most programmers rely on.
             </p>
@@ -172,7 +172,7 @@ function CommonOperations() {
             </Callout>
 
             <p>
-                Modern computers handle such operations extremely fast, and you'll only notice performance issues when working with tens of thousands of elements or doing these operations very frequently.
+                Modern computers handle such operations extremely fast, and you’ll only notice performance issues when working with tens of thousands of elements or doing these operations very frequently.
             </p>
 
             <p>
@@ -183,7 +183,8 @@ function CommonOperations() {
     )
 }
 
-function UseCase() { }
+// function UseCase() { }
+
 function Examples() {
     return (
         <section className={SECTION_CLASS}>
@@ -193,7 +194,7 @@ function Examples() {
             </p>
 
             <p>
-                One simple example is the <Highlight>shopping cart in online stores</Highlight>. Every time you add an item, it's placed into a list, just like adding an element to an array. You can view, remove, or update items by their position in the list, and when you check out, the program goes through each item in order to calculate the total. Arrays make this process efficient and organized, ensuring every item is tracked and accessed easily.
+                One simple example is the <Highlight>shopping cart in online stores</Highlight>. Every time you add an item, it’s placed into a list, just like adding an element to an array. You can view, remove, or update items by their position in the list, and when you check out, the program goes through each item in order to calculate the total. Arrays make this process efficient and organized, ensuring every item is tracked and accessed easily.
             </p>
 
             <p>
@@ -201,7 +202,7 @@ function Examples() {
             </p>
 
             <p>
-                These examples show that arrays are ideal whenever you need <Highlight>ordered storage</Highlight> and <Highlight>quick access by position</Highlight>, whether it's for shopping items, spreadsheet data, or any list of related information.
+                These examples show that arrays are ideal whenever you need <Highlight>ordered storage</Highlight> and <Highlight>quick access by position</Highlight>, whether it’s for shopping items, spreadsheet data, or any list of related information.
             </p>
 
         </section>

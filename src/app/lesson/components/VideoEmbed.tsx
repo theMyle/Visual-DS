@@ -8,7 +8,6 @@ interface VideoEmbedProps {
 
 // Supports YouTube, Vimeo, or direct video links
 const isYouTube = (url: string) => url.includes("youtube.com") || url.includes("youtu.be");
-const isVimeo = (url: string) => url.includes("vimeo.com");
 const isVideoFile = (url: string) => /\.(mp4|webm|ogg)$/i.test(url);
 
 export default function VideoEmbed({ embedUrl, title = "Video", className = "" }: VideoEmbedProps) {

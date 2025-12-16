@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import ProgressDots from "../components/ProgressDots";
-import { Assessment, Choice, Feedback } from "../types";
+import { Choice } from "../types";
 import { arrayListAssessment } from "./questions";
 import Image from "next/image";
 
@@ -14,7 +14,7 @@ export default function Test() {
     }));
 
     // REMOVE THIS LATER
-    const [testFlag, setTestFlag] = useState(false);
+    const [testFlag] = useState(false);
 
     // stuff for progress dots
     const totalQuestions = assessment.questions.length;
@@ -48,7 +48,7 @@ export default function Test() {
     // progress dots operations and stuff
     function handleCorrectAnswer() {
         setCorrectDots(p => {
-            let newCorrectDots = [...p];
+            const newCorrectDots = [...p];
             newCorrectDots[currentDot] = true;
             return newCorrectDots;
         });
@@ -61,16 +61,16 @@ export default function Test() {
     }
 
 
-    function handleNextQuestion(currentIdx: number) {
-        // check if it's last
-        if (currentIdx === assessment.questions.length) {
-            // todo - show summary
-            alert("done!");
-        } else {
-            // next question
-            setCurrentQuestion(assessment.questions[currentIdx]);
-        }
-    }
+    // function handleNextQuestion(currentIdx: number) {
+    //     // check if it's last
+    //     if (currentIdx === assessment.questions.length) {
+    //         // todo - show summary
+    //         alert("done!");
+    //     } else {
+    //         // next question
+    //         setCurrentQuestion(assessment.questions[currentIdx]);
+    //     }
+    // }
 
 
     function handleNextQuestion2() {
@@ -102,7 +102,11 @@ export default function Test() {
             return true;
         });
 
-        isCorrect ? handleCorrectAnswer() : handleWrongAnswer();
+        if (isCorrect) {
+            handleCorrectAnswer()
+        } else {
+            handleWrongAnswer();
+        }
         setAnsweredCount(c => c + 1);
     }
 

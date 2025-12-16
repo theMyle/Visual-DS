@@ -20,7 +20,7 @@ export default function BottomNav({
     if (!prev && !next) return null;
 
     const onlyNext = !prev && !!next;
-    const onlyPrev = !!prev && !next;
+    // const onlyPrev = !!prev && !next;
 
     return (
         <nav

@@ -4,10 +4,9 @@ import { StackElement, StackElementAnimationState } from "@/app/simulator/stack/
 
 interface VisualStackBoxProps {
   element: StackElement;
-  index: number;
 }
 
-export default function VisualStackBox({ element, index }: VisualStackBoxProps) {
+export default function VisualStackBox({ element }: VisualStackBoxProps) {
   const getAnimationProps = () => {
     // Define a common exit animation for all states
     const commonExit = {

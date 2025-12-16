@@ -16,16 +16,15 @@ export default function VisualStack({ stack }: VisualStackProps) {
           Stack Data Structure
         </h1>
       </div>
-      
+
       <div className="flex-1 flex flex-col items-center justify-end w-full max-w-md h-full overflow-hidden relative">
         <div className="flex-1 flex flex-col justify-end items-center overflow-y-auto h-full py-2 md:py-4">
           <div className="flex flex-col gap-1 md:gap-1.5 items-center w-full">
             <AnimatePresence>
-              {stack.map((element, index) => (
+              {stack.map((element) => (
                 <VisualStackBox
                   key={element.id}
                   element={element}
-                  index={index}
                 />
               ))}
             </AnimatePresence>
@@ -33,7 +32,7 @@ export default function VisualStack({ stack }: VisualStackProps) {
             <div className="invisible w-32 h-[1px] md:w-48" />
           </div>
         </div>
-        
+
         {/* Empty message - absolutely positioned to not affect layout */}
         <AnimatePresence>
           {stack.length === 0 && (
@@ -49,7 +48,7 @@ export default function VisualStack({ stack }: VisualStackProps) {
             </motion.div>
           )}
         </AnimatePresence>
-        
+
         {/* Base/Bottom indicator - always at the bottom */}
         <div className="flex flex-col items-center flex-shrink-0">
           <div className="w-16 md:w-24 h-1 md:h-1.5 bg-gray-400 rounded-full"></div>

@@ -1,8 +1,8 @@
 import Link from "next/link";
 
 const accentColor = "#5A6FD6"; // Darker version of #94A6FF
-const buttonColor = "#6f83e8";
-const buttonShadow = "#C0CBFF";
+// const buttonColor = "#6f83e8";
+// const buttonShadow = "#C0CBFF";
 
 // Subtle gradient borders for each card type
 const cardStyles = {
@@ -31,7 +31,7 @@ type HomeItemProps = {
 
 export default function HomeItem({ title, description, path }: HomeItemProps) {
   const style = cardStyles[title as keyof typeof cardStyles];
-  
+
   return (
     <div
       className="flex flex-col gap-3 lg:gap-6 w-full h-full rounded-2xl px-6 py-5 lg:px-8 lg:py-8 shadow-md bg-white relative overflow-hidden"
@@ -40,7 +40,7 @@ export default function HomeItem({ title, description, path }: HomeItemProps) {
       }}
     >
       {/* Gradient border with glow */}
-      <div 
+      <div
         className="absolute inset-0 rounded-2xl p-[2px] -z-10"
         style={{
           background: style?.border || "linear-gradient(135deg, #e5e7eb, #d1d5db)",
@@ -49,7 +49,7 @@ export default function HomeItem({ title, description, path }: HomeItemProps) {
       >
         <div className="w-full h-full bg-white rounded-2xl" />
       </div>
-      
+
       <h1
         className="font-bold text-2xl lg:text-3xl leading-snug relative z-10"
         style={{ color: accentColor }}

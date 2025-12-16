@@ -34,7 +34,7 @@ export default function SimulationStack() {
     const isMobile = typeof window !== 'undefined' && window.innerWidth < 768;
     const maxElements = isMobile ? 10 : 12;
     if (stack.length >= maxElements) return;
-    
+
     value.animationState = StackElementAnimationState.NewPushed;
     setStack(prev => [value, ...prev]); // Add to the beginning (top)
 
@@ -53,7 +53,7 @@ export default function SimulationStack() {
 
     // Directly remove the element - exit animation will handle the visual effect
     setStack(prev => prev.slice(1));
-    
+
     // Reset the popping state after animation completes (0.6s animation + buffer)
     setTimeout(() => {
       setIsPopping(false);
@@ -80,34 +80,34 @@ export default function SimulationStack() {
   };
 
   // Check if stack is empty
-  const isEmpty = async () => {
-    if (isAnimating) return;
-    setIsAnimating(true);
+  // const isEmpty = async () => {
+  //   if (isAnimating) return;
+  //   setIsAnimating(true);
 
-    // Visual feedback for empty check
-    if (stack.length === 0) {
-      // Just a simple check, no animation needed
-      setIsAnimating(false);
-      return;
-    } else {
-      // Highlight all elements briefly to show it's not empty
-      const newStack = stack.map(element => ({
-        ...element,
-        animationState: StackElementAnimationState.HighlightedOrange
-      }));
-      setStack(newStack);
+  //   // Visual feedback for empty check
+  //   if (stack.length === 0) {
+  //     // Just a simple check, no animation needed
+  //     setIsAnimating(false);
+  //     return;
+  //   } else {
+  //     // Highlight all elements briefly to show it's not empty
+  //     const newStack = stack.map(element => ({
+  //       ...element,
+  //       animationState: StackElementAnimationState.HighlightedOrange
+  //     }));
+  //     setStack(newStack);
 
-      // Return to default state
-      setTimeout(() => {
-        const defaultStack = newStack.map(element => ({
-          ...element,
-          animationState: StackElementAnimationState.Default
-        }));
-        setStack(defaultStack);
-        setIsAnimating(false);
-      }, 600);
-    }
-  };
+  //     // Return to default state
+  //     setTimeout(() => {
+  //       const defaultStack = newStack.map(element => ({
+  //         ...element,
+  //         animationState: StackElementAnimationState.Default
+  //       }));
+  //       setStack(defaultStack);
+  //       setIsAnimating(false);
+  //     }, 600);
+  //   }
+  // };
 
   // Get stack size
   const size = async () => {
@@ -146,7 +146,7 @@ export default function SimulationStack() {
   return (
     <div className="h-full bg-gray-50 overflow-hidden">
       <main className="flex flex-col lg:flex-row h-full max-w-7xl mx-auto bg-white">
-        
+
         {/* Stack display - Constrained height */}
         <div className="flex-[1.2] lg:flex-[3] h-full overflow-hidden">
           <VisualStack stack={stack} />
@@ -215,23 +215,23 @@ export default function SimulationStack() {
               {/* BASIC OPERATIONS */}
               {operationType === OperationType.Basic && (
                 <>
-                  <ActionButton 
-                    text="Push" 
+                  <ActionButton
+                    text="Push"
                     bgColor="#2A9D8F"
-                    shadowColor="#1F7A6B" 
-                    onClick={() => push(createStackElement(inputValue || Math.floor(Math.random() * 100)))} 
+                    shadowColor="#1F7A6B"
+                    onClick={() => push(createStackElement(inputValue || Math.floor(Math.random() * 100)))}
                   />
-                  <ActionButton 
-                    text="Pop" 
+                  <ActionButton
+                    text="Pop"
                     bgColor="#C7573B"
-                    shadowColor="#A0422E" 
-                    onClick={() => pop()} 
+                    shadowColor="#A0422E"
+                    onClick={() => pop()}
                   />
-                  <ActionButton 
-                    text="Peek" 
+                  <ActionButton
+                    text="Peek"
                     bgColor="#6C757D"
-                    shadowColor="#495057" 
-                    onClick={() => peek()} 
+                    shadowColor="#495057"
+                    onClick={() => peek()}
                   />
                 </>
               )}
@@ -239,17 +239,17 @@ export default function SimulationStack() {
               {/* ADVANCED OPERATIONS */}
               {operationType === OperationType.Advanced && (
                 <>
-                  <ActionButton 
-                    text="Size" 
+                  <ActionButton
+                    text="Size"
                     bgColor="#6C757D"
-                    shadowColor="#495057" 
-                    onClick={() => size()} 
+                    shadowColor="#495057"
+                    onClick={() => size()}
                   />
-                  <ActionButton 
-                    text="Clear All" 
+                  <ActionButton
+                    text="Clear All"
                     bgColor="#C7573B"
-                    shadowColor="#A0422E" 
-                    onClick={() => clear()} 
+                    shadowColor="#A0422E"
+                    onClick={() => clear()}
                   />
                 </>
               )}

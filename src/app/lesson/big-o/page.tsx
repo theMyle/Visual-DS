@@ -61,7 +61,7 @@ function BigONotation() {
 function WhatDoesNAndWorkMean() {
   return (
     <section className={SECTION_CLASS}>
-      <Heading>What do 'n' and 'work' mean?</Heading>
+      <Heading>What do ’n’ and ’work’ mean?</Heading>
 
       <p>
         <Highlight>n</Highlight> is the size of the input. Think: how many things are we operating on?
@@ -86,7 +86,7 @@ function WhatDoesNAndWorkMean() {
       </ListSection>
 
       <p>
-        Big-O asks: <Highlight>"If n changes, how does the work change?"</Highlight>
+        Big-O asks: <Highlight>“If n changes, how does the work change?“</Highlight>
       </p>
 
       <p>
