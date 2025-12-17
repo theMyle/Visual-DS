@@ -44,8 +44,9 @@ export default function SimulationQueue() {
 
     // Enqueue: Add an element to the rear of the queue
     const enqueue = async (value: ArrayElement) => {
-
-        const maxElements = 20;
+        // Limit to 10 elements on mobile (screen width < 768px), 20 on desktop
+        const isMobile = typeof window !== 'undefined' && window.innerWidth < 768;
+        const maxElements = isMobile ? 10 : 18;
         if (queue.length >= maxElements) return;
 
         setIsAnimating(true);
@@ -144,8 +145,20 @@ export default function SimulationQueue() {
                         </h1>
                     </div>
 
-                    <div className="flex items-center justify-center px-4 md:px-9 py-4 h-full">
+                    <div className="flex items-center justify-center gap-2 md:gap-4 px-4 md:px-9 py-4 h-full">
+                        {/* Front/Dequeue indicator */}
+                        <div className="flex flex-col items-center gap-1">
+                            <p className="text-xs md:text-sm font-semibold text-green-600">FRONT</p>
+                            <p className="text-lg md:text-2xl text-green-600">←</p>
+                        </div>
+
                         <VisualArray array={queue} />
+
+                        {/* Rear/Enqueue indicator */}
+                        <div className="flex flex-col items-center gap-1">
+                            <p className="text-xs md:text-sm font-semibold text-blue-600">REAR</p>
+                            <p className="text-lg md:text-2xl text-blue-600">←</p>
+                        </div>
                     </div>
 
                 </div>

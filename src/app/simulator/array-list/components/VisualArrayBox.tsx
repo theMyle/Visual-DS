@@ -63,13 +63,13 @@ export default function VisualArrayBox({ value, animationState }: VisualArrayBox
   return (
     <motion.div
       layout
-      className="flex w-12 h-12 rounded items-center justify-center text-white bg-[#94A6FF] border-[1.8px] border-black"
+      className="flex w-8 h-8 md:w-12 md:h-12 rounded items-center justify-center text-white bg-[#94A6FF] border-[1.2px] md:border-[1.8px] border-black"
       initial={initial}
       animate={animate}
       exit={exit}
       transition={transition ?? { duration: 0.4 }}
     >
-      <span className={"text-center truncate px-1 text-xl text-white font-bold"}>
+      <span className={"text-center truncate px-1 text-xs md:text-xl text-white font-bold"}>
         {value}
       </span>
     </motion.div>

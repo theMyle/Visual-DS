@@ -15,7 +15,7 @@ export default function VisualArray({ array }: VisualArrayProps) {
         <motion.div
           layout
           transition={{ layout: { duration: 0.5 } }}
-          className="flex flex-wrap max-w-[308px] md:max-w-[587px] gap-2 px-4 py-4 border-[1.8px] rounded-xl border-[#94A6FF]">
+          className="flex flex-wrap max-w-[230px] md:max-w-[587px] gap-2 px-4 py-4 border-[1.8px] rounded-xl border-[#94A6FF]">
           <AnimatePresence>
             {
               array.map((arrayElem) => (

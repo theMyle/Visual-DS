@@ -1,0 +1,23 @@
+.action-button {
+    color: white;
+    padding: 0.5rem 1rem;
+    /* px-4 py-2 approx */
+    border-radius: 0.75rem;
+    /* rounded-xl */
+    background-color: var(--bg-color);
+    box-shadow: 0 4px 0 var(--shadow-color);
+    transition:
+        transform var(--duration) ease-in-out,
+        box-shadow var(--duration) ease-in-out;
+    cursor: pointer;
+}
+
+.action-button:active {
+    box-shadow: 0 0 0 var(--shadow-color);
+    transform: translateY(var(--press-depth));
+}
+
+.action-button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}

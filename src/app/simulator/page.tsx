@@ -10,6 +10,7 @@ export default function SimulatorPage() {
       <MenuItem title={"Array List - Simulator"} path={"/simulator/array-list"} />
       <MenuItem title={"Stack - Simulator"} path={"/simulator/stack"} />
       <MenuItem title={"Queue - Simulator"} path={"/simulator/queue"} />
+      <MenuItem title={"Linked List- Simulator"} path={"/simulator/linked-list"} />
       {
         /*
           <MenuItem title={"Map - Simulator"} path={"/"} />

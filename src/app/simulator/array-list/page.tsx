@@ -423,7 +423,7 @@ export default function SimulationArray() {
     // Check if array is sorted first
     if (!isArraySorted()) {
       // Show visual feedback that array is not sorted
-      const newArray = [...array];
+      // const newArray = [...array];
 
       alert('Array must be sorted before performing binary search!');
       return;
