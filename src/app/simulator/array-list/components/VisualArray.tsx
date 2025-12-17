@@ -9,7 +9,8 @@ type VisualArrayProps = {
 
 export default function VisualArray({ array }: VisualArrayProps) {
   return (
-    <div>
+    <div className="w-full h-full flex flex-col items-center justify-center p-2 md:p-4 overflow-hidden">
+
       <LayoutGroup>
         <motion.div
           layout

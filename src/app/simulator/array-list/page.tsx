@@ -25,9 +25,9 @@ export default function SimulationArray() {
 
   const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
   const delay = {
-    interval: 200,
-    focus: 400,
-    scan: 100, // Faster scanning for selection sort
+    interval: 150,
+    focus: 150,
+    scan: 50, // Faster scanning for selection sort (lower = faster)
   }
 
   // Helper function to get value or generate random
@@ -85,9 +85,7 @@ export default function SimulationArray() {
   const insertAt = async (value: ArrayElement, index: number) => {
     if (isAnimating) return;
 
-    // Limit to 20 elements on mobile (screen width < 768px), 50 on desktop
-    const isMobile = typeof window !== 'undefined' && window.innerWidth < 768;
-    const maxElements = isMobile ? 20 : 50;
+    const maxElements = 20;
     if (array.length >= maxElements) return;
 
     // prolly need to add check if index is invalid
@@ -141,9 +139,7 @@ export default function SimulationArray() {
   const insertBack = async (value: ArrayElement) => {
     if (isAnimating) return;
 
-    // Limit to 20 elements on mobile (screen width < 768px), 50 on desktop
-    const isMobile = typeof window !== 'undefined' && window.innerWidth < 768;
-    const maxElements = isMobile ? 20 : 50;
+    const maxElements = 20;
     if (array.length >= maxElements) return;
 
     if (array.length == 0) {
@@ -174,7 +170,7 @@ export default function SimulationArray() {
     // animate removal
     invisible.animationState = ArrayElementAnimationState.RemovedInvisible;
     setArray(newArray);
-    await sleep(delay.focus);
+    await sleep(delay.focus + 300);
 
     invisible.animationState = ArrayElementAnimationState.Invisible;
 
@@ -359,28 +355,75 @@ export default function SimulationArray() {
     }, 1500);
   };
 
+  // Linear Search Algorithm
+  const linearSearch = async (target: number) => {
+    if (isAnimating) return;
+
+    if (inputValue === "") {
+      alert("Please enter a value to search");
+      return;
+    }
+
+    setIsAnimating(true);
+    const newArray = [...array];
+    let found = false;
+    let foundIndex = -1;
+
+    // Search through array sequentially
+    for (let i = 0; i < newArray.length; i++) {
+      // Highlight current element being checked
+      newArray[i].animationState = ArrayElementAnimationState.Comparing;
+      setArray([...newArray]);
+      await sleep(delay.focus + 100);
+
+      const currentValue = Number(newArray[i].value);
+
+      if (currentValue === target) {
+        // Found the target!
+        newArray[i].animationState = ArrayElementAnimationState.HighlightedGreen;
+        setArray([...newArray]);
+        found = true;
+        foundIndex = i;
+        await sleep(500)
+        alert(`✓ Search Successful!\n\nValue: ${target}\nIndex: ${foundIndex}\nTotal Cycles: ${i + 1}`);
+        break;
+      } else {
+        // Not found, mark as checked and continue
+        newArray[i].animationState = ArrayElementAnimationState.MinElement;
+        setArray([...newArray]);
+        await sleep(delay.scan);
+      }
+    }
+
+    if (!found) {
+      await sleep(500)
+      alert(`✗ Item Not In List\n\nValue: ${target}\nTotal Cycles: ${newArray.length}`);
+    }
+
+    // Reset all to default after showing result
+    setTimeout(() => {
+      const resetArray = newArray.map(element => ({
+        ...element,
+        animationState: ArrayElementAnimationState.Default
+      }));
+      setArray(resetArray);
+      setIsAnimating(false);
+    }, 500);
+  };
+
   // Binary Search Algorithm
   const binarySearch = async (target: number) => {
     if (isAnimating) return;
+
+    if (inputValue === "") {
+      alert("Please enter a value to search")
+      return
+    }
 
     // Check if array is sorted first
     if (!isArraySorted()) {
       // Show visual feedback that array is not sorted
       const newArray = [...array];
-      // Highlight all elements in red to show it's not sorted
-      newArray.forEach(element => {
-        element.animationState = ArrayElementAnimationState.MinElement;
-      });
-      setArray([...newArray]);
-
-      // Reset after showing error
-      setTimeout(() => {
-        const resetArray = newArray.map(element => ({
-          ...element,
-          animationState: ArrayElementAnimationState.Default
-        }));
-        setArray(resetArray);
-      }, 1500);
 
       alert('Array must be sorted before performing binary search!');
       return;
@@ -391,8 +434,10 @@ export default function SimulationArray() {
     let left = 0;
     let right = newArray.length - 1;
     let found = false;
+    let cycles = 0;
 
     while (left <= right && !found) {
+      cycles++;
       // Highlight search range in orange
       for (let i = left; i <= right; i++) {
         newArray[i].animationState = ArrayElementAnimationState.HighlightedOrange;
@@ -421,6 +466,9 @@ export default function SimulationArray() {
         }
         setArray([...newArray]);
         found = true;
+        await sleep(600)
+        alert(`✓ Search Successful!\n\nValue: ${target}\nIndex: ${mid}\nTotal Cycles: ${cycles}`);
+
       } else if (midValue < target) {
         // Target is in right half - show direction with brief red highlight
         newArray[mid].animationState = ArrayElementAnimationState.MinElement;
@@ -456,6 +504,9 @@ export default function SimulationArray() {
       });
       setArray([...newArray]);
       await sleep(delay.focus);
+
+      await sleep(600)
+      alert(`✗ Item Not In List\n\nValue: ${target}\nTotal Cycles: ${cycles}`);
     }
 
     // Reset all to default after showing result
@@ -466,7 +517,7 @@ export default function SimulationArray() {
       }));
       setArray(resetArray);
       setIsAnimating(false);
-    }, 1200); // Reduced display time for final result
+    }, 500); // Reduced display time for final result
   };
 
   return (
@@ -475,9 +526,18 @@ export default function SimulationArray() {
 
         {/* Array display - Constrained height */}
         <div className="flex-1 lg:flex-[3] h-full overflow-hidden">
+
+          {/* Title */}
+          <div className="flex-shrink-0 mb-2 md:mb-4 pt-6">
+            <h1 className="text-base md:text-xl font-semibold text-gray-600 text-center">
+              Array Data Structure
+            </h1>
+          </div>
+
           <div className="flex items-center justify-center px-4 md:px-9 py-4 h-full">
             <VisualArray array={array} />
           </div>
+
         </div>
 
         {/* Controls section */}
@@ -646,11 +706,20 @@ export default function SimulationArray() {
                     onClick={() => selectionSort()}
                   />
                   <ActionButton
+                    text="Linear Search"
+                    bgColor="#10B981"
+                    shadowColor="#059669"
+                    onClick={() => {
+                      const target = Number(inputValue) ?? Math.floor(Math.random() * 100);
+                      linearSearch(target);
+                    }}
+                  />
+                  <ActionButton
                     text="Binary Search"
                     bgColor="#8B5CF6"
                     shadowColor="#6D28D9"
                     onClick={() => {
-                      const target = Number(inputValue) || Math.floor(Math.random() * 100);
+                      const target = Number(inputValue) ?? Math.floor(Math.random() * 100);
                       binarySearch(target);
                     }}
                   />
