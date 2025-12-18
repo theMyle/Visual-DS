@@ -18,6 +18,7 @@ import TreeNodeComponent from './TreeNodeComponent';
 interface VisualTreeProps {
     nodes: TreeNode[];
     rootId: string | null;
+    onNodeClick?: (nodeId: string) => void;
 }
 
 const nodeTypes = {
@@ -29,7 +30,7 @@ interface NodePosition {
     y: number;
 }
 
-const VisualTreeInner = ({ nodes, rootId }: VisualTreeProps) => {
+const VisualTreeInner = ({ nodes, rootId, onNodeClick }: VisualTreeProps) => {
     const [reactFlowNodes, setReactFlowNodes, onNodesChange] = useNodesState([]);
     const [edges, setEdges, onEdgesChange] = useEdgesState([]);
 
@@ -105,6 +106,7 @@ const VisualTreeInner = ({ nodes, rootId }: VisualTreeProps) => {
                     animationState: node.animationState,
                     isRoot: node.id === rootId,
                     isLeaf: isLeaf,
+                    onClick: () => onNodeClick?.(node.id),
                 },
                 sourcePosition: Position.Bottom,
                 targetPosition: Position.Top,
@@ -158,6 +160,7 @@ const VisualTreeInner = ({ nodes, rootId }: VisualTreeProps) => {
                 edges={edges}
                 onNodesChange={onNodesChange}
                 onEdgesChange={onEdgesChange}
+                onNodeClick={(event, node) => onNodeClick?.(node.id)}
                 nodeTypes={nodeTypes}
                 defaultViewport={{ x: 400, y: 50, zoom: 0.8 }}
                 fitView
@@ -165,7 +168,7 @@ const VisualTreeInner = ({ nodes, rootId }: VisualTreeProps) => {
                 attributionPosition="bottom-right"
                 nodesDraggable={false}
                 nodesConnectable={false}
-                elementsSelectable={false}
+                elementsSelectable={true}
                 panOnDrag={true}
                 selectionOnDrag={false}
                 zoomOnScroll={true}

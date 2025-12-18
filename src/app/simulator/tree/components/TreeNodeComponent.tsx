@@ -7,6 +7,7 @@ interface NodeData {
     animationState: TreeNodeAnimationState;
     isRoot: boolean;
     isLeaf: boolean;
+    onClick?: () => void;
 }
 
 const getNodeColor = (state: TreeNodeAnimationState): string => {
@@ -58,12 +59,13 @@ const TreeNodeComponent = ({ data }: { data: NodeData }) => {
 
             {/* Circular node */}
             <div
-                className="flex items-center justify-center w-12 h-12 md:w-16 md:h-16 rounded-full border-2 border-black text-sm md:text-base font-bold text-white transition-all duration-300"
+                className="flex items-center justify-center w-12 h-12 md:w-16 md:h-16 rounded-full border-2 border-black text-sm md:text-base font-bold text-white transition-all duration-300 cursor-pointer hover:brightness-110"
                 style={{
                     backgroundColor: color,
                     transform: `scale(${scale})`,
                     opacity: opacity,
                 }}
+                onClick={data.onClick}
             >
                 {data.value}
             </div>

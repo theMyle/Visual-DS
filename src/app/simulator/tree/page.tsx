@@ -20,7 +20,7 @@ export default function SimulatorTree() {
     const [isAnimating, setIsAnimating] = useState<boolean>(false);
 
     const [inputValue, setInputValue] = useState<string>("");
-    const [parentValue, setParentValue] = useState<string>("");
+    const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
     const [visitOrder, setVisitOrder] = useState<(string | number)[]>([]);
 
     const [operationType, setOperationType] = useState<OperationType>(OperationType.Insertion);
@@ -53,12 +53,49 @@ export default function SimulatorTree() {
         return nodes.find(n => n.value.toString() === value.toString()) || null;
     };
 
+    // Helper to get selected node
+    const getSelectedNode = (): TreeNode | null => {
+        if (!selectedNodeId) return null;
+        return nodes.find(n => n.id === selectedNodeId) || null;
+    };
+
+    // Handle node click for selection
+    const handleNodeClick = (nodeId: string) => {
+        if (isAnimating) return;
+
+        // If clicking the same node, deselect it
+        if (selectedNodeId === nodeId) {
+            setSelectedNodeId(null);
+            // Remove highlight
+            setNodes(prev => prev.map(n =>
+                n.id === nodeId && n.animationState === TreeNodeAnimationState.HighlightedOrange
+                    ? { ...n, animationState: TreeNodeAnimationState.Default }
+                    : n
+            ));
+        } else {
+            // Clear previous selection highlight
+            setNodes(prev => prev.map(n =>
+                n.animationState === TreeNodeAnimationState.HighlightedOrange
+                    ? { ...n, animationState: TreeNodeAnimationState.Default }
+                    : n
+            ));
+
+            // Set new selection
+            setSelectedNodeId(nodeId);
+            setNodes(prev => prev.map(n =>
+                n.id === nodeId
+                    ? { ...n, animationState: TreeNodeAnimationState.HighlightedOrange }
+                    : n
+            ));
+        }
+    };
+
     // Helper to calculate tree height
     const calculateHeight = (nodeId: string | null): number => {
-        if (!nodeId) return -1;
+        if (!nodeId) return 0;
 
         const node = nodes.find(n => n.id === nodeId);
-        if (!node) return -1;
+        if (!node) return 0;
 
         const leftHeight = calculateHeight(node.left);
         const rightHeight = calculateHeight(node.right);
@@ -72,29 +109,49 @@ export default function SimulatorTree() {
     };
 
     // INSERT NODE
-    const insertNode = async (value: TreeNode, parentValue: string, position: 'left' | 'right') => {
+    const insertNode = async (value: TreeNode, position: 'left' | 'right') => {
         if (isAnimating) return;
 
-        // Find parent node
-        const parent = findNodeByValue(parentValue);
+        // If tree is empty, insert as root
+        if (!rootId || nodes.length === 0) {
+            setIsAnimating(true);
+
+            value.level = 0;
+            value.animationState = TreeNodeAnimationState.NewInserted;
+
+            setNodes([value]);
+            setRootId(value.id);
+
+            await sleep(delay.focus);
+
+            value.animationState = TreeNodeAnimationState.Default;
+            setNodes([value]);
+
+            setInputValue("");
+            setIsAnimating(false);
+            return;
+        }
+
+        // Get selected parent node
+        const parent = getSelectedNode();
         if (!parent) {
-            alert(`Parent node with value "${parentValue}" does not exist`);
+            alert("Please select a parent node first by clicking on it in the tree.");
             return;
         }
 
         // Check if position is already occupied
         if (position === 'left' && parent.left) {
-            alert(`Left child of node "${parentValue}" already exists`);
+            alert(`Left child of node with value "${parent.value}" already exists`);
             return;
         }
         if (position === 'right' && parent.right) {
-            alert(`Right child of node "${parentValue}" already exists`);
+            alert(`Right child of node with value "${parent.value}" already exists`);
             return;
         }
 
         // Check depth limit (parent level must be < MAX_DEPTH)
         if (parent.level >= MAX_DEPTH) {
-            // Silently ignore - button should be disabled
+            alert(`Cannot insert at depth ${MAX_DEPTH + 1}. Maximum depth is ${MAX_DEPTH}.`);
             return;
         }
 
@@ -150,12 +207,6 @@ export default function SimulatorTree() {
             return;
         }
 
-        // Cannot delete root if it's the only node
-        if (targetNode.id === rootId && nodes.length === 1) {
-            alert("Cannot delete the only node in the tree. Use Clear instead.");
-            return;
-        }
-
         setIsAnimating(true);
 
         // Highlight node to be removed
@@ -169,7 +220,7 @@ export default function SimulatorTree() {
             if (parent.left === targetNode.id) parent.left = null;
             if (parent.right === targetNode.id) parent.right = null;
         } else if (targetNode.id === rootId) {
-            // Deleting root
+            // Deleting root (also handles case when it's the only node)
             setRootId(null);
         }
 
@@ -503,7 +554,7 @@ export default function SimulatorTree() {
         setRootId(null);
         setVisitOrder([]);
         setInputValue("");
-        setParentValue("");
+        setSelectedNodeId(null);
     };
 
     // RESET TO INITIAL [1,2,3,4,5]
@@ -514,12 +565,12 @@ export default function SimulatorTree() {
         setRootId(root);
         setVisitOrder([]);
         setInputValue("");
-        setParentValue("");
+        setSelectedNodeId(null);
     };
 
     // Check if insert button should be disabled
     const isInsertDisabled = (position: 'left' | 'right') => {
-        const parent = findNodeByValue(parentValue);
+        const parent = getSelectedNode();
         if (!parent) return true;
         if (parent.level >= MAX_DEPTH) return true;
         if (position === 'left' && parent.left) return true;
@@ -541,7 +592,7 @@ export default function SimulatorTree() {
                     </div>
 
                     <div className="flex items-center justify-center px-4 md:px-9 py-4 h-full">
-                        <VisualTree nodes={nodes} rootId={rootId} />
+                        <VisualTree nodes={nodes} rootId={rootId} onNodeClick={handleNodeClick} />
                     </div>
                 </div>
 
@@ -585,18 +636,24 @@ export default function SimulatorTree() {
                                 </div>
                             )}
                             {operationType === OperationType.Insertion && (
-                                <>
-                                    <div className="flex gap-2 md:gap-3 items-center">
-                                        <label className="text-xs md:text-sm font-medium text-gray-700 min-w-[50px] md:min-w-[60px]">Parent:</label>
-                                        <input
-                                            type="number"
-                                            className="bg-white border border-gray-200 rounded-lg text-center flex-1 text-sm md:text-lg py-1.5 md:py-2 focus:border-blue-300 focus:outline-none transition-colors"
-                                            value={parentValue}
-                                            onChange={(e) => setParentValue(e.target.value)}
-                                            placeholder="Parent value"
-                                        />
+                                <div className="bg-blue-50 border border-blue-200 p-2 md:p-2.5 rounded-lg">
+                                    <div className="flex items-center justify-between">
+                                        <div className="flex items-center gap-2">
+                                            <span className="text-xs md:text-sm font-medium text-gray-700">Selected Node:</span>
+                                            <span className="text-sm md:text-base font-bold text-blue-600">
+                                                {selectedNodeId ? getSelectedNode()?.value : 'None'}
+                                            </span>
+                                        </div>
+                                        {selectedNodeId && (
+                                            <button
+                                                onClick={() => handleNodeClick(selectedNodeId)}
+                                                className="text-xs text-blue-600 hover:text-blue-800 underline"
+                                            >
+                                                Clear
+                                            </button>
+                                        )}
                                     </div>
-                                </>
+                                </div>
                             )}
                         </div>
 
@@ -646,15 +703,13 @@ export default function SimulatorTree() {
                                         text="Insert Left"
                                         bgColor="#2A9D8F"
                                         shadowColor="#1F7A6B"
-                                        onClick={() => insertNode(createNode(getValueOrRandom(inputValue)), parentValue, 'left')}
-                                        disabled={isInsertDisabled('left')}
+                                        onClick={() => insertNode(createNode(getValueOrRandom(inputValue)), 'left')}
                                     />
                                     <ActionButton
                                         text="Insert Right"
                                         bgColor="#2A9D8F"
                                         shadowColor="#1F7A6B"
-                                        onClick={() => insertNode(createNode(getValueOrRandom(inputValue)), parentValue, 'right')}
-                                        disabled={isInsertDisabled('right')}
+                                        onClick={() => insertNode(createNode(getValueOrRandom(inputValue)), 'right')}
                                     />
                                 </>
                             )}
@@ -718,24 +773,6 @@ export default function SimulatorTree() {
                                     />
                                 </>
                             )}
-
-                            {/* UTILITIES */}
-                            <div className="border-t border-gray-200 pt-2 mt-2">
-                                <ActionButton
-                                    text="Clear Tree"
-                                    bgColor="#6B7280"
-                                    shadowColor="#4B5563"
-                                    onClick={clearTree}
-                                />
-                                <div className="mt-2">
-                                    <ActionButton
-                                        text="Reset to [1,2,3,4,5]"
-                                        bgColor="#6B7280"
-                                        shadowColor="#4B5563"
-                                        onClick={resetTree}
-                                    />
-                                </div>
-                            </div>
                         </div>
                     </div>
                 </div>
