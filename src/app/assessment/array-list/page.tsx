@@ -174,9 +174,9 @@ export default function Test() {
                                 </div>
                             )}
 
-                            {/* Feedback - appears on left side after answering */}
+                            {/* Feedback - desktop only, appears on left side with questions */}
                             {feedbackMode && (answerIsCorrect ? correctFeedback : wrongFeedback) && (
-                                <div className="flex justify-center w-full opacity-0 animate-fade-in">
+                                <div className="hidden lg:flex justify-center w-full opacity-0 animate-fade-in">
                                     <div className={`max-w-3xl w-full flex flex-col gap-2 p-6 rounded-2xl border-2 shadow-md ${(answerIsCorrect ?
                                         "bg-green-50 border-green-300"
                                         :
@@ -223,6 +223,20 @@ export default function Test() {
                                 })}
                             </div>
                         </div>
+
+                        {/* Feedback - mobile/tablet only, appears at bottom for auto-scroll */}
+                        {feedbackMode && (answerIsCorrect ? correctFeedback : wrongFeedback) && (
+                            <div className="lg:hidden flex justify-center w-full lg:col-span-5 opacity-0 animate-fade-in pb-4">
+                                <div className={`max-w-3xl w-full flex flex-col gap-2 p-6 rounded-2xl border-2 shadow-md ${(answerIsCorrect ?
+                                    "bg-green-50 border-green-300"
+                                    :
+                                    "bg-red-50 border-red-300"
+                                )}`}>
+                                    <h1 className="font-bold text-lg">Explanation</h1>
+                                    <p className="text-gray-700 leading-relaxed">{answerIsCorrect ? correctFeedback : wrongFeedback}</p>
+                                </div>
+                            </div>
+                        )}
 
                     </div>
                 </div>
