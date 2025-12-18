@@ -711,6 +711,12 @@ export default function SimulatorTree() {
                                         shadowColor="#1F7A6B"
                                         onClick={() => insertNode(createNode(getValueOrRandom(inputValue)), 'right')}
                                     />
+                                    <ActionButton
+                                        text="Reset"
+                                        bgColor="#2A9D8F"
+                                        shadowColor="#1F7A6B"
+                                        onClick={resetTree}
+                                    />
                                 </>
                             )}
 

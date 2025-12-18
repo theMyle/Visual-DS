@@ -12,26 +12,30 @@ export const createNode = (value: string | number, level: number = 0): TreeNode 
     };
 };
 
-// Create initial tree structure [1,2,3,4,5]
-//        1
-//       / \
-//      2   3
-//     / \
-//    4   5
+// Create initial tree structure [1,2,3,4,5,6,7]
+//          1
+//        /   \
+//       2     3
+//      / \   / \
+//     4   5 6   7
 export const createTreeNodes = (): { nodes: TreeNode[], rootId: string } => {
     const node1 = createNode(1, 0);
     const node2 = createNode(2, 1);
     const node3 = createNode(3, 1);
     const node4 = createNode(4, 2);
     const node5 = createNode(5, 2);
+    const node6 = createNode(6, 2);
+    const node7 = createNode(7, 2);
 
     node1.left = node2.id;
     node1.right = node3.id;
     node2.left = node4.id;
     node2.right = node5.id;
+    node3.left = node6.id;
+    node3.right = node7.id;
 
     return {
-        nodes: [node1, node2, node3, node4, node5],
+        nodes: [node1, node2, node3, node4, node5, node6, node7],
         rootId: node1.id
     };
 };
