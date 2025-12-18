@@ -178,13 +178,18 @@ export default function SimulatorLinkedList() {
         let currentId: string | null = head;
         let currentIndex = 0;
 
-        while (currentId && currentIndex < targetIndex - 1) {
+        while (currentId && currentIndex <= targetIndex - 1) {
             const current = nodes.find(n => n.id === currentId);
             if (!current) break;
 
             current.animationState = NodeAnimationState.Traversing;
             setNodes([...nodes]);
             await sleep(delay.interval);
+
+            if (currentIndex === targetIndex - 1) {
+                // Found the node before target index
+                break;
+            }
 
             current.animationState = NodeAnimationState.Default;
             currentId = current.next;
@@ -312,13 +317,18 @@ export default function SimulatorLinkedList() {
         let currentId: string | null = head;
         let currentIndex = 0;
 
-        while (currentId && currentIndex < targetIndex - 1) {
+        while (currentId && currentIndex <= targetIndex - 1) {
             const current = nodes.find(n => n.id === currentId);
             if (!current) break;
 
             current.animationState = NodeAnimationState.Traversing;
             setNodes([...nodes]);
             await sleep(delay.interval);
+
+            if (currentIndex === targetIndex - 1) {
+                // Found the node before target index
+                break;
+            }
 
             current.animationState = NodeAnimationState.Default;
             currentId = current.next;
