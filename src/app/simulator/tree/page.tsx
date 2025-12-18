@@ -31,7 +31,17 @@ export default function SimulatorTree() {
         focus: 600,
     };
 
-    const MAX_DEPTH = 4; // Maximum tree depth (0-indexed, so allows levels 0-4 = 5 levels total)
+    // Responsive max depth: mobile (<=768px) = 3 (height 4), desktop = 4 (height 5)
+    const [maxDepth, setMaxDepth] = useState<number>(4);
+
+    useEffect(() => {
+        const handleResize = () => {
+            setMaxDepth(window.innerWidth <= 768 ? 3 : 4);
+        };
+        handleResize();
+        window.addEventListener('resize', handleResize);
+        return () => window.removeEventListener('resize', handleResize);
+    }, []);
 
     // Helper function to get value or generate random
     const getValueOrRandom = (value: string): string => {
@@ -149,9 +159,9 @@ export default function SimulatorTree() {
             return;
         }
 
-        // Check depth limit (parent level must be < MAX_DEPTH)
-        if (parent.level >= MAX_DEPTH) {
-            alert(`Cannot insert at depth ${MAX_DEPTH + 1}. Maximum depth is ${MAX_DEPTH}.`);
+        // Check depth limit (parent level must be < maxDepth)
+        if (parent.level >= maxDepth) {
+            alert(`Cannot insert at depth ${maxDepth + 1}. Maximum depth is ${maxDepth}.`);
             return;
         }
 
@@ -247,6 +257,25 @@ export default function SimulatorTree() {
         targetNode.animationState = TreeNodeAnimationState.BeingRemoved;
         setNodes([...nodes]);
         await sleep(delay.focus);
+
+        // Check if target is a leaf node
+        const isLeaf = !targetNode.left && !targetNode.right;
+
+        if (isLeaf) {
+            // If it's a leaf, just remove it directly
+            const parent = nodes.find(n => n.left === targetNode.id || n.right === targetNode.id);
+            if (parent) {
+                if (parent.left === targetNode.id) parent.left = null;
+                if (parent.right === targetNode.id) parent.right = null;
+            } else if (targetNode.id === rootId) {
+                setRootId(null);
+            }
+
+            setNodes(prev => prev.filter(n => n.id !== targetNode.id));
+            setInputValue("");
+            setIsAnimating(false);
+            return;
+        }
 
         // Find deepest rightmost node using level-order traversal
         const findDeepestRightmost = (): TreeNode | null => {
@@ -682,7 +711,7 @@ export default function SimulatorTree() {
                         </div>
 
                         {/* Visit Order Display */}
-                        {visitOrder.length > 0 && (
+                        {operationType === OperationType.Traversal && visitOrder.length > 0 && (
                             <div className="bg-blue-50 border border-blue-200 p-2 md:p-3 rounded-lg flex-shrink-0">
                                 <div className="text-xs md:text-sm">
                                     <span className="font-medium text-gray-700">Visit Order: </span>

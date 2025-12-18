@@ -90,7 +90,7 @@ const VisualTreeInner = ({ nodes, rootId, onNodeClick }: VisualTreeProps) => {
 
         // Calculate positions for all nodes
         const positions = new Map<string, NodePosition>();
-        calculatePositions(rootId, 0, -400, 400, positions);
+        calculatePositions(rootId, 0, -300, 300, positions);
 
         // Convert tree nodes to React Flow nodes
         const flowNodes: Node[] = nodes.map((node) => {
