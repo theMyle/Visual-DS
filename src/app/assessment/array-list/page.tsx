@@ -5,8 +5,12 @@ import ProgressDots from "../components/ProgressDots";
 import { Choice } from "../types";
 import { arrayListAssessment } from "./questions";
 import Image from "next/image";
+import AssessmentSummary from "../components/AssessmentSummary";
+import { useRouter } from "next/navigation";
 
 export default function Test() {
+    const router = useRouter();
+
     // Shuffle questions once on mount
     const [assessment] = useState(() => ({
         ...arrayListAssessment,
@@ -15,6 +19,9 @@ export default function Test() {
 
     // REMOVE THIS LATER
     const [testFlag] = useState(false);
+
+    // Summary state
+    const [showSummary, setShowSummary] = useState(false);
 
     // stuff for progress dots
     const totalQuestions = assessment.questions.length;
@@ -61,27 +68,31 @@ export default function Test() {
     }
 
 
-    // function handleNextQuestion(currentIdx: number) {
-    //     // check if it's last
-    //     if (currentIdx === assessment.questions.length) {
-    //         // todo - show summary
-    //         alert("done!");
-    //     } else {
-    //         // next question
-    //         setCurrentQuestion(assessment.questions[currentIdx]);
-    //     }
-    // }
-
-
     function handleNextQuestion2() {
         // check if it's last
         if (answeredCount === assessment.questions.length) {
-            // todo - show summary
-            alert("done!");
+            // show summary
+            setShowSummary(true);
         } else {
             // next question
             setCurrentQuestion(assessment.questions[answeredCount]);
         }
+    }
+
+    function handleRetry() {
+        // Reset all states
+        setShowSummary(false);
+        setCurrentDot(0);
+        setAnsweredCount(0);
+        setCorrectDots(Array(totalQuestions).fill(false));
+        setCurrentQuestion(assessment.questions[0]);
+        setSelectedButton(null);
+        setFeedbackMode(false);
+        setAnswerIsCorrect(false);
+    }
+
+    function handleBackToHome() {
+        router.push('/assessment');
     }
 
     function handleCheck() {
@@ -125,6 +136,19 @@ export default function Test() {
     } else if (feedbackMode && !answerIsCorrect) {
         bottomNavBackground = "bg-red-50"
         continueButtonColor = "bg-gray-400 active:bg-gray-600 hover:bg-gray-500"
+    }
+
+    // Show summary if assessment is complete
+    if (showSummary) {
+        const correctCount = correctDots.filter(Boolean).length;
+        return (
+            <AssessmentSummary
+                correctCount={correctCount}
+                totalQuestions={totalQuestions}
+                onRetry={handleRetry}
+                onBackToHome={handleBackToHome}
+            />
+        );
     }
 
     // button choices
