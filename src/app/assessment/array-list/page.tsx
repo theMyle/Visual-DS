@@ -153,7 +153,7 @@ export default function Test() {
                             {/* Current question */}
                             <div className="flex flex-col items-center justify-center max-w-3xl w-full">
                                 <div className="bg-gradient-to-br from-indigo-50 to-purple-50 rounded-2xl p-6 md:p-8 shadow-sm border border-indigo-100">
-                                    <p className="text-lg md:text-xl lg:text-2xl font-semibold text-gray-800 text-center leading-relaxed">
+                                    <p className="text-lg md:text-xl lg:text-2xl font-medium text-gray-800 text-center leading-relaxed">
                                         {currentQuestion.text}
                                     </p>
                                 </div>
@@ -197,7 +197,7 @@ export default function Test() {
                                     const isCorrect = choice.is_correct;
 
                                     let buttonClass = `
-        cursor-pointer px-4 py-4 md:px-5 md:py-5 rounded-xl text-center border-2 transition-all duration-200 font-medium text-base md:text-lg shadow-sm hover:shadow-md
+        cursor-pointer px-4 py-4 md:px-5 md:py-5 rounded-xl text-center border-2 transition-all duration-200 text-base md:text-lg shadow-sm hover:shadow-md
     `;
 
                                     if (isSelected && !feedbackMode) {
@@ -260,12 +260,28 @@ export default function Test() {
 
                     {
                         feedbackMode &&
-                        <div className="flex justify-between items-center w-70">
-                            <p className="font-bold text-lg">{answerIsCorrect ? "Correct!" : "Incorrect"}</p>
+                        <div className="flex justify-between items-center w-full max-w-2xl px-2">
+                            <div className="flex items-center gap-2">
+                                {answerIsCorrect ? (
+                                    <>
+                                        <svg className="w-6 h-6 md:w-7 md:h-7 text-green-600" fill="currentColor" viewBox="0 0 20 20">
+                                            <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                                        </svg>
+                                        <p className="font-bold text-lg md:text-xl text-green-700">Correct!</p>
+                                    </>
+                                ) : (
+                                    <>
+                                        <svg className="w-6 h-6 md:w-7 md:h-7 text-red-600" fill="currentColor" viewBox="0 0 20 20">
+                                            <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+                                        </svg>
+                                        <p className="font-bold text-lg md:text-xl text-red-700">Incorrect</p>
+                                    </>
+                                )}
+                            </div>
                             <button
-                                className={` rounded-4xl px-8 py-2 text-white font-bold text-lg ${continueButtonColor}`}
+                                className={`rounded-full px-6 md:px-8 py-2 text-white font-bold text-base md:text-lg transition-all ${continueButtonColor}`}
                                 onClick={() => handleContinue()}
-                            >Contiue</button>
+                            >Continue</button>
                         </div>
                     }
                 </div>
