@@ -201,19 +201,40 @@ export default function SimulatorTree() {
     const deleteLeaf = async (value: string) => {
         if (isAnimating) return;
 
-        // Find leaf node with matching value (prioritize leaves)
-        const targetNode = nodes.find(n =>
-            n.value.toString() === value.toString() && !n.left && !n.right
-        );
+        let targetNode: TreeNode | null = null;
 
-        if (!targetNode) {
-            // Check if any node with this value exists
-            const anyNode = findNodeByValue(value);
-            if (anyNode) {
-                alert(`Node "${value}" is not a leaf node. Use "Delete Node" instead.`);
-            } else {
-                alert(`Node with value "${value}" does not exist`);
+        // If value is empty, use selected node
+        if (!value || value.trim() === '') {
+            if (!selectedNodeId) {
+                alert('Please enter a value or select a node to delete');
+                return;
             }
+            targetNode = getSelectedNode();
+            if (!targetNode) {
+                alert('No selected node'); // or no selected node
+                return;
+            }
+        } else {
+            // Find leaf node with matching value (prioritize leaves)
+            targetNode = nodes.find(n =>
+                n.value.toString() === value.toString() && !n.left && !n.right
+            ) || null;
+
+            if (!targetNode) {
+                // Check if any node with this value exists
+                const anyNode = findNodeByValue(value);
+                if (anyNode) {
+                    alert(`Node "${value}" is not a leaf node. Use "Delete Node" instead.`);
+                } else {
+                    alert(`Node with value "${value}" does not exist`);
+                }
+                return;
+            }
+        }
+
+        // Check if selected/found node is a leaf
+        if (targetNode.left || targetNode.right) {
+            alert(`Node "${targetNode.value}" is not a leaf node. Use "Delete Node" instead.`);
             return;
         }
 
@@ -245,10 +266,25 @@ export default function SimulatorTree() {
     const deleteNode = async (value: string) => {
         if (isAnimating) return;
 
-        const targetNode = findNodeByValue(value);
-        if (!targetNode) {
-            alert(`Node with value "${value}" does not exist`);
-            return;
+        let targetNode: TreeNode | null = null;
+
+        // If value is empty, use selected node
+        if (!value || value.trim() === '') {
+            if (!selectedNodeId) {
+                alert('Please enter a value or select a node to delete');
+                return;
+            }
+            targetNode = getSelectedNode();
+            if (!targetNode) {
+                alert('Selected node not found');
+                return;
+            }
+        } else {
+            targetNode = findNodeByValue(value);
+            if (!targetNode) {
+                alert(`Node with value "${value}" does not exist`);
+                return;
+            }
         }
 
         setIsAnimating(true);
