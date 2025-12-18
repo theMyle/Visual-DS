@@ -145,44 +145,69 @@ export default function Test() {
                 </div>
 
                 <div ref={questionDiv} className="flex-1 flex flex-col overflow-y-auto">
-                    <div className="flex flex-col justify-around gap-10 min-h-full py-4">
-                        {/* Current question */}
+                    {/* Mobile: vertical layout, Desktop: 3:2 split layout */}
+                    <div className="flex flex-col lg:grid lg:grid-cols-5 gap-6 lg:gap-8 min-h-full py-8 px-4 lg:px-8">
 
-                        <div className="shrink-0 flex flex-col items-center px-8 text-lg">
-                            <p>{currentQuestion.text}</p>
+                        {/* LEFT SIDE - Questions and Images (3 parts on desktop) */}
+                        <div className="flex flex-col justify-center items-center gap-8 lg:col-span-3">
+                            {/* Current question */}
+                            <div className="flex flex-col items-center justify-center max-w-3xl w-full">
+                                <div className="bg-gradient-to-br from-indigo-50 to-purple-50 rounded-2xl p-6 md:p-8 shadow-sm border border-indigo-100">
+                                    <p className="text-lg md:text-xl lg:text-2xl font-semibold text-gray-800 text-center leading-relaxed">
+                                        {currentQuestion.text}
+                                    </p>
+                                </div>
+                            </div>
+
+                            {/* Custom image/diagram if present */}
+                            {currentQuestion.image_url && (
+                                <div className="flex justify-center items-center">
+                                    <div className="bg-white rounded-xl p-4 shadow-md border border-gray-200">
+                                        <Image
+                                            src={currentQuestion.image_url}
+                                            alt="Question diagram"
+                                            width={300}
+                                            height={0}
+                                            className="rounded-lg"
+                                        />
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* Feedback - appears on left side after answering */}
+                            {feedbackMode && (answerIsCorrect ? correctFeedback : wrongFeedback) && (
+                                <div className="flex justify-center w-full opacity-0 animate-fade-in">
+                                    <div className={`max-w-3xl w-full flex flex-col gap-2 p-6 rounded-2xl border-2 shadow-md ${(answerIsCorrect ?
+                                        "bg-green-50 border-green-300"
+                                        :
+                                        "bg-red-50 border-red-300"
+                                    )}`}>
+                                        <h1 className="font-bold text-lg">Explanation</h1>
+                                        <p className="text-gray-700 leading-relaxed">{answerIsCorrect ? correctFeedback : wrongFeedback}</p>
+                                    </div>
+                                </div>
+                            )}
                         </div>
 
-                        {/* Custom image/diagram if present */}
-                        {currentQuestion.image_url &&
-                            <div className="flex justify-center">
-                                <Image
-                                    src={currentQuestion.image_url}
-                                    alt="Image diagram"
-                                    width={300}
-                                    height={0}
-                                />
-                            </div>
-                        }
-
-                        {/* Choices render */}
-                        <div className="flex justify-center">
-                            <div className="grid grid-cols-2 gap-4 max-w-2xl w-full px-4">
+                        {/* RIGHT SIDE - Choices (2 parts on desktop) */}
+                        <div className="flex justify-center items-center lg:col-span-2">
+                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-1 gap-3 md:gap-4 max-w-2xl lg:max-w-lg w-full">
                                 {shuffledChoices.map((choice: Choice) => {
                                     const isSelected = selectedButton === choice.id;
                                     const isCorrect = choice.is_correct;
 
                                     let buttonClass = `
-        cursor-pointer px-3 py-3 rounded-xl text-center border-2 border-gray-300 transition-all duration-200
+        cursor-pointer px-4 py-4 md:px-5 md:py-5 rounded-xl text-center border-2 transition-all duration-200 font-medium text-base md:text-lg shadow-sm hover:shadow-md
     `;
 
                                     if (isSelected && !feedbackMode) {
-                                        buttonClass += " bg-indigo-50 text-indigo-600 border-indigo-400";
+                                        buttonClass += " bg-indigo-100 text-indigo-700 border-indigo-400 shadow-md scale-[1.02]";
                                     } else if (isSelected && feedbackMode && isCorrect) {
-                                        buttonClass += " bg-green-200 text-green-900 border-green-400";
+                                        buttonClass += " bg-green-100 text-green-900 border-green-500 shadow-md";
                                     } else if (isSelected && feedbackMode && !isCorrect) {
-                                        buttonClass += " bg-red-200 text-red-800 border-red-400";
+                                        buttonClass += " bg-red-100 text-red-800 border-red-400 shadow-md";
                                     } else {
-                                        buttonClass += " text-black";
+                                        buttonClass += " bg-white text-gray-700 border-gray-300 hover:border-indigo-300 hover:bg-indigo-50";
                                     }
 
                                     return (
@@ -196,24 +221,9 @@ export default function Test() {
                                         </button>
                                     );
                                 })}
-
                             </div>
                         </div>
 
-
-                        {/* Feedback */}
-                        {feedbackMode && (answerIsCorrect ? correctFeedback : wrongFeedback) && (
-                            <div className="flex justify-center pb-10 opacity-0 animate-fade-in">
-                                <div className={`lg:max-w-160 lg:min-w-160 bg-gray-200 flex flex-col gap-2 p-4 ml-4 mr-4 rounded-2xl border-2 border-gray-300 ${(answerIsCorrect ?
-                                    " bg-green-50"
-                                    :
-                                    "bg-red-50"
-                                )}`}>
-                                    <h1 className="font-bold">Explanation</h1>
-                                    <p>{answerIsCorrect ? correctFeedback : wrongFeedback}</p>
-                                </div>
-                            </div>
-                        )}
                     </div>
                 </div>
 
