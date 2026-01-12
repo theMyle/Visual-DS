@@ -637,7 +637,7 @@ export default function SimulatorTree() {
     const isInsertDisabled = (position: 'left' | 'right') => {
         const parent = getSelectedNode();
         if (!parent) return true;
-        if (parent.level >= MAX_DEPTH) return true;
+        if (parent.level >= maxDepth) return true;
         if (position === 'left' && parent.left) return true;
         if (position === 'right' && parent.right) return true;
         return false;

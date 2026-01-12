@@ -42,7 +42,7 @@ export default function AssessmentSummary({
                         Assessment Complete!
                     </h1>
                     <p className="text-sm text-gray-600">
-                        Here's how you did
+                        Here&apos;s how you did
                     </p>
                 </div>
 

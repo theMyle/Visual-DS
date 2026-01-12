@@ -1,6 +1,6 @@
 "use client";
 import { motion, Variants, useScroll, useTransform, useReducedMotion } from "framer-motion";
-import { useRef, useMemo } from "react";
+import { useRef } from "react";
 import HomeItem from "@/app/components/HomeItem";
 
 const containerVariants: Variants = {

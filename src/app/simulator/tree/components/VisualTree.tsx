@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 import ReactFlow, {
     Node,
     Edge,
@@ -56,7 +56,6 @@ const VisualTreeInner = ({ nodes, rootId, onNodeClick }: VisualTreeProps) => {
         // Calculate spacing for children based on level
         // horizontalSpacing = 400 / (2^level)
         const spacing = 400 / Math.pow(2, level);
-        const childSpacing = spacing / 2;
 
         // Position left child
         if (node.left) {
@@ -151,7 +150,7 @@ const VisualTreeInner = ({ nodes, rootId, onNodeClick }: VisualTreeProps) => {
 
         setReactFlowNodes(flowNodes);
         setEdges(flowEdges);
-    }, [nodes, rootId, setReactFlowNodes, setEdges]);
+    }, [nodes, rootId, setReactFlowNodes, setEdges, calculatePositions, onNodeClick]);
 
     return (
         <div className="w-full h-full">
