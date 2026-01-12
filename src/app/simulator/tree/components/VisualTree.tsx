@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useCallback } from 'react';
 import ReactFlow, {
     Node,
     Edge,
@@ -35,7 +35,7 @@ const VisualTreeInner = ({ nodes, rootId, onNodeClick }: VisualTreeProps) => {
     const [edges, setEdges, onEdgesChange] = useEdgesState([]);
 
     // Calculate positions recursively with dynamic spacing
-    const calculatePositions = (
+    const calculatePositions = useCallback((
         nodeId: string | null,
         level: number,
         leftBound: number,
@@ -78,7 +78,7 @@ const VisualTreeInner = ({ nodes, rootId, onNodeClick }: VisualTreeProps) => {
                 positions
             );
         }
-    };
+    }, [nodes]);
 
     useEffect(() => {
         if (!rootId) {
@@ -150,7 +150,7 @@ const VisualTreeInner = ({ nodes, rootId, onNodeClick }: VisualTreeProps) => {
 
         setReactFlowNodes(flowNodes);
         setEdges(flowEdges);
-    }, [nodes, rootId, setReactFlowNodes, setEdges, calculatePositions, onNodeClick]);
+    }, [nodes, rootId, setReactFlowNodes, setEdges, calculatePositions]);
 
     return (
         <div className="w-full h-full">
