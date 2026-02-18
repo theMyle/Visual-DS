@@ -14,10 +14,15 @@ export default function LessonCategory({ icon, title, path, progress = 0 }: Less
     return (
         <Link
             href={path}
-            className="flex flex-col items-center gap-3 w-full border-2 border-gray-300 rounded-2xl px-5 py-4 bg-white hover:border-gray-400 transition-colors"
+            className="flex flex-col items-center gap-3 w-full border-[1.5px] border-gray-300 rounded-lg px-3 py-4 bg-white hover:border-gray-400 transition-colors"
+            style={{
+                boxShadow: isCompleted
+                    ? "0 4px 20px rgba(74, 222, 128, 0.1)"
+                    : "0 4px 20px rgba(116, 143, 252, 0.08)"
+            }}
         >
             <div className="flex justify-between w-full items-baseline">
-                <p className="text-2xl font-bold text-gray-900">{title}</p>
+                <p className="text-2xl font-bold">{title}</p>
                 <p className={`text-lg ${isCompleted ? 'text-green-600 font-semibold' : 'text-gray-500'}`}>
                     {progress}%
                 </p>
@@ -31,10 +36,14 @@ export default function LessonCategory({ icon, title, path, progress = 0 }: Less
                 />
             </div>
 
-            <div className="w-full flex justify-end">
-                <p className={`font-bold ${isCompleted ? 'text-green-600' : 'text-green-600'}`}>
-                    {isCompleted ? 'Completed 🎉🎉' : 'Continue Learning →'}
-                </p>
+            <div className="w-full flex justify-end text-xs md:text-sm">
+                {progress !== 0 ?
+                    <p className={`font-bold ${isCompleted ? 'text-green-600' : 'text-green-600'}`}>
+                        {isCompleted ? 'Completed 🎉🎉🎉' : 'Continue Learning →'}
+                    </p>
+                    :
+                    <p className="text-gray-500 ">Get Started</p>
+                }
             </div>
         </Link>
     );

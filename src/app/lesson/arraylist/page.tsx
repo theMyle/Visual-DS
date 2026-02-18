@@ -13,7 +13,7 @@ import VideoEmbed from "../components/VideoEmbed"
 export default function ArrayList() {
     return (
         <div>
-            <main className="flex flex-col gap-16 px-4 pt-8 text-base md:text-lg max-w-3xl mx-auto">
+            <main className="flex flex-col gap-16 px-4 pt-8 text-base md:text-lg max-w-2xl mx-auto">
                 <Array />
                 <Array_List />
                 <CommonOperations />
