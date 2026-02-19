@@ -1,7 +1,7 @@
 import { Category } from "../lessons";
 
 export const SAMPLE_LESSON: Category = {
-  title: "Sample Lesson",
+  title: "Sample",
   description:
     "This is a sample lesson sub menu showing sub lesson that you can navigate and mark for progress tracking. Currently lessons point to nothing so you will be redirected to an error page. Thanks",
   lessons: [

@@ -20,10 +20,12 @@ export default function LessonPage() {
   }, [])
 
   return (
-    <div className="flex items-center w-full justify-center">
+    <div className="flex w-full justify-center">
       <div
-        className={"flex flex-col gap-6 items-center justify-center my-6 w-full px-4 max-w-3xl"}
+        className={"flex flex-col gap-4 justify-center my-6 w-full px-4 max-w-3xl"}
       >
+        <p className="font-bold text-gray-700">Lessons</p>
+
         {Object.entries(LESSON_MAP).map(([key, category]) => (
           <LessonCategory
             key={key}

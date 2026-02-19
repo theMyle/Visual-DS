@@ -9,7 +9,7 @@ import { STACK } from "./stack";
 import { TREE } from "./tree";
 
 export const LESSON_MAP: Record<string, Category> = {
-  "sample-lesson": SAMPLE_LESSON,
+  sample: SAMPLE_LESSON,
   "introduction-1": INTRODUCTION,
   "big-o": BIG_O,
   array: ARRAY,
