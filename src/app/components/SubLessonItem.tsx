@@ -6,10 +6,11 @@ import { cn } from "../lib/utils";
 interface SubLessonItemProps {
     title: string;
     href: string;
+    status: boolean;
+    onToggle: () => void;
 }
 
-export default function SubLessonItem({ title, href }: SubLessonItemProps) {
-    const [status, setStatus] = useState(false);
+export default function SubLessonItem({ title, href, status, onToggle }: SubLessonItemProps) {
 
     return (
         <div className="group flex items-center rounded-lg border-2 border-gray-300 h-20 transition-colors duration-150 hover:bg-gray-50">
@@ -32,7 +33,7 @@ export default function SubLessonItem({ title, href }: SubLessonItemProps) {
                     checked={status}
                     onChange={(e) => {
                         e.stopPropagation()
-                        setStatus((s) => !s);
+                        onToggle()
                     }}
                 />
             </div>

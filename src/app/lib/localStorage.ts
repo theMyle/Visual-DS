@@ -1,96 +1,119 @@
 /**
- * Generic utility class for saving and loading JSON data to/from browser localStorage.
- * All methods are SSR-safe and will return fallback values when localStorage is unavailable.
+ * Type Definitions
  */
-export class LocalStorage {
-  /**
-   * Check if localStorage is available (client-side only)
-   */
-  private static isAvailable(): boolean {
-    return (
-      typeof window !== "undefined" &&
-      typeof window.localStorage !== "undefined"
-    );
-  }
-
-  /**
-   * Save a value to localStorage with the specified key.
-   * @param key - The storage key
-   * @param value - The value to store (will be serialized to JSON)
-   * @returns true if successful, false otherwise
-   */
-  static setItem<T>(key: string, value: T): boolean {
-    if (!this.isAvailable()) {
-      return false;
-    }
-
-    try {
-      const serialized = JSON.stringify(value);
-      window.localStorage.setItem(key, serialized);
-      return true;
-    } catch (error) {
-      console.error(`Error saving to localStorage (key: ${key}):`, error);
-      return false;
-    }
-  }
-
-  /**
-   * Retrieve a value from localStorage by key.
-   * @param key - The storage key
-   * @param defaultValue - Optional default value to return if key doesn't exist or parsing fails
-   * @returns The parsed value, defaultValue if provided, or null
-   */
-  static getItem<T>(key: string, defaultValue?: T): T | null {
-    if (!this.isAvailable()) {
-      return defaultValue !== undefined ? defaultValue : null;
-    }
-
-    try {
-      const item = window.localStorage.getItem(key);
-      if (item === null) {
-        return defaultValue !== undefined ? defaultValue : null;
-      }
-      return JSON.parse(item) as T;
-    } catch (error) {
-      console.error(`Error reading from localStorage (key: ${key}):`, error);
-      return defaultValue !== undefined ? defaultValue : null;
-    }
-  }
-
-  /**
-   * Remove a specific item from localStorage by key.
-   * @param key - The storage key to remove
-   */
-  static removeItem(key: string): void {
-    if (!this.isAvailable()) {
-      return;
-    }
-
-    try {
-      window.localStorage.removeItem(key);
-    } catch (error) {
-      console.error(`Error removing from localStorage (key: ${key}):`, error);
-    }
-  }
-
-  /**
-   * Clear all items from localStorage.
-   */
-  static clear(): void {
-    if (!this.isAvailable()) {
-      return;
-    }
-
-    try {
-      window.localStorage.clear();
-    } catch (error) {
-      console.error("Error clearing localStorage:", error);
-    }
-  }
+export interface SubLesson {
+  title: string;
+  href: string;
+  completed: boolean;
 }
 
-/**
- * Example type for lesson progress structure.
- * You can use this as a reference or define your own types.
- */
-export type LessonProgressData = Record<string, Record<string, boolean>>;
+const CATEGORY_PREFIX = "lesson_";
+const DATA_VERSION = "1.0";
+
+const isClient = typeof window !== "undefined" && !!window.localStorage;
+
+export const LocalStorage = {
+  /**
+   * Core Generic Methods
+   */
+  setItem<T>(key: string, value: T): boolean {
+    if (!isClient) return false;
+    try {
+      window.localStorage.setItem(key, JSON.stringify(value));
+      return true;
+    } catch (error) {
+      console.error(`[LocalStorage] Save Error (key: ${key}):`, error);
+      return false;
+    }
+  },
+
+  getItem<T>(key: string, defaultValue: T): T {
+    if (!isClient) return defaultValue;
+    try {
+      const item = window.localStorage.getItem(key);
+      return item ? (JSON.parse(item) as T) : defaultValue;
+    } catch (error) {
+      console.error(`[LocalStorage] Read Error (key: ${key}):`, error);
+      return defaultValue;
+    }
+  },
+
+  removeItem(key: string): void {
+    if (isClient) window.localStorage.removeItem(key);
+  },
+
+  /**
+   * Domain-Specific Lesson Methods
+   */
+
+  /**
+   * syncCategory ensures the local data matches your static code definition.
+   * It preserves the 'completed' status of existing lessons while updating
+   * titles, adding new lessons, or handling version migrations.
+   */
+  syncCategory(path: string, staticLessons: SubLesson[]): SubLesson[] {
+    if (!isClient) return staticLessons;
+
+    const storageKey = `${CATEGORY_PREFIX}${path}`;
+    const versionKey = `${storageKey}_version`;
+
+    const stored = this.getCategory(path);
+    const localVersion = window.localStorage.getItem(versionKey);
+
+    // If version is current and data exists, don't overwrite
+    if (localVersion === DATA_VERSION && stored.length > 0) {
+      return stored;
+    }
+
+    // Version mismatch or empty data: Perform a "Smart Merge"
+    const merged = staticLessons.map((staticItem) => {
+      // Find matching user progress by the unique 'href'
+      const userProgress = stored.find((s) => s.href === staticItem.href);
+      return {
+        ...staticItem,
+        completed: userProgress ? userProgress.completed : staticItem.completed,
+      };
+    });
+
+    // Update storage with merged data and new version
+    this.setCategory(path, merged);
+    window.localStorage.setItem(versionKey, DATA_VERSION);
+
+    return merged;
+  },
+
+  getCategory(path: string): SubLesson[] {
+    return this.getItem<SubLesson[]>(`${CATEGORY_PREFIX}${path}`, []);
+  },
+
+  setCategory(path: string, lessons: SubLesson[]): boolean {
+    return this.setItem(`${CATEGORY_PREFIX}${path}`, lessons);
+  },
+
+  updateSubLesson(path: string, href: string, completed: boolean): boolean {
+    const lessons = this.getCategory(path);
+    const exists = lessons.some((l) => l.href === href);
+
+    if (!exists) return false;
+
+    const updated = lessons.map((l) =>
+      l.href === href ? { ...l, completed } : l,
+    );
+    return this.setCategory(path, updated);
+  },
+
+  getProgress(path: string): number {
+    const lessons = this.getCategory(path);
+    if (!lessons.length) return 0;
+
+    const completedCount = lessons.filter((l) => l.completed).length;
+
+    return Math.round((completedCount / lessons.length) * 100);
+  },
+
+  deleteCategory(path: string): void {
+    const storageKey = `${CATEGORY_PREFIX}${path}`;
+    this.removeItem(storageKey);
+    this.removeItem(`${storageKey}_version`);
+  },
+};
