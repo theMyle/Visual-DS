@@ -1,4 +1,4 @@
-import { Category } from "../lessons";
+import { Category } from "./types";
 
 export const INTRODUCTION: Category = {
   title: "Introduction to Data Structures",

@@ -1,4 +1,4 @@
-import { Category } from "../lessons";
+import { Category } from "./types";
 
 export const LINKED_LIST: Category = {
   title: "Linked List",

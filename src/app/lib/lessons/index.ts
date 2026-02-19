@@ -1,4 +1,3 @@
-import { Category } from "../lessons";
 import { ARRAY } from "./array";
 import { BIG_O } from "./big-o";
 import { INTRODUCTION } from "./introduction";
@@ -7,6 +6,7 @@ import { QUEUE } from "./queue";
 import { SAMPLE_LESSON } from "./sample-lesson";
 import { STACK } from "./stack";
 import { TREE } from "./tree";
+import { Category } from "./types";
 
 export const LESSON_MAP: Record<string, Category> = {
   sample: SAMPLE_LESSON,

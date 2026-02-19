@@ -2,6 +2,7 @@
 import { motion, Variants, useScroll, useTransform, useReducedMotion } from "framer-motion";
 import { useRef } from "react";
 import HomeItem from "@/app/components/HomeItem";
+import { LocalStorage } from "./lib/localStorage";
 
 const containerVariants: Variants = {
   hidden: { opacity: 0 },
@@ -47,6 +48,14 @@ const reducedHeroVariants: Variants = {
       duration: 0.3,
     },
   },
+};
+
+const handleReset = (e: React.MouseEvent) => {
+  e.preventDefault();
+  if (confirm("Reset all local learning progress?")) {
+    LocalStorage.clearAll();
+    window.location.reload();
+  }
 };
 
 export default function App() {
@@ -195,6 +204,22 @@ export default function App() {
             />
           </div>
         </motion.div>
+
+        {/* Minimal Footer with Debug Link */}
+        <footer className="mt-20 py-8 text-center border-t border-gray-100">
+          <p className="text-sm text-gray-400">
+            Visual Data Structures &copy; {new Date().getFullYear()}
+          </p>
+          <a
+            href="#"
+            onClick={handleReset}
+            className="text-[10px] text-gray-300 hover:text-red-400 transition-colors mt-2 inline-block cursor-pointer"
+            title="Clear local progress"
+          >
+            [Debug: Reset Data]
+          </a>
+        </footer>
+
       </motion.section>
     </div>
   );

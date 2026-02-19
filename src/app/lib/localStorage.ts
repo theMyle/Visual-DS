@@ -111,9 +111,30 @@ export const LocalStorage = {
     return Math.round((completedCount / lessons.length) * 100);
   },
 
+  // ...existing code...
   deleteCategory(path: string): void {
     const storageKey = `${CATEGORY_PREFIX}${path}`;
     this.removeItem(storageKey);
     this.removeItem(`${storageKey}_version`);
+  },
+
+  /**
+   * Debugging / Dev Tools
+   */
+  clearAll(): void {
+    if (!isClient) return;
+
+    // Collect keys to remove to avoid index shifting issues during iteration
+    const keysToRemove: string[] = [];
+
+    for (let i = 0; i < window.localStorage.length; i++) {
+      const key = window.localStorage.key(i);
+      if (key && (key.startsWith(CATEGORY_PREFIX) || key === "theme")) {
+        keysToRemove.push(key);
+      }
+    }
+
+    keysToRemove.forEach((key) => window.localStorage.removeItem(key));
+    console.log(`[LocalStorage] Cleared ${keysToRemove.length} entries.`);
   },
 };
