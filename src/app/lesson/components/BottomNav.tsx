@@ -19,60 +19,58 @@ export default function BottomNav({
 }) {
     if (!prev && !next) return null;
 
-    const onlyNext = !prev && !!next;
-    // const onlyPrev = !!prev && !next;
+    const baseLinkClass = "group flex flex-col gap-1 p-4 rounded-2xl transition-all duration-200 hover:bg-gray-50 border border-transparent hover:border-gray-100 active:scale-[0.98]";
 
     return (
         <nav
             aria-label="Lesson navigation"
-            className={`max-w-3xl mx-auto py-6 px-5 ${className}`}
+            className={`max-w-3xl mx-auto py-10 px-5 ${className}`}
         >
-            <div className="flex flex-row items-center justify-between gap-3">
-                {prev && (
-                    <Link
-                        href={prev.href}
-                        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm transition-all hover:opacity-80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-1"
-                        style={{ backgroundColor: ACCENT_COLOR, color: "#ffffff" }}
-                    >
-                        <ChevronLeft />
-                        <span>{prev.label ?? "Previous"}</span>
-                    </Link>
-                )}
+            <div className="grid grid-cols-2 gap-4">
+                {/* Previous Link */}
+                <div className="flex justify-start">
+                    {prev && (
+                        <Link href={prev.href} className={baseLinkClass}>
+                            <span className="flex items-center gap-1 text-xs font-semibold uppercase tracking-wider text-gray-400 group-hover:text-gray-500">
+                                <ChevronLeft /> Previous
+                            </span>
+                            <span className="text-sm md:text-base font-bold text-gray-800 ml-5">
+                                {prev.label}
+                            </span>
+                        </Link>
+                    )}
+                </div>
 
-                {next && (
-                    <Link
-                        href={next.href}
-                        className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm transition-all hover:opacity-80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-1 ${onlyNext ? "ml-auto" : ""
-                            }`}
-                        style={{ backgroundColor: ACCENT_COLOR, color: "#ffffff" }}
-                    >
-                        <span>{next.label ?? "Next"}</span>
-                        <ChevronRight />
-                    </Link>
-                )}
+                {/* Next Link */}
+                <div className="flex justify-end text-right">
+                    {next && (
+                        <Link href={next.href} className={baseLinkClass}>
+                            <span className="flex items-center justify-end gap-1 text-xs font-semibold uppercase tracking-wider" style={{ color: ACCENT_COLOR }}>
+                                Next <ChevronRight />
+                            </span>
+                            <span className="text-sm md:text-base font-bold text-gray-800 mr-5">
+                                {next.label}
+                            </span>
+                        </Link>
+                    )}
+                </div>
             </div>
         </nav>
     );
 }
 
-function ChevronLeft(props: React.SVGProps<SVGSVGElement>) {
+function ChevronLeft() {
     return (
-        <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden {...props}>
-            <path
-                fill="currentColor"
-                d="M15.41 7.41 14 6l-6 6 6 6 1.41-1.41L10.83 12z"
-            />
+        <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" strokeWidth="2.5" fill="none">
+            <path d="M15 18l-6-6 6-6" strokeLinecap="round" strokeLinejoin="round" />
         </svg>
     );
 }
 
-function ChevronRight(props: React.SVGProps<SVGSVGElement>) {
+function ChevronRight() {
     return (
-        <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden {...props}>
-            <path
-                fill="currentColor"
-                d="M8.59 16.59 10 18l6-6-6-6-1.41 1.41L13.17 12z"
-            />
+        <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" strokeWidth="2.5" fill="none">
+            <path d="M9 18l6-6-6-6" strokeLinecap="round" strokeLinejoin="round" />
         </svg>
     );
 }

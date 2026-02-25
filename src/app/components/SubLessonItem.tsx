@@ -1,6 +1,5 @@
 'use client'
 import Link from "next/link";
-import { useState } from "react";
 import { cn } from "../lib/utils";
 
 interface SubLessonItemProps {
@@ -11,6 +10,9 @@ interface SubLessonItemProps {
 }
 
 export default function SubLessonItem({ title, href, status, onToggle }: SubLessonItemProps) {
+    const dashIndex = title.indexOf("-");
+    const left = dashIndex === -1 ? title : title.slice(0, dashIndex).trim();
+    const right = dashIndex === -1 ? "" : title.slice(dashIndex + 1).trim();
 
     return (
         <div className="group flex items-center rounded-lg border-2 border-gray-300 h-20 transition-colors duration-150 hover:bg-gray-50">
@@ -22,7 +24,9 @@ export default function SubLessonItem({ title, href, status, onToggle }: SubLess
                     status && "line-through text-gray-400 italic"
                 )}
             >
-                <li>{title}</li>
+                <li>
+                    {left} {right && <>- <strong>{right}</strong></>}
+                </li>
             </Link>
 
             {/* Checkbox container */}
@@ -30,6 +34,7 @@ export default function SubLessonItem({ title, href, status, onToggle }: SubLess
                 <input
                     type="checkbox"
                     className="h-6 w-6 accent-green-600 cursor-pointer"
+                    disabled
                     checked={status}
                     onChange={(e) => {
                         e.stopPropagation()

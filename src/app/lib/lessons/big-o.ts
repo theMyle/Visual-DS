@@ -3,16 +3,16 @@ import { Category } from "./types";
 export const BIG_O: Category = {
   title: "Big-O",
   description:
-    "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.",
+    "This module discusses the universal language used to compare algorithmic efficiency. You'll learn how to classify algorithms by their worst-case growth rates; from linear O(n) to quadratic O(n²); and understand why theoretical scaling matters more than raw execution time when dealing with large datasets.",
   lessons: [
     {
-      title: "lessons 2.1",
-      href: "/lesson/introduction-2-1",
+      title: "2.1 - Introduction",
+      href: "/lesson/big-o/introduction",
       completed: false,
     },
     {
-      title: "lessons 2.2",
-      href: "/lesson/introduction-2-2",
+      title: "2.2 - What is Big-O?",
+      href: "/lesson/big-o/big-o-notation",
       completed: false,
     },
   ],
