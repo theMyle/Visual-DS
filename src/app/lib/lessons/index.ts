@@ -3,14 +3,12 @@ import { BIG_O } from "./big-o";
 import { INTRODUCTION } from "./introduction";
 import { LINKED_LIST } from "./linked-list";
 import { QUEUE } from "./queue";
-import { SAMPLE_LESSON } from "./sample-lesson";
 import { STACK } from "./stack";
 import { TREE } from "./tree";
 import { Category } from "./types";
 
 export const LESSON_MAP: Record<string, Category> = {
-  sample: SAMPLE_LESSON,
-  "introduction-1": INTRODUCTION,
+  introduction: INTRODUCTION,
   "big-o": BIG_O,
   array: ARRAY,
   stack: STACK,

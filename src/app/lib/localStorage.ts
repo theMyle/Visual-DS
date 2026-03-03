@@ -8,7 +8,7 @@ export interface SubLesson {
 }
 
 const CATEGORY_PREFIX = "lesson_";
-const DATA_VERSION = "1.0";
+const DATA_VERSION = "1.01";
 
 const isClient = typeof window !== "undefined" && !!window.localStorage;
 
