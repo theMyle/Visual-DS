@@ -15,7 +15,10 @@ export default function SubLessonItem({ title, href, status, onToggle }: SubLess
     const right = dashIndex === -1 ? "" : title.slice(dashIndex + 1).trim();
 
     return (
-        <div className="group flex items-center rounded-lg border-2 border-gray-300 h-20 transition-colors duration-150 hover:bg-gray-50">
+        <div className={cn(
+            "group flex items-center rounded-lg border-2 border-gray-300 h-20 transition-colors duration-150 hover:bg-gray-50",
+        )}
+        >
 
             <Link
                 href={href}
@@ -34,8 +37,9 @@ export default function SubLessonItem({ title, href, status, onToggle }: SubLess
                 <input
                     type="checkbox"
                     className="h-6 w-6 accent-green-600 cursor-pointer"
-                    disabled
                     checked={status}
+                    readOnly
+                    disabled
                     onChange={(e) => {
                         e.stopPropagation()
                         onToggle()

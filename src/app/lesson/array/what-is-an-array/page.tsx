@@ -2,11 +2,11 @@
 import { SECTION_CLASS } from "../../components/constants";
 import Heading from "../../components/Heading";
 import BottomNav from "../../components/BottomNav";
-import Image from "next/image";
 import MarkAsDone from "../../components/MarkAsDone";
 import BackButton from "@/app/components/BackButton";
 import ListSection from "../../components/ListSection";
 import VideoEmbed from "../../components/VideoEmbed";
+import VisualImage from "../../components/VisualImage";
 
 export default function WhatIsAnArray() {
     const slug = "array";
@@ -46,28 +46,19 @@ function Array() {
                 Arrays store data in elements which are accessed using indices. An index acts as an offset; it tells the computer exactly how far to jump from the starting memory address to find the desired value. By convention, indexing starts at 0, meaning the first element has an offset of zero from the start of the array.
             </p>
 
-
-            <div className="flex justify-center w-full pt-10 pb-10">
-                <Image
-                    src={"/lessons/array/array-diagram.png"}
-                    alt="Array diagram"
-                    width={600}
-                    height={100}
-                />
-            </div>
+            <VisualImage
+                src="/lessons/array/array-diagram.png"
+                alt="Array diagram"
+            />
 
             <p>
                 When an array is initialized, the system allocates a single, unbroken block of memory. This physical layout is the defining characteristic of the structure. Because the elements are adjacent, the computer calculates the physical address of any element using a base-plus-offset formula. If you know the starting address and the size of the data type, you can jump to any specific element immediately without traversing the ones before it.
             </p>
 
-            <div className="flex justify-center w-full pt-10 pb-10">
-                <Image
-                    src={"/lessons/array/array-index-calculation.png"}
-                    alt="Array index calculation diagram"
-                    width={600}
-                    height={100}
-                />
-            </div>
+            <VisualImage
+                src="/lessons/array/array-index-calculation.png"
+                alt="Array index calculation diagram"
+            />
 
             <p>
                 This leads to a key superpower of the array: extremely fast random access. Since the position can be calculated mathematically, the computer achieves constant time O(1) access regardless of whether it is retrieving the first or the last item in the list.

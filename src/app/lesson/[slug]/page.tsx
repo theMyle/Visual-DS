@@ -37,7 +37,7 @@ export default function LessonDetail() {
 
     return (
         <div className="w-full flex justify-center">
-            <div className="flex flex-col  gap-6 max-w-3xl md:min-w-3xl p-6">
+            <div className="flex flex-col gap-6 max-w-3xl md:min-w-3xl p-6 pb-10">
 
                 {/* back button */}
                 <BackButton text="Back to Lessons" href="/lesson" />
