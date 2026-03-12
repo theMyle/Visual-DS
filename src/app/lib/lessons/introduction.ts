@@ -3,16 +3,21 @@ import { Category } from "./types";
 export const INTRODUCTION: Category = {
   title: "Introduction to Data Structures",
   description:
-    "Welcome to introduction to datastructure, here we do bla bla bla about data structure and more datastructre thingy. You can sleep now good night",
+    "A high-level overview of the fundamental concepts behind Data Structures and Algorithms. This module defines what they are, how they work together, and why they are the essential building blocks of efficient software development.",
   lessons: [
     {
-      title: "lessons 2.1",
-      href: "/lesson/introduction-2-1",
+      title: "lessons 1.0 - Introduction to DSA",
+      href: "/lesson/introduction/introduction-to-dsa",
       completed: false,
     },
     {
-      title: "lessons 2.2",
-      href: "/lesson/introduction-2-2",
+      title: "lessons 1.1 - What is an Algorithm",
+      href: "/lesson/introduction/what-is-an-algorithm",
+      completed: false,
+    },
+    {
+      title: "lessons 1.2 - What is a Data Structure",
+      href: "/lesson/introduction/what-is-a-ds",
       completed: false,
     },
   ],

@@ -27,6 +27,7 @@ export default function WhatIsAnArray() {
 
             </main>
             <BottomNav
+                prev={{ href: `/lesson/${slug}/introduction`, label: "Introduction" }}
                 next={{ href: `/lesson/${slug}/types-of-array`, label: "Types of Array" }}
             />
         </div>

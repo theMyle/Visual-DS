@@ -1,6 +1,5 @@
 
 
-import { section } from "framer-motion/client";
 import BottomNav from "../../components/BottomNav";
 import MarkAsDone from "../../components/MarkAsDone";
 import BackButton from "@/app/components/BackButton";
