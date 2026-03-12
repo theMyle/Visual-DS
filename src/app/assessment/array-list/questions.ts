@@ -1,213 +1,228 @@
 import { Assessment } from "../types";
 
 export const arrayListAssessment: Assessment = {
-    id: "array-list-1",
-    title: "Array List Basics",
-    description: "Short assessment on accessing and indexing arrays",
-    category: {
-        id: "data-structures",
-        name: "Data Structures",
-        description: "Core data structures concepts",
+  id: "array-list-1",
+  title: "Array List Basics",
+  description: "Assessment on indexing, memory calculation, and performance.",
+  category: {
+    id: "data-structures",
+    name: "Data Structures",
+    description: "Core data structures concepts",
+  },
+  questions: [
+    {
+      id: "q1",
+      text: "How do you access the value (5) in this array nums?",
+      type: "multiple_choice",
+      image_url: "/assessment/array-list/q1.png",
+      choices: [
+        { id: "a", text: "nums[2]", is_correct: false },
+        { id: "b", text: "nums[3]", is_correct: false },
+        { id: "c", text: "nums[4]", is_correct: true },
+        { id: "d", text: "nums[5]", is_correct: false },
+      ],
+      feedback: {
+        correct:
+          "That's right! Since array indices start at 0, the fifth element (the value 5) is at index 4.",
+        incorrect:
+          "Not quite. Arrays start counting from 0, so the fifth element is actually at index 4.",
+      },
     },
-    questions: [
+    {
+      id: "q2",
+      text: 'For items = ["Sword", "Shield", "Potion"], how do you access the very first element?',
+      type: "multiple_choice",
+      choices: [
+        { id: "a", text: "items[1]", is_correct: false },
+        { id: "b", text: "items[0]", is_correct: true },
+        { id: "c", text: "items{0}", is_correct: false },
+        { id: "d", text: "items{1}", is_correct: false },
+      ],
+      feedback: {
+        correct:
+          "Correct! In almost all programming languages, arrays are 0-indexed. The first element is always at index 0.",
+        incorrect:
+          "Careful! Computer scientists start counting at 0. If you use [1], you’ll actually grab the second item (Shield)!",
+      },
+    },
+    {
+      id: "q3",
+      text: "In a Dynamic Array, what happens behind the scenes when you add an element but the capacity is full?",
+      type: "multiple_choice",
+      choices: [
         {
-            id: "q1",
-            text: "How do you access the value (5) in this array?",
-            type: "multiple_choice",
-            image_url: "/assessment/array-list/q1.png",
-            choices: [
-                { id: "a", text: "array.get(2)", is_correct: false },
-                { id: "b", text: "array.get(3)", is_correct: false },
-                { id: "c", text: "array.get(4)", is_correct: true },
-                { id: "d", text: "array.get(5)", is_correct: false },
-            ],
-            feedback: {
-                correct: "That's right! Number 5 is the fifth element of the array. Since array indices starts at Zero (0). Number 5 is at index 4.",
-                incorrect: "Not quite. Arrays start counting from 0, so the fifth element is actually at index 4."
-            },
+          id: "a",
+          text: "The array expands into the next available byte.",
+          is_correct: false,
         },
-
         {
-            id: "q2",
-            text: "Given an Array [10, 20, 30, 40], what is the value at index 2?",
-            type: "multiple_choice",
-            choices: [
-                { id: "a", text: "40", is_correct: false },
-                { id: "b", text: "30", is_correct: true },
-                { id: "c", text: "20", is_correct: false },
-                { id: "d", text: "10", is_correct: false },
-            ],
-            feedback:
-            {
-                correct: "That's right! Indices start at 0, so index 2 refers to the third element (30).",
-                incorrect: "Remember that ArrayLists are zero-indexed. The first element is at index 0."
-            },
+          id: "b",
+          text: "The computer allocates a larger block and copies all elements over.",
+          is_correct: true,
         },
-
         {
-            id: "q3",
-            text: "Which operation is generally the slowest in an array?",
-            type: "multiple_choice",
-            choices: [
-                { id: "a", text: "Insert at the back", is_correct: false },
-                { id: "b", text: "Insert at the front", is_correct: true },
-                { id: "c", text: "Insert in the middle", is_correct: false },
-                { id: "d", text: "Get the first element", is_correct: false },
-            ],
-            feedback: {
-                correct:
-                    "Correct! Inserting at the front is slow because all other elements must be shifted one position to make space.",
-                incorrect:
-                    "Not quite. Inserting at the front is the slowest because it requires shifting all existing elements to the right.",
-            },
+          id: "c",
+          text: "The array becomes a Linked List automatically.",
+          is_correct: false,
         },
-
-
         {
-            id: "q4",
-            text: "Why are arrays efficient for accessing elements by index?",
-            type: "multiple_choice",
-            choices: [
-                { id: "a", text: "Because elements are stored in random locations", is_correct: false },
-                { id: "b", text: "Because each element is linked to the next", is_correct: false },
-                { id: "c", text: "Because elements are stored in contiguous memory", is_correct: true },
-                { id: "d", text: "Because the array automatically searches for values", is_correct: false },
-            ],
-            feedback: {
-                correct:
-                    "That's right! Arrays store elements in contiguous memory, so the computer can calculate an element’s position directly from its index.",
-                incorrect:
-                    "Remember, arrays are stored in contiguous memory, allowing instant access when you know the index.",
-            },
+          id: "d",
+          text: "The new element is stored in an 'overflow' variable.",
+          is_correct: false,
         },
-
+      ],
+      feedback: {
+        correct:
+          'Correct! This is why "pushing" to a dynamic array is usually O(1), but occasionally becomes O(n) during a resize.',
+        incorrect:
+          'A dynamic array is still just a basic array under the hood. Since a basic array is a fixed block of slots, it can\'t just "grow" if the spots next to it are taken. It must find a brand-new, larger space and move everything there.',
+      },
+    },
+    {
+      id: "q4",
+      text: "Which operation is faster: accessing Index 0 or accessing a random middle element (Index 547)?",
+      type: "multiple_choice",
+      choices: [
+        { id: "a", text: "Index 0 is faster", is_correct: false },
+        { id: "b", text: "Index 547 is slower", is_correct: false },
         {
-            id: "q5",
-            text: "What happens if you try to access an array index that doesn't exist?",
-            type: "multiple_choice",
-            choices: [
-                { id: "a", text: "The array automatically creates a new element", is_correct: false },
-                { id: "b", text: "You get an out-of-bounds or undefined error", is_correct: true },
-                { id: "c", text: "The array returns the last element instead", is_correct: false },
-                { id: "d", text: "Nothing happens; it just skips that index", is_correct: false },
-            ],
-            feedback: {
-                correct:
-                    "Correct! Accessing an index outside the array’s range causes an out-of-bounds or undefined error, depending on the language.",
-                incorrect:
-                    "Arrays have fixed bounds. Accessing an invalid index results in an error, not a new element or a skipped index.",
-            },
+          id: "c",
+          text: "Both take the exact same amount of time",
+          is_correct: true,
         },
-
+        { id: "d", text: "It depends on the stored value", is_correct: false },
+      ],
+      feedback: {
+        correct:
+          "Correct! This is the power of the Address Calculation Formula. Whether the index is 0 or 547, the computer performs the same single math operation to find the address instantly (O(1)).",
+        incorrect:
+          "It’s a trick! Remember the formula: Address = Base + (Index * Size). The computer does the same amount of 'work' regardless of how big the index is.",
+      },
+    },
+    {
+      id: "q5",
+      text: "Which of the following operations is the most efficient (fastest) in a standard array?",
+      type: "multiple_choice",
+      choices: [
+        { id: "a", text: "Inserting at the beginning", is_correct: false },
+        { id: "b", text: "Searching in an unsorted array", is_correct: false },
         {
-            id: "q6",
-            text: "Why is inserting in the middle of an array slower than adding at the end?",
-            type: "multiple_choice",
-            choices: [
-                { id: "a", text: "Because arrays only allow insertions at the start or end", is_correct: false },
-                { id: "b", text: "Because elements after the insertion point must be shifted", is_correct: true },
-                { id: "c", text: "Because the array needs to reallocate memory each time", is_correct: false },
-                { id: "d", text: "Because middle elements are locked in place", is_correct: false },
-            ],
-            feedback: {
-                correct:
-                    "Exactly! When you insert in the middle, every element after that position must be shifted to make space.",
-                incorrect:
-                    "Not quite. Inserting in the middle is slower because it requires shifting all elements that come after the insertion point.",
-            },
+          id: "c",
+          text: "Accessing an item at a specific index",
+          is_correct: true,
         },
-
+        { id: "d", text: "Deleting from the middle", is_correct: false },
+      ],
+      feedback: {
+        correct:
+          "Excellent! Accessing by index is O(1) constant time. It takes the same amount of time whether you have 10 elements or 10 million.",
+        incorrect:
+          "Think about which operation lets the computer jump directly to the answer. Most of these require looking at or shifting every item in the list.",
+      },
+    },
+    {
+      id: "q6",
+      text: "Why is inserting in the middle of an array slower than adding at the end?",
+      type: "multiple_choice",
+      choices: [
         {
-            id: "q7",
-            text: "How does an ArrayList handle adding elements when it runs out of space?",
-            type: "multiple_choice",
-            choices: [
-                { id: "a", text: "It deletes old elements to make space", is_correct: false },
-                { id: "b", text: "It allocates a larger array and copies the old elements", is_correct: true },
-                { id: "c", text: "It prevents further insertions", is_correct: false },
-                { id: "d", text: "It stores new elements in a separate list", is_correct: false },
-            ],
-            feedback: {
-                correct:
-                    "Right! When an ArrayList grows, it creates a larger array and copies the old elements into it.",
-                incorrect:
-                    "Remember, ArrayLists grow by allocating a larger array and copying the existing elements over — they don’t delete or split them.",
-            },
+          id: "a",
+          text: "Arrays only allow insertions at the start/end",
+          is_correct: false,
         },
-
         {
-            id: "q8",
-            text: "Given this array [2, 4, 6, 8, 10], how do you access the last element?",
-            type: "multiple_choice",
-            choices: [
-                { id: "a", text: "array.get(4)", is_correct: true },
-                { id: "b", text: "array.get(5)", is_correct: false },
-                { id: "c", text: "array.get(10)", is_correct: false },
-                { id: "d", text: "array.get(3)", is_correct: false },
-            ],
-            feedback: {
-                correct:
-                    "Correct! The array’s last element is at index 4 because indexing starts at 0. The indices are 0→2, 1→4, 2→6, 3→8, 4→10.",
-                incorrect:
-                    "Not quite. Since arrays start at index 0, the last element (10) is at index 4, not 5. The valid indices are 0 to 4.",
-            },
+          id: "b",
+          text: "Elements after the insertion point must be shifted",
+          is_correct: true,
         },
-
-
         {
-            id: "q9",
-            text: "What does the index in an array represent?",
-            type: "multiple_choice",
-            choices: [
-                { id: "a", text: "The position of an element in the array", is_correct: true },
-                { id: "b", text: "The actual value stored in the element", is_correct: false },
-                { id: "c", text: "The number of times the value appears", is_correct: false },
-                { id: "d", text: "The total size of the array", is_correct: false },
-            ],
-            feedback: {
-                correct:
-                    "That's right! The index represents an element’s position, starting from 0 for the first element.",
-                incorrect:
-                    "Remember, the index refers to where an element is positioned in the array, not its value or count.",
-            },
+          id: "c",
+          text: "The array must reallocate memory every time",
+          is_correct: false,
         },
-
         {
-            id: "q10",
-            text: "Which operation requires shifting elements in an array?",
-            type: "multiple_choice",
-            choices: [
-                { id: "a", text: "Accessing an element by index", is_correct: false },
-                { id: "b", text: "Updating an existing element", is_correct: false },
-                { id: "c", text: "Inserting or removing an element at the front", is_correct: true },
-                { id: "d", text: "Reading all elements in order", is_correct: false },
-            ],
-            feedback: {
-                correct:
-                    "Exactly! Inserting or removing at the front requires shifting all other elements to keep the array contiguous.",
-                incorrect:
-                    "Remember, shifting only happens when inserting or removing elements — not when accessing or updating them.",
-            },
+          id: "d",
+          text: "Middle elements are locked in place",
+          is_correct: false,
         },
-
+      ],
+      feedback: {
+        correct:
+          "Exactly! To maintain the order, every element after the new item must be 'scooted over' to make room.",
+        incorrect:
+          "Not quite. Think about the slots. If you put something in slot 5, what has to happen to the items already in slots 5, 6, and 7?",
+      },
+    },
+    {
+      id: "q7",
+      text: "Worst-case search time for a specific username in an unsorted array of 1,000,000 elements?",
+      type: "multiple_choice",
+      choices: [
+        { id: "a", text: "O(1)", is_correct: false },
+        { id: "b", text: "O(n)", is_correct: true },
+        { id: "c", text: "O(n²)", is_correct: false },
+        { id: "d", text: "O(log n)", is_correct: false },
+      ],
+      feedback: {
+        correct:
+          "Correct! Because it's unsorted, you might have to check every single element. This is Linear Search (O(n)).",
+        incorrect:
+          "If the computer doesn't know where the value is, it has to check one-by-one. If the item is at the very end, how many steps does that take?",
+      },
+    },
+    {
+      id: "q8",
+      text: "Given a character array starting at base address 1024 where each character occupies 1 byte, what is the memory location of the character at index 7?",
+      type: "multiple_choice",
+      choices: [
+        { id: "a", text: "1030", is_correct: false },
+        { id: "b", text: "1031", is_correct: true },
+        { id: "c", text: "1032", is_correct: false },
+        { id: "d", text: "1033", is_correct: false },
+      ],
+      feedback: {
+        correct:
+          "Correct! Each index increases the address by 1 byte: 1024 + 7 = 1031.",
+        incorrect:
+          "Careful with the 'off-by-one' error. If index 0 is 1024, count 7 steps forward. (1024 + 7).",
+      },
+    },
+    {
+      id: "q9",
+      text: "What does the index in an array represent?",
+      type: "multiple_choice",
+      choices: [
         {
-            id: "q11",
-            text: "Given this array [1, 2, 3, 4, 5], what happens after array.removeAt(2)?",
-            type: "multiple_choice",
-            choices: [
-                { id: "a", text: "[1, 2, 3, 4, 5]", is_correct: false },
-                { id: "b", text: "[1, 2, 4, 5]", is_correct: true },
-                { id: "c", text: "[1, 3, 4, 5]", is_correct: false },
-                { id: "d", text: "[1, 2, 3, 5]", is_correct: false },
-            ],
-            feedback: {
-                correct:
-                    "Correct! The element at index 2 (which is 3) is removed, and later elements shift left.",
-                incorrect:
-                    "Remember, removeAt(2) deletes the element at index 2 (the 3). The new array becomes [1, 2, 4, 5].",
-            },
+          id: "a",
+          text: "The position (offset) of an element",
+          is_correct: true,
         },
-
-
-    ],
+        { id: "b", text: "The actual value stored inside", is_correct: false },
+        { id: "c", text: "The frequency of the value", is_correct: false },
+        { id: "d", text: "The total size of the array", is_correct: false },
+      ],
+      feedback: {
+        correct:
+          "That's right! The index is the offset from the start of the array.",
+        incorrect:
+          "The index is like a mailbox number. It tells you *where* to look, not *what* is inside the box.",
+      },
+    },
+    {
+      id: "q10",
+      text: "Given an array of integers starting at base address 2000 where each integer occupies 4 bytes, what is the memory location of the element at index 5?",
+      type: "multiple_choice",
+      choices: [
+        { id: "a", text: "2005", is_correct: false },
+        { id: "b", text: "2016", is_correct: false },
+        { id: "c", text: "2020", is_correct: true },
+        { id: "d", text: "2024", is_correct: false },
+      ],
+      feedback: {
+        correct: "Correct! Using Base + (Index * Size): 2000 + (5 * 4) = 2020.",
+        incorrect:
+          "Use the Address Calculation formula: Address = Base + (Index * Size). You need to skip five 4-byte elements from the starting address of 2000.",
+      },
+    },
+  ],
 };

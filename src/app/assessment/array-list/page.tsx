@@ -174,10 +174,11 @@ export default function Test() {
 
                         {/* LEFT SIDE - Questions and Images (3 parts on desktop) */}
                         <div className="flex flex-col justify-center items-center gap-8 lg:col-span-3">
+
                             {/* Current question */}
                             <div className="flex flex-col items-center justify-center max-w-3xl w-full">
-                                <div className="bg-gradient-to-br from-indigo-50 to-purple-50 rounded-2xl p-6 md:p-8 shadow-sm border border-indigo-100">
-                                    <p className="text-lg md:text-xl lg:text-2xl font-medium text-gray-800 text-center leading-relaxed">
+                                <div className="bg-gradient-to-br from-indigo-50 to-purple-50 rounded-2xl p-6 md:p-8 shadow-sm border border-indigo-100 border-l-indigo-400 border-l-8">
+                                    <p className="text-lg md:text-xl lg:text-2xl text-gray-800 text-center leading-relaxed">
                                         {currentQuestion.text}
                                     </p>
                                 </div>

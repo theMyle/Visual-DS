@@ -53,8 +53,13 @@ function Array() {
             />
 
             <p>
-                When an array is initialized, the system allocates a single, unbroken block of memory. This physical layout is the defining characteristic of the structure. Because the elements are adjacent, the computer calculates the physical address of any element using a base-plus-offset formula. If you know the starting address and the size of the data type, you can jump to any specific element immediately without traversing the ones before it.
+                When an array is initialized, the system allocates a single, unbroken block of memory. This physical layout is the defining characteristic of the structure. Because the elements are adjacent, the computer calculates the physical address of any element using <strong>Address Calculation Formula</strong> formula. If you know the starting address and the size of the data type, you can jump to any specific element immediately without traversing the ones before it.
             </p>
+
+            <VisualImage
+                src="/lessons/array/array-address-calculation.png"
+                alt="Address Calculation Formula"
+            />
 
             <VisualImage
                 src="/lessons/array/array-index-calculation.png"
