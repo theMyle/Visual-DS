@@ -57,9 +57,28 @@ export default function SimulatorLinkedList() {
     ];
 
     const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
-    const delay = {
-        interval: 150,
-        focus: 150,
+    const timing = {
+        step: 180,
+        pulse: 280,
+        settle: 140,
+        result: 550,
+    };
+
+    const cloneNodes = (list: LinkedListNode[]): LinkedListNode[] =>
+        list.map(node => ({ ...node }));
+
+    const resetAllNodeStates = (list: LinkedListNode[]): LinkedListNode[] =>
+        list.map(node => ({ ...node, animationState: NodeAnimationState.Default }));
+
+    const runAnimated = async (operation: () => Promise<void>) => {
+        if (isAnimating) return;
+
+        setIsAnimating(true);
+        try {
+            await operation();
+        } finally {
+            setIsAnimating(false);
+        }
     };
 
     // Helper function to get value or generate random
@@ -114,39 +133,39 @@ export default function SimulatorLinkedList() {
 
     // INSERT FRONT
     const insertFront = async (value: LinkedListNode) => {
-        if (isAnimating) return;
-
         const maxElements = 10;
         if (getSize() >= maxElements) {
             alert(`Maximum ${maxElements} nodes reached!`);
             return;
         }
 
-        const wasEmpty = !head;
-        setIsAnimating(true);
+        await runAnimated(async () => {
+            const working = cloneNodes(nodes);
+            const newNode: LinkedListNode = {
+                ...value,
+                next: head,
+                animationState: NodeAnimationState.NewInserted,
+            };
 
-        value.animationState = NodeAnimationState.NewInserted;
-        value.next = head;
+            working.unshift(newNode);
+            setNodes(working);
+            setHead(newNode.id);
+            if (!head) {
+                setTail(newNode.id);
+            }
 
-        setNodes(prev => [value, ...prev]);
-        setHead(value.id);
-        if (wasEmpty) {
-            setTail(value.id);
-        }
+            await sleep(timing.pulse);
 
-        await sleep(delay.focus + 200);
-
-        value.animationState = NodeAnimationState.Default;
-        setNodes(prev => [...prev]);
+            newNode.animationState = NodeAnimationState.Default;
+            setNodes([...working]);
+            await sleep(timing.settle);
+        });
 
         setInputValue("");
-        setIsAnimating(false);
     };
 
     // INSERT BACK (O(1) with tracked tail pointer)
     const insertBack = async (value: LinkedListNode) => {
-        if (isAnimating) return;
-
         const maxElements = 10;
         if (getSize() >= maxElements) {
             alert(`Maximum ${maxElements} nodes reached!`);
@@ -154,34 +173,42 @@ export default function SimulatorLinkedList() {
         }
 
         if (!head || !tail) {
-            insertFront(value);
+            await insertFront(value);
             return;
         }
 
-        const tailNode = nodes.find(n => n.id === tail);
-        if (!tailNode) return;
+        await runAnimated(async () => {
+            const working = cloneNodes(nodes);
+            const tailNode = working.find(n => n.id === tail);
+            if (!tailNode) return;
 
-        setIsAnimating(true);
+            tailNode.animationState = NodeAnimationState.Traversing;
+            setNodes([...working]);
+            await sleep(timing.step);
 
-        // Append new node using tracked tail pointer
-        value.animationState = NodeAnimationState.NewInserted;
-        tailNode.next = value.id;
-        setNodes(prev => [...prev, value]);
-        setTail(value.id);
+            tailNode.animationState = NodeAnimationState.Default;
+            const newNode: LinkedListNode = {
+                ...value,
+                next: null,
+                animationState: NodeAnimationState.NewInserted,
+            };
+            tailNode.next = newNode.id;
+            working.push(newNode);
 
-        await sleep(delay.focus + 200);
+            setNodes([...working]);
+            setTail(newNode.id);
+            await sleep(timing.pulse);
 
-        value.animationState = NodeAnimationState.Default;
-        setNodes(prev => [...prev]);
+            newNode.animationState = NodeAnimationState.Default;
+            setNodes([...working]);
+            await sleep(timing.settle);
+        });
 
         setInputValue("");
-        setIsAnimating(false);
     };
 
     // INSERT AT INDEX
     const insertAt = async (value: LinkedListNode, targetIndex: number) => {
-        if (isAnimating) return;
-
         const size = getSize();
         const maxElements = 10;
 
@@ -196,85 +223,84 @@ export default function SimulatorLinkedList() {
         }
 
         if (targetIndex === 0) {
-            insertFront(value);
+            await insertFront(value);
             return;
         }
 
         // Appending at size can use O(1) tail update path
         if (targetIndex === size) {
-            insertBack(value);
+            await insertBack(value);
             return;
         }
 
-        setIsAnimating(true);
+        await runAnimated(async () => {
+            const working = cloneNodes(nodes);
+            let currentId: string | null = head;
+            let currentIndex = 0;
 
-        // Traverse to index - 1
-        let currentId: string | null = head;
-        let currentIndex = 0;
+            while (currentId && currentIndex < targetIndex - 1) {
+                const current = working.find(n => n.id === currentId);
+                if (!current) return;
 
-        while (currentId && currentIndex <= targetIndex - 1) {
-            const current = nodes.find(n => n.id === currentId);
-            if (!current) break;
+                current.animationState = NodeAnimationState.Traversing;
+                setNodes([...working]);
+                await sleep(timing.step);
 
-            current.animationState = NodeAnimationState.Traversing;
-            setNodes([...nodes]);
-            await sleep(delay.interval);
-
-            if (currentIndex === targetIndex - 1) {
-                // Found the node before target index
-                break;
+                current.animationState = NodeAnimationState.Default;
+                currentId = current.next;
+                currentIndex++;
             }
 
-            current.animationState = NodeAnimationState.Default;
-            currentId = current.next;
-            currentIndex++;
-        }
+            const previous = working.find(n => n.id === currentId);
+            if (!previous) return;
 
-        // Insert after current
-        const current = nodes.find(n => n.id === currentId);
-        if (current) {
-            value.next = current.next;
-            current.next = value.id;
-            current.animationState = NodeAnimationState.Default;
+            previous.animationState = NodeAnimationState.HighlightedOrange;
+            setNodes([...working]);
+            await sleep(timing.step);
 
-            value.animationState = NodeAnimationState.NewInserted;
-            setNodes(prev => [...prev, value]);
+            const newNode: LinkedListNode = {
+                ...value,
+                next: previous.next,
+                animationState: NodeAnimationState.NewInserted,
+            };
+            previous.next = newNode.id;
+            previous.animationState = NodeAnimationState.Default;
+            working.push(newNode);
+            setNodes([...working]);
+            await sleep(timing.pulse);
 
-            await sleep(delay.focus + 200);
-
-            value.animationState = NodeAnimationState.Default;
-            setNodes(prev => [...prev]);
-        }
+            newNode.animationState = NodeAnimationState.Default;
+            setNodes([...working]);
+            await sleep(timing.settle);
+        });
 
         setInputValue("");
-        setIsAnimating(false);
     };
 
     // REMOVE FRONT
     const removeFront = async () => {
-        if (isAnimating) return;
         if (!head) return;
 
-        setIsAnimating(true);
+        await runAnimated(async () => {
+            const working = cloneNodes(nodes);
+            const headNode = working.find(n => n.id === head);
+            if (!headNode) return;
 
-        const headNode = nodes.find(n => n.id === head);
-        if (!headNode) {
-            setIsAnimating(false);
-            return;
-        }
+            headNode.animationState = NodeAnimationState.BeingRemoved;
+            setNodes([...working]);
+            await sleep(timing.pulse);
 
-        headNode.animationState = NodeAnimationState.BeingRemoved;
-        setNodes([...nodes]);
-        await sleep(delay.focus + 300);
+            const newHead = headNode.next;
+            const filtered = working.filter(n => n.id !== headNode.id);
 
-        const newHead = headNode.next;
-        setHead(newHead);
-        if (!newHead) {
-            setTail(null);
-        }
-        setNodes(prev => prev.filter(n => n.id !== headNode.id));
+            setHead(newHead);
+            if (!newHead) {
+                setTail(null);
+            }
 
-        setIsAnimating(false);
+            setNodes(filtered);
+            await sleep(timing.settle);
+        });
     };
 
     // REMOVE BACK
@@ -288,8 +314,6 @@ export default function SimulatorLinkedList() {
 
     // REMOVE AT INDEX
     const removeAt = async (targetIndex: number) => {
-        if (isAnimating) return;
-
         const size = getSize();
         if (targetIndex < 0 || targetIndex >= size) {
             alert(`Invalid index! List has ${size} number of elements.`);
@@ -297,152 +321,133 @@ export default function SimulatorLinkedList() {
         }
 
         if (targetIndex === 0) {
-            removeFront();
+            await removeFront();
             return;
         }
 
-        setIsAnimating(true);
+        await runAnimated(async () => {
+            const working = cloneNodes(nodes);
+            let currentId: string | null = head;
+            let currentIndex = 0;
 
-        // Traverse to index - 1
-        let currentId: string | null = head;
-        let currentIndex = 0;
+            while (currentId && currentIndex < targetIndex - 1) {
+                const current = working.find(n => n.id === currentId);
+                if (!current) return;
 
-        while (currentId && currentIndex <= targetIndex - 1) {
-            const current = nodes.find(n => n.id === currentId);
-            if (!current) break;
+                current.animationState = NodeAnimationState.Traversing;
+                setNodes([...working]);
+                await sleep(timing.step);
 
-            current.animationState = NodeAnimationState.Traversing;
-            setNodes([...nodes]);
-            await sleep(delay.interval);
-
-            if (currentIndex === targetIndex - 1) {
-                // Found the node before target index
-                break;
-            }
-
-            current.animationState = NodeAnimationState.Default;
-            currentId = current.next;
-            currentIndex++;
-        }
-
-        // Remove node after current
-        const current = nodes.find(n => n.id === currentId);
-        if (current && current.next) {
-            const toRemove = nodes.find(n => n.id === current.next);
-            if (toRemove) {
-                toRemove.animationState = NodeAnimationState.BeingRemoved;
                 current.animationState = NodeAnimationState.Default;
-                setNodes([...nodes]);
-                await sleep(delay.focus + 300);
-
-                current.next = toRemove.next;
-                if (toRemove.id === tail) {
-                    setTail(current.id);
-                }
-                setNodes(prev => prev.filter(n => n.id !== toRemove.id));
+                currentId = current.next;
+                currentIndex++;
             }
-        }
 
-        setIsAnimating(false);
+            const previous = working.find(n => n.id === currentId);
+            if (!previous || !previous.next) return;
+
+            const toRemove = working.find(n => n.id === previous.next);
+            if (!toRemove) return;
+
+            previous.animationState = NodeAnimationState.HighlightedOrange;
+            toRemove.animationState = NodeAnimationState.BeingRemoved;
+            setNodes([...working]);
+            await sleep(timing.pulse);
+
+            previous.next = toRemove.next;
+            previous.animationState = NodeAnimationState.Default;
+
+            if (toRemove.id === tail) {
+                setTail(previous.id);
+            }
+
+            const filtered = working.filter(n => n.id !== toRemove.id);
+            setNodes(filtered);
+            await sleep(timing.settle);
+        });
     };
 
     // SEARCH
     const search = async (target: number) => {
-        if (isAnimating) return;
-
         if (inputValue === "") {
             alert("Please enter a value to search");
             return;
         }
 
-        setIsAnimating(true);
+        await runAnimated(async () => {
+            const working = cloneNodes(nodes);
+            let currentId: string | null = head;
+            let currentIndex = 0;
+            let found = false;
 
-        let currentId: string | null = head;
-        let currentIndex = 0;
-        let found = false;
+            while (currentId) {
+                const current = working.find(n => n.id === currentId);
+                if (!current) break;
 
-        while (currentId) {
-            const current = nodes.find(n => n.id === currentId);
-            if (!current) break;
+                current.animationState = NodeAnimationState.Traversing;
+                setNodes([...working]);
+                await sleep(timing.step);
 
-            current.animationState = NodeAnimationState.Traversing;
-            setNodes([...nodes]);
-            await sleep(delay.focus + 100);
+                if (Number(current.value) === target) {
+                    current.animationState = NodeAnimationState.HighlightedGreen;
+                    setNodes([...working]);
+                    found = true;
+                    await sleep(timing.result);
+                    alert(`✓ Value Found!\n\nValue: ${target}\nIndex: ${currentIndex}\nSteps: ${currentIndex + 1}`);
+                    break;
+                }
 
-            if (Number(current.value) === target) {
-                current.animationState = NodeAnimationState.HighlightedGreen;
-                setNodes([...nodes]);
-                found = true;
-                await sleep(500);
-                alert(`✓ Value Found!\n\nValue: ${target}\nIndex: ${currentIndex}\nSteps: ${currentIndex + 1}`);
-                break;
+                current.animationState = NodeAnimationState.Default;
+                currentId = current.next;
+                currentIndex++;
             }
 
-            current.animationState = NodeAnimationState.Default;
-            currentId = current.next;
-            currentIndex++;
-        }
+            if (!found) {
+                await sleep(timing.settle);
+                alert(`✗ Value Not in List\n`);
+            }
 
-        if (!found) {
-            await sleep(500);
-            alert(`✗ Value Not in List\n`);
-        }
-
-        // Reset all to default
-        setTimeout(() => {
-            const resetNodes = nodes.map(node => ({
-                ...node,
-                animationState: NodeAnimationState.Default
-            }));
-            setNodes(resetNodes);
-            setIsAnimating(false);
-        }, 500);
+            await sleep(timing.settle);
+            setNodes(resetAllNodeStates(working));
+        });
     };
 
     // GET BY INDEX (Traversal)
     const getByIndex = async (targetIndex: number) => {
-        if (isAnimating) return;
-
         const size = getSize();
         if (targetIndex < 0 || targetIndex >= size) {
             alert(`Invalid index! Must be between 0 and ${size - 1}`);
             return;
         }
 
-        setIsAnimating(true);
+        await runAnimated(async () => {
+            const working = cloneNodes(nodes);
+            let currentId: string | null = head;
+            let currentIndex = 0;
 
-        let currentId: string | null = head;
-        let currentIndex = 0;
-        while (currentId) {
-            const current = nodes.find(n => n.id === currentId);
-            if (!current) break;
+            while (currentId) {
+                const current = working.find(n => n.id === currentId);
+                if (!current) break;
 
-            current.animationState = NodeAnimationState.Traversing;
-            setNodes([...nodes]);
-            await sleep(delay.focus + 100);
+                current.animationState = NodeAnimationState.Traversing;
+                setNodes([...working]);
+                await sleep(timing.step);
 
-            if (currentIndex === targetIndex) {
-                current.animationState = NodeAnimationState.HighlightedOrange;
-                setNodes([...nodes]);
-                await sleep(400);
-                // alert(`Index ${targetIndex} -> Value: ${current.value}`);
-                break;
+                if (currentIndex === targetIndex) {
+                    current.animationState = NodeAnimationState.HighlightedOrange;
+                    setNodes([...working]);
+                    await sleep(timing.result);
+                    break;
+                }
+
+                current.animationState = NodeAnimationState.Default;
+                currentId = current.next;
+                currentIndex++;
             }
 
-            current.animationState = NodeAnimationState.Default;
-            currentId = current.next;
-            currentIndex++;
-        }
-
-        // Reset states
-        setTimeout(() => {
-            const resetNodes = nodes.map(node => ({
-                ...node,
-                animationState: NodeAnimationState.Default,
-            }));
-            setNodes(resetNodes);
-            setIsAnimating(false);
-        }, 500);
+            await sleep(timing.settle);
+            setNodes(resetAllNodeStates(working));
+        });
     };
 
     return (

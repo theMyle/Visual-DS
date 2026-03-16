@@ -31,12 +31,12 @@ const getNodeColor = (state: NodeAnimationState): string => {
 const getNodeScale = (state: NodeAnimationState): number => {
     switch (state) {
         case NodeAnimationState.Traversing:
-            return 1.1;
+            return 1.08;
         case NodeAnimationState.HighlightedGreen:
         case NodeAnimationState.HighlightedOrange:
-            return 1.3;
+            return 1.14;
         case NodeAnimationState.BeingRemoved:
-            return 1.2;
+            return 1.1;
         default:
             return 1;
     }
@@ -62,6 +62,7 @@ const LinkedListNodeComponent = ({ data }: { data: NodeData }) => {
                     backgroundColor: color,
                     transform: `scale(${scale})`,
                     opacity: opacity,
+                    transition: 'transform 220ms ease-in-out, background-color 220ms ease-in-out, opacity 220ms ease-in-out',
                 }}
             >
                 {data.value}
