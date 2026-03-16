@@ -273,13 +273,22 @@ export default function SimulationArray() {
 
   // Selection Sort Algorithm
   const selectionSort = async () => {
-    if (isAnimating || array.length <= 1) return;
+    if (isAnimating) return;
+
+    if (array.length <= 1) {
+      alert("List is sorted!\n\nTotal Steps: 0\nTotal Cycles: 0");
+      return;
+    }
+
     setIsAnimating(true);
 
     const newArray = [...array];
     const n = newArray.length;
+    let stepCount = 0;
+    let cycleCount = 0;
 
     for (let i = 0; i < n - 1; i++) {
+      cycleCount++;
       let minIndex = i;
 
       // Highlight current position (start of unsorted portion)
@@ -289,6 +298,7 @@ export default function SimulationArray() {
 
       // Find minimum element in the remaining unsorted array
       for (let j = i + 1; j < n; j++) {
+        stepCount++;
         // Highlight element being compared
         newArray[j].animationState = ArrayElementAnimationState.Comparing;
         setArray([...newArray]);
@@ -323,6 +333,7 @@ export default function SimulationArray() {
         const tempElement = newArray[i];
         newArray[i] = newArray[minIndex];
         newArray[minIndex] = tempElement;
+        stepCount++;
         setArray([...newArray]);
         await sleep(delay.focus);
       }
@@ -343,6 +354,8 @@ export default function SimulationArray() {
       setArray([...newArray]);
       await sleep(delay.focus);
     }
+
+    alert(`List is sorted!\n\nTotal Steps: ${stepCount}\nTotal Cycles: ${cycleCount}`);
 
     // Reset all to default after a pause
     setTimeout(() => {
@@ -638,18 +651,36 @@ export default function SimulationArray() {
                     bgColor="#2A9D8F"
                     shadowColor="#1F7A6B"
                     onClick={() => insertFront(createArrayElement(getValueOrRandom(inputValue)))}
+                    info={{
+                      title: "Insert Front",
+                      description: "Inserts a new element at the beginning of the array. Every existing element must shift one position to the right to make room, so all n elements are touched.",
+                      timeComplexity: "O(n)",
+                      spaceComplexity: "O(1)",
+                    }}
                   />
                   <ActionButton
                     text="Insert Back"
                     bgColor="#2A9D8F"
                     shadowColor="#1F7A6B"
                     onClick={() => insertBack(createArrayElement(getValueOrRandom(inputValue)))}
+                    info={{
+                      title: "Insert Back",
+                      description: "Appends a new element at the end of the array. No shifting is needed — the element lands directly in the next available slot.",
+                      timeComplexity: "O(1)",
+                      spaceComplexity: "O(1)",
+                    }}
                   />
                   <ActionButton
                     text="Insert At"
                     bgColor="#2A9D8F"
                     shadowColor="#1F7A6B"
                     onClick={() => insertAt(createArrayElement(getValueOrRandom(inputValue)), index)}
+                    info={{
+                      title: "Insert At Index",
+                      description: "Inserts a new element at a chosen index. All elements from that index to the end shift one position right to create the gap.",
+                      timeComplexity: "O(n)",
+                      spaceComplexity: "O(1)",
+                    }}
                   />
                 </>
               )}
@@ -662,18 +693,36 @@ export default function SimulationArray() {
                     bgColor="#C7573B"
                     shadowColor="#A0422E"
                     onClick={() => removeFront()}
+                    info={{
+                      title: "Remove Front",
+                      description: "Removes the first element of the array. All remaining elements must shift one position left to fill the gap, touching every element in the array.",
+                      timeComplexity: "O(n)",
+                      spaceComplexity: "O(1)",
+                    }}
                   />
                   <ActionButton
                     text="Remove Back"
                     bgColor="#C7573B"
                     shadowColor="#A0422E"
                     onClick={() => removeBack()}
+                    info={{
+                      title: "Remove Back",
+                      description: "Removes the last element of the array. No shifting is required — the array size simply decreases by one.",
+                      timeComplexity: "O(1)",
+                      spaceComplexity: "O(1)",
+                    }}
                   />
                   <ActionButton
                     text="Remove At"
                     bgColor="#C7573B"
                     shadowColor="#A0422E"
                     onClick={() => removeAt(index)}
+                    info={{
+                      title: "Remove At Index",
+                      description: "Removes the element at a chosen index. All elements after the removed position shift one position left to close the gap.",
+                      timeComplexity: "O(n)",
+                      spaceComplexity: "O(1)",
+                    }}
                   />
                 </>
               )}
@@ -686,12 +735,24 @@ export default function SimulationArray() {
                     bgColor="#6C757D"
                     shadowColor="#495057"
                     onClick={() => setAt(getValueOrRandom(inputValue), index)}
+                    info={{
+                      title: "Set At Index",
+                      description: "Updates the value at a specific index. Arrays allow direct index access via pointer arithmetic, so no traversal is needed — the target slot is reached instantly.",
+                      timeComplexity: "O(1)",
+                      spaceComplexity: "O(1)",
+                    }}
                   />
                   <ActionButton
                     text="Get At"
                     bgColor="#6C757D"
                     shadowColor="#495057"
                     onClick={() => getAt(Number(index))}
+                    info={{
+                      title: "Get At Index",
+                      description: "Reads the value at a specific index. Because arrays occupy contiguous memory, any index can be accessed directly in constant time.",
+                      timeComplexity: "O(1)",
+                      spaceComplexity: "O(1)",
+                    }}
                   />
                 </>
               )}
@@ -704,6 +765,12 @@ export default function SimulationArray() {
                     bgColor="#3B82F6"
                     shadowColor="#1E40AF"
                     onClick={() => selectionSort()}
+                    info={{
+                      title: "Selection Sort",
+                      description: "Repeatedly finds the smallest element in the unsorted portion and swaps it into the correct position. Makes n−1 passes, each time scanning the remaining unsorted elements to find the minimum.",
+                      timeComplexity: "O(n²)",
+                      spaceComplexity: "O(1)",
+                    }}
                   />
                   <ActionButton
                     text="Linear Search"
@@ -713,6 +780,12 @@ export default function SimulationArray() {
                       const target = Number(inputValue) ?? Math.floor(Math.random() * 100);
                       linearSearch(target);
                     }}
+                    info={{
+                      title: "Linear Search",
+                      description: "Scans every element one by one from the start until the target is found or the end is reached. Works on both sorted and unsorted arrays.",
+                      timeComplexity: "O(n)",
+                      spaceComplexity: "O(1)",
+                    }}
                   />
                   <ActionButton
                     text="Binary Search"
@@ -721,6 +794,12 @@ export default function SimulationArray() {
                     onClick={() => {
                       const target = Number(inputValue) ?? Math.floor(Math.random() * 100);
                       binarySearch(target);
+                    }}
+                    info={{
+                      title: "Binary Search",
+                      description: "Requires a sorted array. Compares the target with the middle element and eliminates half the remaining search space each step, making it far faster than linear search on large arrays.",
+                      timeComplexity: "O(log n)",
+                      spaceComplexity: "O(1)",
                     }}
                   />
                 </>
