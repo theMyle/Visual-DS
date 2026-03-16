@@ -6,6 +6,7 @@ import { createArrayElement, createArrayElements } from "@/app/simulator/array-l
 
 import VisualArray from "@/app/simulator/array-list/components/VisualArray";
 import ActionButton from "@/app/simulator/array-list/components/ActionButton";
+import SimulatorHelp, { HelpSlide } from "@/app/simulator/components/SimulatorHelp";
 
 enum OperationType {
   Insertion,
@@ -22,6 +23,36 @@ export default function SimulationArray() {
   const [index, setIndex] = useState<number>(0);
 
   const [operationType, setOperationType] = useState<OperationType>(OperationType.Insertion);
+  const [showHelp, setShowHelp] = useState<boolean>(true);
+
+  const helpSlides: HelpSlide[] = [
+    {
+      title: 'Array Simulator',
+      description: 'Interact with an array data structure in real time. Watch elements shift, swap, and sort as you trigger operations step by step.',
+      items: [
+        { label: 'Visual Array', detail: 'Each box is one element. Colour highlights show which element is being accessed, compared, or moved.' },
+        { label: 'Controls Panel', detail: 'Pick a category tab on the right, fill in inputs if needed, then press a button to run the animation.' },
+      ],
+    },
+    {
+      title: 'Input Fields',
+      description: 'Two fields let you control the value and index used by array operations.',
+      items: [
+        { label: 'Value', detail: 'The number to insert, search for, or set. Leave it blank and a random value (0–99) will be used.' },
+        { label: 'Index', detail: 'Zero-based position for index-specific operations: Insert At, Remove At, Set At, and Get At.' },
+      ],
+    },
+    {
+      title: 'Operation Tabs',
+      description: 'Select a tab to switch operation categories. Each tab reveals a set of buttons under the Input Fields.',
+      items: [
+        { label: 'Insertion', detail: 'Add elements at the front, back, or a specific index.' },
+        { label: 'Deletion', detail: 'Remove elements from the front, back, or a specific index.' },
+        { label: 'Others', detail: 'Directly read or overwrite a value at a given index.' },
+        { label: 'Algorithms', detail: 'Run sorting and searching algorithms step by step on the current array.' },
+      ],
+    },
+  ];
 
   const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
   const delay = {
@@ -535,16 +566,26 @@ export default function SimulationArray() {
 
   return (
     <div className="h-full bg-gray-50 overflow-hidden">
+      {showHelp && (
+        <SimulatorHelp slides={helpSlides} onClose={() => setShowHelp(false)} />
+      )}
       <main className="flex flex-col lg:flex-row h-full max-w-7xl mx-auto bg-white">
 
         {/* Array display - Constrained height */}
         <div className="flex-1 lg:flex-[3] h-full overflow-hidden">
 
           {/* Title */}
-          <div className="flex-shrink-0 mb-2 md:mb-4 pt-6">
+          <div className="flex-shrink-0 mb-2 md:mb-4 pt-6 relative flex items-center justify-center px-4">
             <h1 className="text-base md:text-xl font-semibold text-gray-600 text-center">
               Array Data Structure
             </h1>
+            <button
+              className="absolute right-4 w-7 h-7 rounded-full bg-gray-100 hover:bg-gray-200 text-gray-500 hover:text-gray-700 text-sm font-bold transition-colors flex items-center justify-center"
+              onClick={() => setShowHelp(true)}
+              aria-label="Open simulator help"
+            >
+              ?
+            </button>
           </div>
 
           <div className="flex items-center justify-center px-4 md:px-9 py-4 h-full">
