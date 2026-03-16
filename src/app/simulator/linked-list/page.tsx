@@ -7,6 +7,7 @@ import { createNode, createNodes } from "@/app/simulator/linked-list/components/
 
 import VisualLinkedList from "@/app/simulator/linked-list/components/VisualLinkedList";
 import ActionButton from "@/app/simulator/linked-list/components/ActionButton";
+import SimulatorHelp, { HelpSlide } from "@/app/simulator/components/SimulatorHelp";
 
 enum OperationType {
     Insertion,
@@ -17,12 +18,43 @@ enum OperationType {
 export default function SimulatorLinkedList() {
     const [nodes, setNodes] = useState<LinkedListNode[]>([]);
     const [head, setHead] = useState<string | null>(null);
+    const [tail, setTail] = useState<string | null>(null);
     const [isAnimating, setIsAnimating] = useState<boolean>(false);
 
     const [inputValue, setInputValue] = useState<string>("");
     const [index, setIndex] = useState<number>(0);
 
     const [operationType, setOperationType] = useState<OperationType>(OperationType.Insertion);
+
+    const [showHelp, setShowHelp] = useState<boolean>(true);
+
+    const helpSlides: HelpSlide[] = [
+        {
+            title: 'Linked List Simulator',
+            description: 'Interact with a singly linked list in real time. The visual is draggable, pan it around freely to explore the node chain as it grows and changes.',
+            items: [
+                { label: 'Visual Area', detail: 'Each box is a node with a value and a pointer to the next node. Drag anywhere on the canvas to reposition the view.' },
+                { label: 'Controls Panel', detail: 'Pick a category tab on the right, fill in inputs if needed, then press a button to animate the operation.' },
+            ],
+        },
+        {
+            title: 'Input Fields',
+            description: 'Two fields let you control the value and index used by list operations.',
+            items: [
+                { label: 'Value', detail: 'The number to insert or search for. Leave it blank and a random value (0–99) will be used.' },
+                { label: 'Index', detail: 'Zero-based position used by Insert At, Remove At, and Get At operations.' },
+            ],
+        },
+        {
+            title: 'Operation Tabs',
+            description: 'Select a tab to switch operation categories. Each tab reveals a set of buttons that visualizes operations',
+            items: [
+                { label: 'Insertion', detail: 'Add nodes at the front, back, or a specific index.' },
+                { label: 'Deletion', detail: 'Remove nodes from the front, back, or a specific index.' },
+                { label: 'Traversal', detail: 'Traverse the list to search for a value or retrieve a node at a given index.' },
+            ],
+        },
+    ];
 
     const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
     const delay = {
@@ -44,6 +76,7 @@ export default function SimulatorLinkedList() {
         setNodes(initial);
         if (initial.length > 0) {
             setHead(initial[0].id);
+            setTail(initial[initial.length - 1].id);
         }
     }, []);
 
@@ -85,10 +118,11 @@ export default function SimulatorLinkedList() {
 
         const maxElements = 10;
         if (getSize() >= maxElements) {
-            // alert(`Maximum ${maxElements} nodes reached!`);
+            alert(`Maximum ${maxElements} nodes reached!`);
             return;
         }
 
+        const wasEmpty = !head;
         setIsAnimating(true);
 
         value.animationState = NodeAnimationState.NewInserted;
@@ -96,6 +130,9 @@ export default function SimulatorLinkedList() {
 
         setNodes(prev => [value, ...prev]);
         setHead(value.id);
+        if (wasEmpty) {
+            setTail(value.id);
+        }
 
         await sleep(delay.focus + 200);
 
@@ -106,40 +143,31 @@ export default function SimulatorLinkedList() {
         setIsAnimating(false);
     };
 
-    // INSERT BACK (instant, no traversal animation)
+    // INSERT BACK (O(1) with tracked tail pointer)
     const insertBack = async (value: LinkedListNode) => {
         if (isAnimating) return;
 
         const maxElements = 10;
         if (getSize() >= maxElements) {
-            // alert(`Maximum ${maxElements} nodes reached!`);
+            alert(`Maximum ${maxElements} nodes reached!`);
             return;
         }
 
-        if (!head) {
+        if (!head || !tail) {
             insertFront(value);
             return;
         }
 
+        const tailNode = nodes.find(n => n.id === tail);
+        if (!tailNode) return;
+
         setIsAnimating(true);
 
-        // Find tail instantly (no animation)
-        let currentId: string | null = head;
-        let tail: LinkedListNode | null = null;
-        while (currentId) {
-            const current = nodes.find(n => n.id === currentId);
-            if (!current) break;
-            if (!current.next) {
-                tail = current;
-                break;
-            }
-            currentId = current.next;
-        }
-
-        // Append new node at tail
+        // Append new node using tracked tail pointer
         value.animationState = NodeAnimationState.NewInserted;
-        if (tail) tail.next = value.id;
+        tailNode.next = value.id;
         setNodes(prev => [...prev, value]);
+        setTail(value.id);
 
         await sleep(delay.focus + 200);
 
@@ -158,17 +186,23 @@ export default function SimulatorLinkedList() {
         const maxElements = 10;
 
         if (size >= maxElements) {
-            // alert(`Maximum ${maxElements} nodes reached!`);
+            alert(`Maximum ${maxElements} nodes reached!`);
             return;
         }
 
         if (targetIndex < 0 || targetIndex > size) {
-            // alert(`Invalid index! Must be between 0 and ${size}`);
+            alert(`Invalid index! Must be between 0 and ${size}`);
             return;
         }
 
         if (targetIndex === 0) {
             insertFront(value);
+            return;
+        }
+
+        // Appending at size can use O(1) tail update path
+        if (targetIndex === size) {
+            insertBack(value);
             return;
         }
 
@@ -235,6 +269,9 @@ export default function SimulatorLinkedList() {
 
         const newHead = headNode.next;
         setHead(newHead);
+        if (!newHead) {
+            setTail(null);
+        }
         setNodes(prev => prev.filter(n => n.id !== headNode.id));
 
         setIsAnimating(false);
@@ -243,57 +280,10 @@ export default function SimulatorLinkedList() {
     // REMOVE BACK
     const removeBack = async () => {
         if (isAnimating) return;
-        if (!head) return;
+        const size = getSize();
+        if (size === 0) return;
 
-        setIsAnimating(true);
-
-        // Find tail node (instant - we track tail in data structure)
-        let tailNode: LinkedListNode | null = null;
-        let secondLast: LinkedListNode | null = null;
-
-        // If only one node
-        const headNode = nodes.find(n => n.id === head);
-        if (headNode && !headNode.next) {
-            headNode.animationState = NodeAnimationState.BeingRemoved;
-            setNodes([...nodes]);
-            await sleep(delay.focus + 300);
-
-            setHead(null);
-            setNodes([]);
-            setIsAnimating(false);
-            return;
-        }
-
-        // Find tail and second-to-last without animation
-        let currentId: string | null = head;
-        while (currentId) {
-            const current = nodes.find(n => n.id === currentId);
-            if (!current) break;
-
-            if (!current.next) {
-                tailNode = current;
-                break;
-            }
-
-            const nextNode = nodes.find(n => n.id === current.next);
-            if (nextNode && !nextNode.next) {
-                secondLast = current;
-            }
-
-            currentId = current.next;
-        }
-
-        // Remove tail node
-        if (tailNode && secondLast) {
-            tailNode.animationState = NodeAnimationState.BeingRemoved;
-            setNodes([...nodes]);
-            await sleep(delay.focus + 300);
-
-            secondLast.next = null;
-            setNodes(prev => prev.filter(n => n.id !== tailNode!.id));
-        }
-
-        setIsAnimating(false);
+        await removeAt(size - 1);
     };
 
     // REMOVE AT INDEX
@@ -346,6 +336,9 @@ export default function SimulatorLinkedList() {
                 await sleep(delay.focus + 300);
 
                 current.next = toRemove.next;
+                if (toRemove.id === tail) {
+                    setTail(current.id);
+                }
                 setNodes(prev => prev.filter(n => n.id !== toRemove.id));
             }
         }
@@ -454,15 +447,25 @@ export default function SimulatorLinkedList() {
 
     return (
         <div className="h-full bg-gray-50 overflow-hidden">
+            {showHelp && (
+                <SimulatorHelp slides={helpSlides} onClose={() => setShowHelp(false)} />
+            )}
             <main className="flex flex-col lg:flex-row h-full max-w-7xl mx-auto bg-white">
 
                 {/* Linked List display */}
                 <div className="flex-1 lg:flex-[3] h-full overflow-hidden">
                     {/* Title */}
-                    <div className="flex-shrink-0 mb-2 md:mb-4 pt-6">
+                    <div className="flex-shrink-0 mb-2 md:mb-4 pt-6 relative flex items-center justify-center px-4">
                         <h1 className="text-base md:text-xl font-semibold text-gray-600 text-center">
                             Singly Linked List
                         </h1>
+                        <button
+                            className="absolute right-4 w-7 h-7 rounded-full bg-gray-100 hover:bg-gray-200 text-gray-500 hover:text-gray-700 text-sm font-bold transition-colors flex items-center justify-center"
+                            onClick={() => setShowHelp(true)}
+                            aria-label="Open simulator help"
+                        >
+                            ?
+                        </button>
                     </div>
 
                     <div className="flex items-center justify-center px-4 md:px-9 py-4 h-full">
@@ -546,12 +549,18 @@ export default function SimulatorLinkedList() {
                             <div className="flex justify-between gap-1 text-xs md:text-sm">
                                 <div className="flex items-center gap-1">
                                     <span className="font-medium text-gray-700">Size:</span>
-                                    <span className="text-blue-600 font-bold">{getSize()}</span>
+                                    <span className="text-blue-600 font-bold">{getSize()}/10</span>
                                 </div>
                                 <div className="flex items-center gap-1">
                                     <span className="font-medium text-gray-700">Head:</span>
                                     <span className="text-green-600 font-bold truncate max-w-[60px]">
                                         {head ? nodes.find(n => n.id === head)?.value || 'None' : 'None'}
+                                    </span>
+                                </div>
+                                <div className="flex items-center gap-1">
+                                    <span className="font-medium text-gray-700">Tail:</span>
+                                    <span className="text-purple-600 font-bold truncate max-w-[60px]">
+                                        {tail ? nodes.find(n => n.id === tail)?.value || 'None' : 'None'}
                                     </span>
                                 </div>
                             </div>
@@ -568,18 +577,33 @@ export default function SimulatorLinkedList() {
                                         bgColor="#2A9D8F"
                                         shadowColor="#1F7A6B"
                                         onClick={() => insertFront(createNode(getValueOrRandom(inputValue)))}
+                                        info={{
+                                            title: 'Insert Front',
+                                            description: "Creates a new node and makes it the new head. The new node's pointer is set to the old head — no traversal needed.",
+                                            timeComplexity: 'O(1)',
+                                        }}
                                     />
                                     <ActionButton
                                         text="Insert Back"
                                         bgColor="#2A9D8F"
                                         shadowColor="#1F7A6B"
                                         onClick={() => insertBack(createNode(getValueOrRandom(inputValue)))}
+                                        info={{
+                                            title: 'Insert Back',
+                                            description: "Appends a new node by updating the current tail's 'next' pointer and reassigning the tail reference.",
+                                            timeComplexity: 'O(1)',
+                                        }}
                                     />
                                     <ActionButton
                                         text="Insert At"
                                         bgColor="#2A9D8F"
                                         shadowColor="#1F7A6B"
                                         onClick={() => insertAt(createNode(getValueOrRandom(inputValue)), index)}
+                                        info={{
+                                            title: 'Insert At Index',
+                                            description: 'Traverses to the node just before the target index, then splices the new node in by rewiring the next pointers.',
+                                            timeComplexity: 'O(n)',
+                                        }}
                                     />
                                 </>
                             )}
@@ -592,18 +616,33 @@ export default function SimulatorLinkedList() {
                                         bgColor="#C7573B"
                                         shadowColor="#A0422E"
                                         onClick={() => removeFront()}
+                                        info={{
+                                            title: 'Remove Front',
+                                            description: 'Removes the head node and promotes the next node as the new head. No traversal required.',
+                                            timeComplexity: 'O(1)',
+                                        }}
                                     />
                                     <ActionButton
                                         text="Remove Back"
                                         bgColor="#C7573B"
                                         shadowColor="#A0422E"
                                         onClick={() => removeBack()}
+                                        info={{
+                                            title: 'Remove Back',
+                                            description: 'Traverses to the second-to-last node and sets its next pointer to null, detaching the tail.',
+                                            timeComplexity: 'O(n)',
+                                        }}
                                     />
                                     <ActionButton
                                         text="Remove At"
                                         bgColor="#C7573B"
                                         shadowColor="#A0422E"
                                         onClick={() => removeAt(index)}
+                                        info={{
+                                            title: 'Remove At Index',
+                                            description: 'Traverses to the node just before the target index, then bypasses the target node by pointing directly to its successor.',
+                                            timeComplexity: 'O(n)',
+                                        }}
                                     />
                                 </>
                             )}
@@ -619,8 +658,12 @@ export default function SimulatorLinkedList() {
                                             const target = Number(inputValue);
                                             search(target);
                                         }}
+                                        info={{
+                                            title: 'Search',
+                                            description: "Walks the list from head to tail comparing each node's value to the target. Stops and highlights the match if found.",
+                                            timeComplexity: 'O(n)',
+                                        }}
                                     />
-
                                     <ActionButton
                                         text="Get At"
                                         bgColor="#6C757D"
@@ -628,6 +671,11 @@ export default function SimulatorLinkedList() {
                                         onClick={() => {
                                             const target = Number(index);
                                             getByIndex(target);
+                                        }}
+                                        info={{
+                                            title: 'Get At Index',
+                                            description: 'Traverses the list step by step from the head until reaching the target index, then highlights that node.',
+                                            timeComplexity: 'O(n)',
                                         }}
                                     />
                                 </>

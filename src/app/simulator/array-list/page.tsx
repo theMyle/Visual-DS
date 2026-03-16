@@ -696,7 +696,6 @@ export default function SimulationArray() {
                       title: "Insert Front",
                       description: "Inserts a new element at the beginning of the array. Every existing element must shift one position to the right to make room, so all n elements are touched.",
                       timeComplexity: "O(n)",
-                      spaceComplexity: "O(1)",
                     }}
                   />
                   <ActionButton
@@ -708,7 +707,6 @@ export default function SimulationArray() {
                       title: "Insert Back",
                       description: "Appends a new element at the end of the array. No shifting is needed — the element lands directly in the next available slot.",
                       timeComplexity: "O(1)",
-                      spaceComplexity: "O(1)",
                     }}
                   />
                   <ActionButton
@@ -720,7 +718,6 @@ export default function SimulationArray() {
                       title: "Insert At Index",
                       description: "Inserts a new element at a chosen index. All elements from that index to the end shift one position right to create the gap.",
                       timeComplexity: "O(n)",
-                      spaceComplexity: "O(1)",
                     }}
                   />
                 </>
@@ -738,7 +735,6 @@ export default function SimulationArray() {
                       title: "Remove Front",
                       description: "Removes the first element of the array. All remaining elements must shift one position left to fill the gap, touching every element in the array.",
                       timeComplexity: "O(n)",
-                      spaceComplexity: "O(1)",
                     }}
                   />
                   <ActionButton
@@ -750,7 +746,6 @@ export default function SimulationArray() {
                       title: "Remove Back",
                       description: "Removes the last element of the array. No shifting is required — the array size simply decreases by one.",
                       timeComplexity: "O(1)",
-                      spaceComplexity: "O(1)",
                     }}
                   />
                   <ActionButton
@@ -762,7 +757,6 @@ export default function SimulationArray() {
                       title: "Remove At Index",
                       description: "Removes the element at a chosen index. All elements after the removed position shift one position left to close the gap.",
                       timeComplexity: "O(n)",
-                      spaceComplexity: "O(1)",
                     }}
                   />
                 </>
@@ -780,7 +774,6 @@ export default function SimulationArray() {
                       title: "Set At Index",
                       description: "Updates the value at a specific index. Arrays allow direct index access via pointer arithmetic, so no traversal is needed — the target slot is reached instantly.",
                       timeComplexity: "O(1)",
-                      spaceComplexity: "O(1)",
                     }}
                   />
                   <ActionButton
@@ -792,7 +785,6 @@ export default function SimulationArray() {
                       title: "Get At Index",
                       description: "Reads the value at a specific index. Because arrays occupy contiguous memory, any index can be accessed directly in constant time.",
                       timeComplexity: "O(1)",
-                      spaceComplexity: "O(1)",
                     }}
                   />
                 </>
@@ -810,7 +802,6 @@ export default function SimulationArray() {
                       title: "Selection Sort",
                       description: "Repeatedly finds the smallest element in the unsorted portion and swaps it into the correct position. Makes n−1 passes, each time scanning the remaining unsorted elements to find the minimum.",
                       timeComplexity: "O(n²)",
-                      spaceComplexity: "O(1)",
                     }}
                   />
                   <ActionButton
@@ -825,7 +816,6 @@ export default function SimulationArray() {
                       title: "Linear Search",
                       description: "Scans every element one by one from the start until the target is found or the end is reached. Works on both sorted and unsorted arrays.",
                       timeComplexity: "O(n)",
-                      spaceComplexity: "O(1)",
                     }}
                   />
                   <ActionButton
@@ -840,7 +830,6 @@ export default function SimulationArray() {
                       title: "Binary Search",
                       description: "Requires a sorted array. Compares the target with the middle element and eliminates half the remaining search space each step, making it far faster than linear search on large arrays.",
                       timeComplexity: "O(log n)",
-                      spaceComplexity: "O(1)",
                     }}
                   />
                 </>

@@ -9,9 +9,9 @@ export default function SimulatorPage() {
       >
         <p className="font-bold text-gray-700">Simulator</p>
         <MenuItem title={"Array"} path={"/simulator/array-list"} />
+        <MenuItem title={"Linked List"} path={"/simulator/linked-list"} />
         <MenuItem title={"Stack"} path={"/simulator/stack"} />
         <MenuItem title={"Queue"} path={"/simulator/queue"} />
-        <MenuItem title={"Linked List"} path={"/simulator/linked-list"} />
         <MenuItem title={"Tree"} path={"/simulator/tree"} />
       </div>
     </div>
