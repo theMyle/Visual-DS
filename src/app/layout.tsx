@@ -43,7 +43,6 @@ export const metadata: Metadata = {
     title: "Visual DS | Interactive Data Structures Visualizer",
     description: "Visual DS is an interactive platform to learn, visualize, and practice data structures and algorithms.",
     images: ["/logo.svg"],
-    creator: "@your_twitter_handle",
   },
   keywords: [
     "data structures",
