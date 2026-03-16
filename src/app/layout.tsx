@@ -55,7 +55,10 @@ export const metadata: Metadata = {
     "education",
     "practice",
     "simulator",
-    "Visual DS"
+    "Visual DS",
+    "visualds",
+    "visual ds",
+    "visual-ds"
   ],
   authors: [{ name: "Your Name", url: "https://visualds.com/" }],
   creator: "Your Name",
