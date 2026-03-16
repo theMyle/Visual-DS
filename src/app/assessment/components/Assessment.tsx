@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import ProgressDots from "./ProgressDots";
 import AssessmentSummary from "./AssessmentSummary";
 import type { Assessment as AssessmentType, Choice } from "../types";
+import { LocalStorage } from "../../lib/localStorage";
 
 type AssessmentProps = {
     assessmentData: AssessmentType;
@@ -128,6 +129,13 @@ export default function Assessment({ assessmentData }: AssessmentProps) {
         continueButtonColor = "bg-gray-400 active:bg-gray-600 hover:bg-gray-500";
     }
 
+    useEffect(() => {
+        if (!showSummary) return;
+
+        const correctCount = correctDots.filter(Boolean).length;
+        LocalStorage.saveAssessmentScore(assessment.id, correctCount, totalQuestions);
+    }, [assessment.id, correctDots, showSummary, totalQuestions]);
+
     if (showSummary) {
         const correctCount = correctDots.filter(Boolean).length;
         return (
@@ -180,8 +188,8 @@ export default function Assessment({ assessmentData }: AssessmentProps) {
                             <div className="hidden lg:flex justify-center w-full opacity-0 animate-fade-in">
                                 <div
                                     className={`max-w-3xl w-full flex flex-col gap-2 p-6 rounded-2xl border-2 shadow-md ${answerIsCorrect
-                                            ? "bg-green-50 border-green-300"
-                                            : "bg-red-50 border-red-300"
+                                        ? "bg-green-50 border-green-300"
+                                        : "bg-red-50 border-red-300"
                                         }`}
                                 >
                                     <h1 className="font-bold text-lg">Explanation</h1>
@@ -230,8 +238,8 @@ export default function Assessment({ assessmentData }: AssessmentProps) {
                         <div className="lg:hidden flex justify-center w-full lg:col-span-5 opacity-0 animate-fade-in pb-4">
                             <div
                                 className={`max-w-3xl w-full flex flex-col gap-2 p-6 rounded-2xl border-2 shadow-md ${answerIsCorrect
-                                        ? "bg-green-50 border-green-300"
-                                        : "bg-red-50 border-red-300"
+                                    ? "bg-green-50 border-green-300"
+                                    : "bg-red-50 border-red-300"
                                     }`}
                             >
                                 <h1 className="font-bold text-lg">Explanation</h1>

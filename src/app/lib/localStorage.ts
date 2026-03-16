@@ -7,7 +7,17 @@ export interface SubLesson {
   completed: boolean;
 }
 
+export interface AssessmentScore {
+  assessmentId: string;
+  lastCorrectCount: number;
+  highestCorrectCount: number;
+  totalQuestions: number;
+  attempts: number;
+  updatedAt: string;
+}
+
 const CATEGORY_PREFIX = "lesson_";
+const ASSESSMENT_SCORE_PREFIX = "assessment_score_";
 const DATA_VERSION = "1.01";
 
 const isClient = typeof window !== "undefined" && !!window.localStorage;
@@ -111,6 +121,89 @@ export const LocalStorage = {
     return Math.round((completedCount / lessons.length) * 100);
   },
 
+  /**
+   * Assessment score methods
+   */
+  getAssessmentScore(assessmentId: string): AssessmentScore | null {
+    const raw = this.getItem<Record<string, unknown> | null>(
+      `${ASSESSMENT_SCORE_PREFIX}${assessmentId}`,
+      null,
+    );
+
+    if (!raw) return null;
+
+    const totalQuestions = Number(raw.totalQuestions ?? 0);
+    if (totalQuestions <= 0) return null;
+
+    const hasCurrentShape =
+      typeof raw.lastCorrectCount === "number" &&
+      typeof raw.highestCorrectCount === "number";
+
+    if (hasCurrentShape) {
+      return {
+        assessmentId,
+        lastCorrectCount: Math.max(0, Math.round(Number(raw.lastCorrectCount))),
+        highestCorrectCount: Math.max(
+          0,
+          Math.round(Number(raw.highestCorrectCount)),
+        ),
+        totalQuestions,
+        attempts: Math.max(0, Math.round(Number(raw.attempts ?? 0))),
+        updatedAt:
+          typeof raw.updatedAt === "string"
+            ? raw.updatedAt
+            : new Date().toISOString(),
+      };
+    }
+
+    // Backward compatibility: migrate old percentage-based shape.
+    const legacyLastScore = Number(raw.lastScore ?? 0);
+    const legacyBestScore = Number(raw.bestScore ?? 0);
+    const migrated: AssessmentScore = {
+      assessmentId,
+      lastCorrectCount: Math.round((legacyLastScore / 100) * totalQuestions),
+      highestCorrectCount: Math.round((legacyBestScore / 100) * totalQuestions),
+      totalQuestions,
+      attempts: Math.max(0, Math.round(Number(raw.attempts ?? 0))),
+      updatedAt:
+        typeof raw.updatedAt === "string"
+          ? raw.updatedAt
+          : new Date().toISOString(),
+    };
+
+    this.setItem(`${ASSESSMENT_SCORE_PREFIX}${assessmentId}`, migrated);
+    return migrated;
+  },
+
+  saveAssessmentScore(
+    assessmentId: string,
+    correctCount: number,
+    totalQuestions: number,
+  ): AssessmentScore | null {
+    if (totalQuestions <= 0) return null;
+
+    const existing = this.getAssessmentScore(assessmentId);
+
+    const payload: AssessmentScore = {
+      assessmentId,
+      lastCorrectCount: correctCount,
+      highestCorrectCount: existing
+        ? Math.max(existing.highestCorrectCount, correctCount)
+        : correctCount,
+      totalQuestions,
+      attempts: (existing?.attempts ?? 0) + 1,
+      updatedAt: new Date().toISOString(),
+    };
+
+    return this.setItem(`${ASSESSMENT_SCORE_PREFIX}${assessmentId}`, payload)
+      ? payload
+      : null;
+  },
+
+  deleteAssessmentScore(assessmentId: string): void {
+    this.removeItem(`${ASSESSMENT_SCORE_PREFIX}${assessmentId}`);
+  },
+
   // ...existing code...
   deleteCategory(path: string): void {
     const storageKey = `${CATEGORY_PREFIX}${path}`;
@@ -129,7 +222,12 @@ export const LocalStorage = {
 
     for (let i = 0; i < window.localStorage.length; i++) {
       const key = window.localStorage.key(i);
-      if (key && (key.startsWith(CATEGORY_PREFIX) || key === "theme")) {
+      if (
+        key &&
+        (key.startsWith(CATEGORY_PREFIX) ||
+          key.startsWith(ASSESSMENT_SCORE_PREFIX) ||
+          key === "theme")
+      ) {
         keysToRemove.push(key);
       }
     }
