@@ -5,7 +5,42 @@ import { StackElement, StackElementAnimationState } from "@/app/simulator/stack/
 import { createStackElement, createStackElements } from "@/app/simulator/stack/components/utils";
 
 import VisualStack from "@/app/simulator/stack/components/VisualStack";
-import ActionButton from "@/app/simulator/stack/components/ActionButton";
+import ActionButton, { OperationInfo } from "@/app/simulator/stack/components/ActionButton";
+
+// ─── Operation info definitions (edit descriptions/complexities here) ───────
+const STACK_OPERATION_INFOS: Record<string, OperationInfo> = {
+  push: {
+    title: "Push",
+    description: "Adds a new element to the top of the stack. Follows LIFO — the last element pushed is the first one popped.",
+    timeComplexity: "O(1)",
+    spaceComplexity: "O(1)",
+  },
+  pop: {
+    title: "Pop",
+    description: "Removes and discards the element at the top of the stack. The element beneath it becomes the new top.",
+    timeComplexity: "O(1)",
+    spaceComplexity: "O(1)",
+  },
+  peek: {
+    title: "Peek",
+    description: "Returns the value at the top of the stack without removing it. Useful for inspecting the next element to be popped.",
+    timeComplexity: "O(1)",
+    spaceComplexity: "O(1)",
+  },
+  size: {
+    title: "Size",
+    description: "Returns the number of elements currently in the stack. The array's length property gives this in constant time.",
+    timeComplexity: "O(1)",
+    spaceComplexity: "O(1)",
+  },
+  clear: {
+    title: "Clear All",
+    description: "Removes all elements from the stack, resetting it to an empty state.",
+    timeComplexity: "O(1)",
+    spaceComplexity: "O(1)",
+  },
+};
+// ────────────────────────────────────────────────────────────────────────────
 
 enum OperationType {
   Basic,
@@ -220,18 +255,21 @@ export default function SimulationStack() {
                     bgColor="#2A9D8F"
                     shadowColor="#1F7A6B"
                     onClick={() => push(createStackElement(inputValue || Math.floor(Math.random() * 100)))}
+                    info={STACK_OPERATION_INFOS.push}
                   />
                   <ActionButton
                     text="Pop"
                     bgColor="#C7573B"
                     shadowColor="#A0422E"
                     onClick={() => pop()}
+                    info={STACK_OPERATION_INFOS.pop}
                   />
                   <ActionButton
                     text="Peek"
                     bgColor="#6C757D"
                     shadowColor="#495057"
                     onClick={() => peek()}
+                    info={STACK_OPERATION_INFOS.peek}
                   />
                 </>
               )}
@@ -244,12 +282,14 @@ export default function SimulationStack() {
                     bgColor="#6C757D"
                     shadowColor="#495057"
                     onClick={() => size()}
+                    info={STACK_OPERATION_INFOS.size}
                   />
                   <ActionButton
                     text="Clear All"
                     bgColor="#C7573B"
                     shadowColor="#A0422E"
                     onClick={() => clear()}
+                    info={STACK_OPERATION_INFOS.clear}
                   />
                 </>
               )}

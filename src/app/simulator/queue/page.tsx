@@ -6,7 +6,42 @@ import { ArrayElement, ArrayElementAnimationState } from "@/app/simulator/array-
 import { createArrayElement, createArrayElements } from "@/app/simulator/array-list/components/utils";
 
 import VisualArray from "@/app/simulator/array-list/components/VisualArray";
-import ActionButton from "@/app/simulator/array-list/components/ActionButton";
+import ActionButton, { OperationInfo } from "@/app/simulator/array-list/components/ActionButton";
+
+// ─── Operation info definitions (edit descriptions/complexities here) ───────
+const QUEUE_OPERATION_INFOS: Record<string, OperationInfo> = {
+    enqueue: {
+        title: "Enqueue",
+        description: "Adds a new element to the rear of the queue. Follows FIFO — the first element in will be the first element out.",
+        timeComplexity: "O(1)",
+        spaceComplexity: "O(1)",
+    },
+    dequeue: {
+        title: "Dequeue",
+        description: "Removes and discards the element at the front of the queue. Returns nothing in this simulator.",
+        timeComplexity: "O(1)",
+        spaceComplexity: "O(1)",
+    },
+    peek: {
+        title: "Peek",
+        description: "Returns the value at the front of the queue without removing it. Useful for inspecting the next element to be dequeued.",
+        timeComplexity: "O(1)",
+        spaceComplexity: "O(1)",
+    },
+    size: {
+        title: "Size",
+        description: "Returns the number of elements currently in the queue. The array's length property gives this in constant time.",
+        timeComplexity: "O(1)",
+        spaceComplexity: "O(1)",
+    },
+    clear: {
+        title: "Clear All",
+        description: "Removes all elements from the queue, resetting it to an empty state.",
+        timeComplexity: "O(1)",
+        spaceComplexity: "O(1)",
+    },
+};
+// ────────────────────────────────────────────────────────────────────────────
 
 enum OperationType {
     Basic,
@@ -237,18 +272,21 @@ export default function SimulationQueue() {
                                         bgColor="#2A9D8F"
                                         shadowColor="#1F7A6B"
                                         onClick={() => enqueue(createArrayElement(getValueOrRandom(inputValue)))}
+                                        info={QUEUE_OPERATION_INFOS.enqueue}
                                     />
                                     <ActionButton
                                         text="Dequeue"
                                         bgColor="#C7573B"
                                         shadowColor="#A0422E"
                                         onClick={() => dequeue()}
+                                        info={QUEUE_OPERATION_INFOS.dequeue}
                                     />
                                     <ActionButton
                                         text="Peek"
                                         bgColor="#6C757D"
                                         shadowColor="#495057"
                                         onClick={() => peek()}
+                                        info={QUEUE_OPERATION_INFOS.peek}
                                     />
                                 </>
                             )}
@@ -261,12 +299,14 @@ export default function SimulationQueue() {
                                         bgColor="#6C757D"
                                         shadowColor="#495057"
                                         onClick={() => size()}
+                                        info={QUEUE_OPERATION_INFOS.size}
                                     />
                                     <ActionButton
                                         text="Clear All"
                                         bgColor="#C7573B"
                                         shadowColor="#A0422E"
                                         onClick={() => clear()}
+                                        info={QUEUE_OPERATION_INFOS.clear}
                                     />
                                 </>
                             )}

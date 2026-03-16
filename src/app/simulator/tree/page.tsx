@@ -5,7 +5,72 @@ import { TreeNode, TreeNodeAnimationState } from "@/app/simulator/tree/component
 import { createNode, createTreeNodes } from "@/app/simulator/tree/components/utils";
 
 import VisualTree from "@/app/simulator/tree/components/VisualTree";
-import ActionButton from "@/app/simulator/tree/components/ActionButton";
+import ActionButton, { OperationInfo } from "@/app/simulator/tree/components/ActionButton";
+
+// ─── Operation info definitions (edit descriptions/complexities here) ───────
+const TREE_OPERATION_INFOS: Record<string, OperationInfo> = {
+    insertLeft: {
+        title: "Insert Left",
+        description: "Inserts a new node as the left child of the selected node. Select a parent node first by clicking it in the tree.",
+        timeComplexity: "O(1)",
+        spaceComplexity: "O(1)",
+    },
+    insertRight: {
+        title: "Insert Right",
+        description: "Inserts a new node as the right child of the selected node. Select a parent node first by clicking it in the tree.",
+        timeComplexity: "O(1)",
+        spaceComplexity: "O(1)",
+    },
+    reset: {
+        title: "Reset",
+        description: "Resets the tree back to the initial state with the default sample nodes.",
+        timeComplexity: "O(1)",
+        spaceComplexity: "O(n)",
+    },
+    deleteLeaf: {
+        title: "Delete Leaf",
+        description: "Removes a leaf node (a node with no children). Enter a value or select a node in the tree. Non-leaf nodes must use Delete Node instead.",
+        timeComplexity: "O(n)",
+        spaceComplexity: "O(1)",
+    },
+    deleteNode: {
+        title: "Delete Node",
+        description: "Removes any node from the tree. If the node has children, it is replaced by the deepest rightmost node to maintain tree structure.",
+        timeComplexity: "O(n)",
+        spaceComplexity: "O(n)",
+    },
+    findValue: {
+        title: "Find Value",
+        description: "Searches for a node with the given value using level-order (BFS) traversal, highlighting each visited node along the way.",
+        timeComplexity: "O(n)",
+        spaceComplexity: "O(n)",
+    },
+    preorder: {
+        title: "Pre-order Traversal",
+        description: "Visits nodes in Root → Left → Right order. Useful for creating a copy of the tree or prefix expression evaluation.",
+        timeComplexity: "O(n)",
+        spaceComplexity: "O(h)",
+    },
+    inorder: {
+        title: "In-order Traversal",
+        description: "Visits nodes in Left → Root → Right order. For a Binary Search Tree, this produces values in sorted (ascending) order.",
+        timeComplexity: "O(n)",
+        spaceComplexity: "O(h)",
+    },
+    postorder: {
+        title: "Post-order Traversal",
+        description: "Visits nodes in Left → Right → Root order. Useful for deleting the tree or evaluating postfix expressions.",
+        timeComplexity: "O(n)",
+        spaceComplexity: "O(h)",
+    },
+    levelorder: {
+        title: "Level-order Traversal (BFS)",
+        description: "Visits nodes level by level from top to bottom, left to right. Uses a queue internally. Also known as Breadth-First Search.",
+        timeComplexity: "O(n)",
+        spaceComplexity: "O(n)",
+    },
+};
+// ────────────────────────────────────────────────────────────────────────────
 
 enum OperationType {
     Insertion,
@@ -769,18 +834,21 @@ export default function SimulatorTree() {
                                         bgColor="#2A9D8F"
                                         shadowColor="#1F7A6B"
                                         onClick={() => insertNode(createNode(getValueOrRandom(inputValue)), 'left')}
+                                        info={TREE_OPERATION_INFOS.insertLeft}
                                     />
                                     <ActionButton
                                         text="Insert Right"
                                         bgColor="#2A9D8F"
                                         shadowColor="#1F7A6B"
                                         onClick={() => insertNode(createNode(getValueOrRandom(inputValue)), 'right')}
+                                        info={TREE_OPERATION_INFOS.insertRight}
                                     />
                                     <ActionButton
                                         text="Reset"
                                         bgColor="#2A9D8F"
                                         shadowColor="#1F7A6B"
                                         onClick={resetTree}
+                                        info={TREE_OPERATION_INFOS.reset}
                                     />
                                 </>
                             )}
@@ -793,12 +861,14 @@ export default function SimulatorTree() {
                                         bgColor="#C7573B"
                                         shadowColor="#A0422E"
                                         onClick={() => deleteLeaf(inputValue)}
+                                        info={TREE_OPERATION_INFOS.deleteLeaf}
                                     />
                                     <ActionButton
                                         text="Delete Node"
                                         bgColor="#C7573B"
                                         shadowColor="#A0422E"
                                         onClick={() => deleteNode(inputValue)}
+                                        info={TREE_OPERATION_INFOS.deleteNode}
                                     />
                                 </>
                             )}
@@ -811,6 +881,7 @@ export default function SimulatorTree() {
                                         bgColor="#3B82F6"
                                         shadowColor="#1E40AF"
                                         onClick={() => findNode(inputValue)}
+                                        info={TREE_OPERATION_INFOS.findValue}
                                     />
                                 </>
                             )}
@@ -823,24 +894,28 @@ export default function SimulatorTree() {
                                         bgColor="#7C3AED"
                                         shadowColor="#5B21B6"
                                         onClick={runPreorder}
+                                        info={TREE_OPERATION_INFOS.preorder}
                                     />
                                     <ActionButton
                                         text="In-order (L-Root-R)"
                                         bgColor="#7C3AED"
                                         shadowColor="#5B21B6"
                                         onClick={runInorder}
+                                        info={TREE_OPERATION_INFOS.inorder}
                                     />
                                     <ActionButton
                                         text="Post-order (L-R-Root)"
                                         bgColor="#7C3AED"
                                         shadowColor="#5B21B6"
                                         onClick={runPostorder}
+                                        info={TREE_OPERATION_INFOS.postorder}
                                     />
                                     <ActionButton
                                         text="Level-order (BFS)"
                                         bgColor="#7C3AED"
                                         shadowColor="#5B21B6"
                                         onClick={levelorderTraversal}
+                                        info={TREE_OPERATION_INFOS.levelorder}
                                     />
                                 </>
                             )}
