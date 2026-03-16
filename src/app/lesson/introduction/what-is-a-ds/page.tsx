@@ -23,6 +23,7 @@ export default function WhatIsDSPage() {
             </main>
             <BottomNav
                 prev={{ href: `/lesson/${slug}/what-is-an-algorithm`, label: "What is an Algorithm" }}
+                next={{ href: `/lesson`, label: "Lesson Page" }}
             />
         </div>
     );

@@ -25,6 +25,7 @@ export default function BigO() {
       </main>
       <BottomNav
         prev={{ href: "/lesson/big-o/introduction", label: "Introduction" }}
+        next={{ href: `/lesson`, label: "Lesson Page" }}
       />
     </div>
   );

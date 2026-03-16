@@ -13,6 +13,11 @@ export default function LessonPage() {
                     path="/assessment/array-list"
                 />
 
+                <MenuItem
+                    title="Linked List"
+                    path="/assessment/linked-list"
+                />
+
                 {/* <Link href={"/assessment/stack"}>Stack</Link>
             <Link href={"/assessment/queue"}>Queue</Link>
             <Link href={"/assessment/test"}>Test</Link> */}

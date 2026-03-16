@@ -2,22 +2,26 @@ import { Category } from "./types";
 
 export const LINKED_LIST: Category = {
   title: "Linked List",
-  description:
-    "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.",
+  description: "Todo",
   lessons: [
     {
-      title: "lessons 2.1",
-      href: "/lesson/introduction-2-1",
+      title: "lessons 4.0",
+      href: "/lesson/linkedlist/introduction",
       completed: false,
     },
     {
-      title: "lessons 2.2",
-      href: "/lesson/introduction-2-2",
+      title: "lessons 4.1",
+      href: "/lesson/linkedlist/what-is-a-linkedlist",
       completed: false,
     },
     {
-      title: "lessons 2.3",
-      href: "/lesson/introduction-2-3",
+      title: "lessons 4.2",
+      href: "/lesson/linkedlist/linkedlist-properties",
+      completed: false,
+    },
+    {
+      title: "lessons 4.3",
+      href: "/lesson/linkedlist/linkedlist-operations",
       completed: false,
     },
   ],

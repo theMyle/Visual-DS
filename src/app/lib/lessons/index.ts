@@ -11,8 +11,8 @@ export const LESSON_MAP: Record<string, Category> = {
   introduction: INTRODUCTION,
   "big-o": BIG_O,
   array: ARRAY,
+  "linked-list": LINKED_LIST,
   stack: STACK,
   queue: QUEUE,
-  "linked-list": LINKED_LIST,
   tree: TREE,
 };
