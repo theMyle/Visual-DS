@@ -30,7 +30,7 @@ export default function AssessmentMenuItem({
             className="w-full border-[1.5px] border-gray-300 rounded-lg px-4 py-3.5 bg-white hover:border-gray-400 transition-colors"
             style={{ boxShadow: "0 4px 20px rgba(116, 143, 252, 0.08)" }}
         >
-            <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-3 md:gap-4 w-full">
+            <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3 md:gap-4 w-full">
                 <div className="min-w-0 flex-1 md:pr-2">
                     <p className="text-2xl font-bold text-gray-900 leading-tight break-words">{title}</p>
                 </div>

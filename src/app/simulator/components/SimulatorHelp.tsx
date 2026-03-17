@@ -56,7 +56,11 @@ export default function SimulatorHelp({ slides, onClose }: SimulatorHelpProps) {
 
                 {/* Footer: prev / dots / next */}
                 <div className="sim-help-footer">
-                    <button className="sim-help-nav" onClick={prev} disabled={isFirst} aria-label="Previous">‹</button>
+                    <button className="sim-help-nav" onClick={prev} disabled={isFirst} aria-label="Previous">
+                        <svg aria-hidden="true" viewBox="0 0 24 24" className="sim-help-nav-icon">
+                            <path d="M15 6l-6 6 6 6" />
+                        </svg>
+                    </button>
 
                     <div className="sim-help-dots">
                         {slides.map((_, i) => (
@@ -69,7 +73,11 @@ export default function SimulatorHelp({ slides, onClose }: SimulatorHelpProps) {
                         ))}
                     </div>
 
-                    <button className="sim-help-nav" onClick={next} disabled={isLast} aria-label="Next">›</button>
+                    <button className="sim-help-nav" onClick={next} disabled={isLast} aria-label="Next">
+                        <svg aria-hidden="true" viewBox="0 0 24 24" className="sim-help-nav-icon">
+                            <path d="M9 6l6 6-6 6" />
+                        </svg>
+                    </button>
                 </div>
 
             </div>

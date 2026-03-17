@@ -11,13 +11,30 @@ export default function MenuItem({ icon, title, path }: MenuItemProps) {
     <Link
       href={path}
       className={
-        "flex items-center gap-4 w-full border-[1.5px] border-[#94A6FF] rounded-2xl px-5 py-4 " +
-        "bg-white shadow-[0_4px_4px_rgba(0,0,0,0.1)] transition-all " +
-        "duration-150 ease-in-out active:translate-y-[2px] active:shadow-none"
+        "flex w-full items-center justify-between gap-4 border-[1.5px] border-gray-300 rounded-lg px-4 py-3.5 bg-white"
       }
+      style={{ boxShadow: "0 4px 20px rgba(116, 143, 252, 0.08)" }}
     >
-      {icon && <span className="text-[#5168DA] text-2xl">{icon}</span>}
-      <span className="text-lg font-semibold text-gray-800">{title}</span>
+      <div className="flex min-w-0 flex-1 items-center gap-4 pr-2">
+        {icon && <span className="text-2xl text-[#5168DA]">{icon}</span>}
+
+        <div className="min-w-0 flex-1">
+          <p className="text-2xl font-bold text-gray-900 leading-tight break-words">{title}</p>
+        </div>
+      </div>
+
+      <span className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl border border-[#C9D3FF] bg-[#EEF1FF] text-[#5C70D6]">
+        <svg
+          aria-hidden="true"
+          viewBox="0 0 24 24"
+          className="h-5 w-5 fill-none stroke-current"
+          strokeWidth="2"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        >
+          <path d="M9 6l6 6-6 6" />
+        </svg>
+      </span>
     </Link>
   );
 }
