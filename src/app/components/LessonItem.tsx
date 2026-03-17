@@ -39,7 +39,7 @@ export default function LessonCategory({ icon, title, path, progress = 0 }: Less
             <div className="w-full flex justify-end text-xs md:text-sm">
                 {progress !== 0 ?
                     <p className={`font-bold ${isCompleted ? 'text-green-600' : 'text-green-600'}`}>
-                        {isCompleted ? 'Completed 🎉🎉🎉' : 'Continue Learning →'}
+                        {isCompleted ? 'Completed!' : 'Continue Learning →'}
                     </p>
                     :
                     <p className="text-gray-500 ">Get Started</p>

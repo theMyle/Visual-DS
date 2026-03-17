@@ -70,7 +70,7 @@ export default function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} antialiased h-full flex flex-col`}
       >
         <NavBar />
-        <main className="flex-1 overflow-auto">
+        <main className="flex-1 overflow-auto relative">
           {children}
         </main>
       </body>
