@@ -33,8 +33,8 @@ function Body() {
             <Heading>Introduction</Heading>
 
             <p>
-                Welcome to the Array module. Before we dive into specific code examples, it's important to understand the high-level goals of this section.
-            </p >
+                Welcome to the Array module. You will learn what Arrays are, how static and dynamic Arrays differ, and the efficiency of common operations.
+            </p>
 
             <ListSection title="In this module we will learn about:">
                 <li>The Array Data structure</li>
@@ -42,6 +42,6 @@ function Body() {
                 <li>Efficiency of common Array Operations</li>
             </ListSection>
 
-        </section >
+        </section>
     )
 }

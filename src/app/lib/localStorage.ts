@@ -18,7 +18,7 @@ export interface AssessmentScore {
 
 const CATEGORY_PREFIX = "lesson_";
 const ASSESSMENT_SCORE_PREFIX = "assessment_score_";
-const DATA_VERSION = "1.01";
+const DATA_VERSION = "1.02";
 
 const isClient = typeof window !== "undefined" && !!window.localStorage;
 

@@ -200,7 +200,7 @@ export const linkedListAssessment: Assessment = {
     },
     {
       id: "q8",
-      text: "Accessing a node in the 'middle' of a linked list has a time complexity of:",
+      text: "Accessing a node in the 'middle' of a singly linked list has a time complexity of:",
       type: "multiple_choice",
       choices: [
         { id: "a", text: "O(1)", is_correct: false },

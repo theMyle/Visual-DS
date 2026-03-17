@@ -14,6 +14,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
+  metadataBase: new URL("https://visualds.vercel.app"),
   title: {
     default: "Visual DS | Interactive Data Structures Visualizer",
     template: "%s | Visual DS",
@@ -37,12 +38,6 @@ export const metadata: Metadata = {
     ],
     locale: "en_US",
     type: "website",
-  },
-  twitter: {
-    card: "summary_large_image",
-    title: "Visual DS | Interactive Data Structures Visualizer",
-    description: "Visual DS is an interactive platform to learn, visualize, and practice data structures and algorithms.",
-    images: ["/logo.svg"],
   },
   keywords: [
     "data structures",
