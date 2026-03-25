@@ -6,12 +6,13 @@ import { createStackElement, createStackElements } from "@/app/simulator/stack/c
 
 import VisualStack from "@/app/simulator/stack/components/VisualStack";
 import ActionButton, { OperationInfo } from "@/app/simulator/stack/components/ActionButton";
+import SimulatorHelp, { HelpSlide } from "@/app/simulator/components/SimulatorHelp";
 
 // ─── Operation info definitions (edit descriptions/complexities here) ───────
 const STACK_OPERATION_INFOS: Record<string, OperationInfo> = {
   push: {
     title: "Push",
-    description: "Adds a new element to the top of the stack. Follows LIFO — the last element pushed is the first one popped.",
+    description: "Adds a new element to the top of the stack. Follows LIFO; the last element pushed is the first one popped.",
     timeComplexity: "O(1)",
     spaceComplexity: "O(1)",
   },
@@ -54,6 +55,35 @@ export default function SimulationStack() {
 
   const [inputValue, setInputValue] = useState<string>("");
   const [operationType, setOperationType] = useState<OperationType>(OperationType.Basic);
+  const [showHelp, setShowHelp] = useState<boolean>(true);
+
+  const helpSlides: HelpSlide[] = [
+    {
+      title: 'Stack Simulator',
+      description: 'Explore a stack visually in real time. New items are pushed to the top and operations animate to reinforce LIFO behavior.',
+      items: [
+        { label: 'Visual Area', detail: 'The top of the stack is shown first. Push adds to the top, Pop removes from the top, and Peek highlights the current top.' },
+        { label: 'Controls Panel', detail: 'On desktop, controls appear on the right side. On mobile, the same controls move below the visual stack. This panel contains the operation switcher, the Value field, and operation buttons.' },
+      ],
+    },
+    {
+      title: 'Panel Layout and Input',
+      description: 'Use the controls from top to bottom in this order: switcher, Value input, then operation buttons.',
+      items: [
+        { label: 'Operation Switcher', detail: 'Use the tab switcher at the top of the panel to change which operation group is shown.' },
+        { label: 'Value Field', detail: 'Enter the value to push into the stack. If the field is empty and you press Push, a random value is generated.' },
+      ],
+    },
+    {
+      title: 'Operation Buttons and Limits',
+      description: 'After selecting a group, use the buttons underneath the Value field to run stack operations.',
+      items: [
+        { label: 'Basic', detail: 'Push, Pop, and Peek demonstrate core LIFO operations directly on the top item.' },
+        { label: 'Others', detail: 'Size shows stack count behavior and Clear All resets the stack to empty.' },
+        { label: 'Overflow and Underflow', detail: 'Push shows a stack overflow alert at max capacity (10 on mobile, 12 on desktop). Pop shows an underflow alert when the stack is empty.' },
+      ],
+    },
+  ];
 
   useEffect(() => {
     // Initialize with some sample data
@@ -68,7 +98,10 @@ export default function SimulationStack() {
     // Limit to 10 elements on mobile (screen width < 768px), 12 on desktop
     const isMobile = typeof window !== 'undefined' && window.innerWidth < 768;
     const maxElements = isMobile ? 10 : 12;
-    if (stack.length >= maxElements) return;
+    if (stack.length >= maxElements) {
+      alert(`Stack Overflow! Maximum ${maxElements} elements reached.`);
+      return;
+    }
 
     value.animationState = StackElementAnimationState.NewPushed;
     setStack(prev => [value, ...prev]); // Add to the beginning (top)
@@ -84,7 +117,11 @@ export default function SimulationStack() {
 
   // Pop an element from the stack
   const pop = async () => {
-    if (stack.length === 0 || isPopping) return;
+    if (stack.length === 0) {
+      alert("Stack Underflow! Cannot pop from an empty stack.");
+      return;
+    }
+    if (isPopping) return;
 
     // Directly remove the element - exit animation will handle the visual effect
     setStack(prev => prev.slice(1));
@@ -180,10 +217,21 @@ export default function SimulationStack() {
 
   return (
     <div className="h-full bg-gray-50 overflow-hidden">
+      {showHelp && (
+        <SimulatorHelp slides={helpSlides} onClose={() => setShowHelp(false)} />
+      )}
       <main className="flex flex-col lg:flex-row h-full max-w-7xl mx-auto bg-white">
 
         {/* Stack display - Constrained height */}
-        <div className="flex-[1.2] lg:flex-[3] h-full overflow-hidden">
+        <div className="flex-[1.2] lg:flex-[3] h-full overflow-hidden relative">
+          <button
+            className="absolute right-4 top-4 z-10 w-7 h-7 rounded-full bg-gray-100 hover:bg-gray-200 text-gray-500 hover:text-gray-700 text-sm font-bold transition-colors flex items-center justify-center"
+            onClick={() => setShowHelp(true)}
+            aria-label="Open simulator help"
+          >
+            ?
+          </button>
+
           <VisualStack stack={stack} />
         </div>
 
