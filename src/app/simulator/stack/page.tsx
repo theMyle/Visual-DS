@@ -28,12 +28,12 @@ const STACK_OPERATION_INFOS: Record<string, OperationInfo> = {
     timeComplexity: "O(1)",
     spaceComplexity: "O(1)",
   },
-  size: {
-    title: "Size",
-    description: "Returns the number of elements currently in the stack. The array's length property gives this in constant time.",
-    timeComplexity: "O(1)",
-    spaceComplexity: "O(1)",
-  },
+  // size: {
+  //   title: "Size",
+  //   description: "Returns the number of elements currently in the stack. The array's length property gives this in constant time.",
+  //   timeComplexity: "O(1)",
+  //   spaceComplexity: "O(1)",
+  // },
   clear: {
     title: "Clear All",
     description: "Removes all elements from the stack, resetting it to an empty state.",
@@ -79,7 +79,7 @@ export default function SimulationStack() {
       description: 'After selecting a group, use the buttons underneath the Value field to run stack operations.',
       items: [
         { label: 'Basic', detail: 'Push, Pop, and Peek demonstrate core LIFO operations directly on the top item.' },
-        { label: 'Others', detail: 'Size shows stack count behavior and Clear All resets the stack to empty.' },
+        { label: 'Others', detail: 'Clear All resets the stack to empty.' },
         { label: 'Overflow and Underflow', detail: 'Push shows a stack overflow alert at max capacity (10 on mobile, 12 on desktop). Pop shows an underflow alert when the stack is empty.' },
       ],
     },
@@ -182,31 +182,31 @@ export default function SimulationStack() {
   // };
 
   // Get stack size
-  const size = async () => {
-    if (isAnimating) return;
-    setIsAnimating(true);
+  // const size = async () => {
+  //   if (isAnimating) return;
+  //   setIsAnimating(true);
 
-    // Highlight all elements to show the size
-    if (stack.length > 0) {
-      const newStack = stack.map(element => ({
-        ...element,
-        animationState: StackElementAnimationState.HighlightedGreen
-      }));
-      setStack(newStack);
+  //   // Highlight all elements to show the size
+  //   if (stack.length > 0) {
+  //     const newStack = stack.map(element => ({
+  //       ...element,
+  //       animationState: StackElementAnimationState.HighlightedGreen
+  //     }));
+  //     setStack(newStack);
 
-      // Return to default state
-      setTimeout(() => {
-        const defaultStack = newStack.map(element => ({
-          ...element,
-          animationState: StackElementAnimationState.Default
-        }));
-        setStack(defaultStack);
-        setIsAnimating(false);
-      }, 800);
-    } else {
-      setIsAnimating(false);
-    }
-  };
+  //     // Return to default state
+  //     setTimeout(() => {
+  //       const defaultStack = newStack.map(element => ({
+  //         ...element,
+  //         animationState: StackElementAnimationState.Default
+  //       }));
+  //       setStack(defaultStack);
+  //       setIsAnimating(false);
+  //     }, 800);
+  //   } else {
+  //     setIsAnimating(false);
+  //   }
+  // };
 
   // Clear the entire stack
   const clear = async () => {
@@ -325,13 +325,13 @@ export default function SimulationStack() {
               {/* ADVANCED OPERATIONS */}
               {operationType === OperationType.Advanced && (
                 <>
-                  <ActionButton
+                  {/* <ActionButton
                     text="Size"
                     bgColor="#6C757D"
                     shadowColor="#495057"
                     onClick={() => size()}
                     info={STACK_OPERATION_INFOS.size}
-                  />
+                  /> */}
                   <ActionButton
                     text="Clear All"
                     bgColor="#C7573B"
