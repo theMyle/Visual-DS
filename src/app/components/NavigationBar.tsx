@@ -46,7 +46,7 @@ export default function NavBar() {
                         Home
                     </Link>
                     <Link href="/lesson" className="px-4 py-2 text-gray-700 hover:text-gray-900 hover:bg-gray-100 rounded-md transition-colors font-medium active:transform active:scale-95">
-                        Lessons
+                        Lesson
                     </Link>
                     <Link href="/simulator" className="px-4 py-2 text-gray-700 hover:text-gray-900 hover:bg-gray-100 rounded-md transition-colors font-medium active:transform active:scale-95">
                         Simulator
@@ -90,7 +90,7 @@ export default function NavBar() {
                                 onClick={() => { setMenuOpen(false) }} />
 
                             <MenuItemButton
-                                text={"Lessons"}
+                                text={"Lesson"}
                                 href={"/lesson"}
                                 onClick={() => { setMenuOpen(false) }} />
 

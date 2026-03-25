@@ -15,4 +15,9 @@ export const ASSESSMENT_LIST: AssessmentMenuItem[] = [
     title: "Linked List",
     path: "/assessment/linked-list",
   },
+  {
+    id: "stack-1",
+    title: "Stack",
+    path: "/assessment/stack",
+  },
 ];

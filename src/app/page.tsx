@@ -184,7 +184,7 @@ export default function App() {
         >
           <div className="h-full">
             <HomeItem
-              title="Lessons"
+              title="Lesson"
               description="Dive deep into the core of data structures with clear, structured lessons. Learn about the fundamental properties and operations of various structures, forming the essential foundation for your understanding."
               path="/lesson"
             />

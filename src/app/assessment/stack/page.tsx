@@ -1,8 +1,6 @@
+import Assessment from "../components/Assessment";
+import { stackAssessment } from "./questions";
 
-export default function stackAssessment() {
-    return (
-        <>
-            <h1>Stack</h1>
-        </>
-    )
+export default function LinkedListAssessmentPage() {
+    return <Assessment assessmentData={stackAssessment} />;
 }
