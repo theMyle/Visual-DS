@@ -104,7 +104,7 @@ std::cout << "IsEmpty result: " << bookStack.empty() << std::endl;
             <Heading>Peek and IsEmpty</Heading>
 
             <p>
-                To help manage the stack, two informational operations are used: Peek (or Top) and IsEmpty. <strong>Peek</strong> allows you to look at the value of the top element without actually removing it. Since it only involves a single "read" of the top position, it is a constant time O(1) operation. <strong>IsEmpty</strong> is a simple boolean check used to determine if the stack contains any data. It returns true if the stack is empty and false otherwise, which is a lightning-fast O(1) check. This is crucial for preventing "Stack Underflow" errors, which occur if you try to Pop from a stack that has nothing left in it.
+                To help manage the stack, two informational operations are used: Peek (or Top) and IsEmpty. <strong>Peek</strong> allows you to look at the value of the top element without actually removing it. Since it only involves a single "read" of the top position, it is a constant time O(1) operation. <strong>IsEmpty</strong> is a simple boolean check used to determine if the stack contains any data. It returns true if the stack is empty and false otherwise, which is a lightning-fast O(1) check. This is crucial for preventing <strong>"Stack Underflow"</strong> errors, which occur if you try to Pop from a stack that has nothing left in it.
             </p>
 
             <CodeBlock

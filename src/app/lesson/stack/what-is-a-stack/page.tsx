@@ -1,10 +1,10 @@
 import BackButton from "@/app/components/BackButton";
-import MarkAsDone from "../../../components/MarkAsDone";
-import BottomNav from "../../../components/BottomNav";
-import { SECTION_CLASS } from "../../../components/constants";
-import Heading from "../../../components/Heading";
-import VideoEmbed from "../../../components/VideoEmbed";
-import VisualImage from "../../../components/VisualImage";
+import MarkAsDone from "../../components/MarkAsDone";
+import BottomNav from "../../components/BottomNav";
+import { SECTION_CLASS } from "../../components/constants";
+import Heading from "../../components/Heading";
+import VideoEmbed from "../../components/VideoEmbed";
+import VisualImage from "../../components/VisualImage";
 
 export default function WhatIsAStackPage() {
     const slug = "stack";
