@@ -52,7 +52,13 @@ export default function NavBar() {
                         Simulator
                     </Link>
                     <Link href="/assessment" className="px-4 py-2 text-gray-700 hover:text-gray-900 hover:bg-gray-100 rounded-md transition-colors font-medium active:transform active:scale-95">
-                        Assessment
+                        Quiz
+                    </Link>
+                    <Link
+                        href="https://forms.gle/RFBzwqqXkiWQNyKp9"
+                        target="_blank"
+                        className="px-4 py-2 text-gray-700 hover:text-gray-900 hover:bg-gray-100 rounded-md transition-colors font-medium active:transform active:scale-95">
+                        Feedback
                     </Link>
                 </div>
 
@@ -100,8 +106,13 @@ export default function NavBar() {
                                 onClick={() => { setMenuOpen(false) }} />
 
                             <MenuItemButton
-                                text={"Assessment"}
+                                text={"Quiz"}
                                 href={"/assessment"}
+                                onClick={() => { setMenuOpen(false) }} />
+
+                            <MenuItemButton
+                                text={"Feedback"}
+                                href={"https://forms.gle/RFBzwqqXkiWQNyKp9"}
                                 onClick={() => { setMenuOpen(false) }} />
                         </div>
                     </motion.div>
