@@ -58,15 +58,30 @@ function ArrayOperations() {
 }
 
 function AccessAndUpdate() {
-    const codeExample1 = `// ...accessing an element
-int staticArr[5] = {1, 2, 3, 4, 5};     // creates a static array (fixed size)
-std::cout << staticArr[0] << std::endl; // access/prints the first element`;
+    const codeExample1 = `#include <iostream>
 
-    const codeExample2 = `// ...updating an element
-std::vector<int> dynamicArr = {10, 20, 30, 40, 50};    // creates a dynamic array
-dynamicArr[4] = 100;    // updates element at index 4
+int main() {
+    // Accessing an element in a fixed-size array
+    int staticArr[5] = {1, 2, 3, 4, 5};
+    std::cout << staticArr[0] << '\\n'; // prints: 1
+    return 0;
+}`;
 
-// Result: [10, 20, 30, 40, 100]`;
+    const codeExample2 = `#include <iostream>
+#include <vector>
+
+int main() {
+    // Updating an element in a dynamic array (vector)
+    std::vector<int> dynamicArr = {10, 20, 30, 40, 50};
+    dynamicArr[4] = 100;
+
+    for (int x : dynamicArr) {
+        std::cout << x << " ";
+    }
+    std::cout << '\\n'; // Result: 10 20 30 40 100
+
+    return 0;
+}`;
 
     return (
         <section className={SECTION_CLASS}>
@@ -91,23 +106,53 @@ dynamicArr[4] = 100;    // updates element at index 4
 }
 
 function Insertion() {
-    const sampleCode1 = `// Insertion at the end
-std::vector<int> nums = {1, 2, 3, 4, 5};
-nums.push_back(6);
+    const sampleCode1 = `#include <iostream>
+#include <vector>
 
-// Result: [1, 2, 3, 4, 5, 6]`;
+int main() {
+    // Insertion at the end
+    std::vector<int> nums = {1, 2, 3, 4, 5};
+    nums.push_back(6);
 
-    const sampleCode2 = `// Insertion at front
-std::vector<int> nums = {10, 20, 30, 40, 50};
-nums.insert(nums.begin(), 5);
+    for (int x : nums) {
+        std::cout << x << " ";
+    }
+    std::cout << '\\n'; // Result: 1 2 3 4 5 6
 
-// Result: [5, 10, 20, 30, 40, 50]`;
+    return 0;
+}`;
 
-    const sampleCode3 = `// Insertion around middle (after index 2)
-std::vector<int> nums = {10, 20, 30, 40, 50};
-nums.insert(nums.begin() + 2, 100);
+    const sampleCode2 = `#include <iostream>
+#include <vector>
 
-// Result: [10, 20, 100, 30, 40, 50]`;
+int main() {
+    // Insertion at the front
+    std::vector<int> nums = {10, 20, 30, 40, 50};
+    nums.insert(nums.begin(), 5);
+
+    for (int x : nums) {
+        std::cout << x << " ";
+    }
+    std::cout << '\\n'; // Result: 5 10 20 30 40 50
+
+    return 0;
+}`;
+
+    const sampleCode3 = `#include <iostream>
+#include <vector>
+
+int main() {
+    // Insertion around middle (at index 2)
+    std::vector<int> nums = {10, 20, 30, 40, 50};
+    nums.insert(nums.begin() + 2, 100);
+
+    for (int x : nums) {
+        std::cout << x << " ";
+    }
+    std::cout << '\\n'; // Result: 10 20 100 30 40 50
+
+    return 0;
+}`;
 
     return (
         <section className={SECTION_CLASS}>
@@ -146,18 +191,37 @@ nums.insert(nums.begin() + 2, 100);
 }
 
 function Deletion() {
-    const sampleCode1 = `// Deletion at the end: Fast (No shifting needed) 
-std::vector<int> nums = {10, 20, 30, 40, 50};
-nums.pop_back();
+    const sampleCode1 = `#include <iostream>
+#include <vector>
 
-// Result: [10, 20, 30, 40]`;
+int main() {
+    // Deletion at the end: fast (no shifting needed)
+    std::vector<int> nums = {10, 20, 30, 40, 50};
+    nums.pop_back();
 
-    const sampleCode2 = `// Deletion in the middle
-// Removes the element at index 2 (the number 20) 
-std::vector<int> nums = {10, 20, 30, 40, 50};
-nums.erase(nums.begin() + 2);
+    for (int x : nums) {
+        std::cout << x << " ";
+    }
+    std::cout << '\\n'; // Result: 10 20 30 40
 
-// Result: [10, 20, 40, 50]`;
+    return 0;
+}`;
+
+    const sampleCode2 = `#include <iostream>
+#include <vector>
+
+int main() {
+    // Deletion in the middle (removes the element at index 2)
+    std::vector<int> nums = {10, 20, 30, 40, 50};
+    nums.erase(nums.begin() + 2);
+
+    for (int x : nums) {
+        std::cout << x << " ";
+    }
+    std::cout << '\\n'; // Result: 10 20 40 50
+
+    return 0;
+}`;
 
     return (
         <section className={SECTION_CLASS}>
@@ -169,7 +233,7 @@ nums.erase(nums.begin() + 2);
 
                 </li>
                 <li>
-                    <strong>Deletion at front or middle</strong>: This is an expensive operation <strong>O(n)</strong>. When you remove an element from the middle, it leaves a "hole" in the memory block. To keep the data contiguous, you must shift to the left every subsequent element to fill that vacuum.
+                    <strong>Deletion at front or middle</strong>: This is an expensive operation as list grows <strong>O(n)</strong>. When you remove an element from the middle, it leaves a "hole" in the memory block. To keep the data contiguous, you must shift to the left every subsequent element to fill that slot.
                 </li>
             </ListSection>
 
@@ -187,29 +251,42 @@ nums.erase(nums.begin() + 2);
 }
 
 function TraversalAndSearch() {
-    const sampleCode1 = `// Traversal: Printing every element
-const nums[] = {1, 2, 3, 4, 5};
+    const sampleCode1 = `#include <iostream>
 
-for (int x : nums) {
-  std::cout << x << " "; 
+int main() {
+    // Traversal: printing every element
+    int nums[] = {1, 2, 3, 4, 5};
+
+    for (int x : nums) {
+        std::cout << x << " ";
+    }
+    std::cout << '\\n';
+
+    return 0;
 }`;
 
-    const sampleCode2 = `// Search: Finding a specific value (Linear Search)
-int nums[] = {10, 20, 30, 40, 50};
-int target = 30; // value to be searched
-bool found = false;
+    const sampleCode2 = `#include <iostream>
 
-for (int x : nums) {
-    if (x == target) {
-        found = true;
-        break;
+int main() {
+    // Search: finding a specific value (linear search)
+    int nums[] = {10, 20, 30, 40, 50};
+    int target = 30;
+    bool found = false;
+
+    for (int x : nums) {
+        if (x == target) {
+            found = true;
+            break;
+        }
     }
-}
 
-if (found) {
-    std::cout << "Found 30!\\n";
-} else {
-    std::cout << "Item not found\\n";
+    if (found) {
+        std::cout << "Found 30!" << '\\n';
+    } else {
+        std::cout << "Item not found" << '\\n';
+    }
+
+    return 0;
 }`;
 
     return (

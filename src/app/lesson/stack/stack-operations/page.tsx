@@ -118,6 +118,8 @@ std::cout << "IsEmpty result: " << bookStack.empty() << std::endl;
 function Table() {
     return (
         <section className={SECTION_CLASS}>
+            <Heading>Stack Operations Complexity Table</Heading>
+
             <TableSection
                 headers={["Stack Operations", "Time Complexity"]}
                 rows={[

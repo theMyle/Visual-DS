@@ -14,5 +14,5 @@ export const LESSON_MAP: Record<string, Category> = {
   linkedlist: LINKED_LIST,
   stack: STACK,
   queue: QUEUE,
-  tree: TREE,
+  // tree: TREE,
 };

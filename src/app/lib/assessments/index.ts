@@ -20,4 +20,9 @@ export const ASSESSMENT_LIST: AssessmentMenuItem[] = [
     title: "Stack",
     path: "/assessment/stack",
   },
+  {
+    id: "queue-1",
+    title: "Queue",
+    path: "/assessment/queue",
+  },
 ];

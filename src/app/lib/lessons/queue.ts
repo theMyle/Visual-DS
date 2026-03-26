@@ -3,21 +3,31 @@ import { Category } from "./types";
 export const QUEUE: Category = {
   title: "Queue",
   description:
-    "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.",
+    "Learn how queues manage data in First-In, First-Out (FIFO) order. This module covers what queues are, their core properties, and the efficiency of common operations such as enqueue, dequeue, and practical queue applications.",
   lessons: [
     {
-      title: "lessons 2.1",
-      href: "/lesson/introduction-2-1",
+      title: "lessons 2.0",
+      href: "/lesson/queue/introduction",
       completed: false,
     },
     {
-      title: "lessons 2.2",
-      href: "/lesson/introduction-2-2",
+      title: "lessons 2.1 - What is a Queue",
+      href: "/lesson/queue/what-is-a-queue",
       completed: false,
     },
     {
-      title: "lessons 2.3",
-      href: "/lesson/introduction-2-3",
+      title: "lessons 2.2 - Queue Properties",
+      href: "/lesson/queue/properties",
+      completed: false,
+    },
+    {
+      title: "lessons 2.3 - Queue Operations",
+      href: "/lesson/queue/operations",
+      completed: false,
+    },
+    {
+      title: "lessons 2.4 - Queue Applications",
+      href: "/lesson/queue/applications",
       completed: false,
     },
   ],
