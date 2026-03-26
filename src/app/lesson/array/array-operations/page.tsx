@@ -25,7 +25,7 @@ export default function WhatIsAnArray() {
                 <Deletion />
                 <TraversalAndSearch />
                 <OperationComplexityTable />
-                <RealworldVsTheory />
+                {/* <RealworldVsTheory /> */}
 
                 <MarkAsDone categorySlug={slug} href={href} />
 
