@@ -7,6 +7,7 @@ import { createArrayElement, createArrayElements } from "@/app/simulator/array-l
 
 import VisualArray from "@/app/simulator/array-list/components/VisualArray";
 import ActionButton, { OperationInfo } from "@/app/simulator/array-list/components/ActionButton";
+import SimulatorHelp, { HelpSlide } from "@/app/simulator/components/SimulatorHelp";
 
 // ─── Operation info definitions (edit descriptions/complexities here) ───────
 const QUEUE_OPERATION_INFOS: Record<string, OperationInfo> = {
@@ -48,12 +49,41 @@ enum OperationType {
     Advanced,
 }
 
+const helpSlides: HelpSlide[] = [
+    {
+        title: 'Queue Simulator',
+        description: 'Explore queue behavior visually in real time. Elements are added at the rear and removed from the front to reinforce FIFO ordering.',
+        items: [
+            { label: 'Visual Area', detail: 'The queue is displayed horizontally with FRONT and REAR indicators. Enqueue adds to the rear and Dequeue removes from the front.' },
+            { label: 'Controls Panel', detail: 'On desktop, controls appear on the right. On mobile, controls move below. It contains operation tabs, value input, queue stats, and action buttons.' },
+        ],
+    },
+    {
+        title: 'Panel Layout and Input',
+        description: 'Use controls from top to bottom: operation switcher, Value field, then operation buttons.',
+        items: [
+            { label: 'Operation Switcher', detail: 'Tabs separate core queue behavior from utility actions, so you can focus on one operation group at a time.' },
+            { label: 'Value Field', detail: 'Use the input when adding new values. If left empty, the simulator can generate a random value for quick experimentation.' },
+        ],
+    },
+    {
+        title: 'Operations and Limits',
+        description: 'Run actions and watch the visual state update so FIFO behavior is easy to follow.',
+        items: [
+            { label: 'Interaction Pattern', detail: 'Most actions either update the queue structure or briefly highlight elements to show what was inspected.' },
+            { label: 'Using Info Popups', detail: 'Tap the info icon on any action button for a quick explanation and complexity details before running it.' },
+            { label: 'Capacity Limit', detail: 'Queue capacity is responsive: 10 items on mobile and 18 items on desktop.' },
+        ],
+    },
+];
+
 export default function SimulationQueue() {
     const [queue, setQueue] = useState<ArrayElement[]>([]);
     const [isAnimating, setIsAnimating] = useState<boolean>(false);
 
     const [inputValue, setInputValue] = useState<string>("");
     const [operationType, setOperationType] = useState<OperationType>(OperationType.Basic);
+    const [showHelp, setShowHelp] = useState<boolean>(true);
 
     const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
     const delay = {
@@ -168,10 +198,21 @@ export default function SimulationQueue() {
 
     return (
         <div className="h-full bg-gray-50 overflow-hidden">
+            {showHelp && (
+                <SimulatorHelp slides={helpSlides} onClose={() => setShowHelp(false)} />
+            )}
             <main className="flex flex-col lg:flex-row h-full max-w-7xl mx-auto bg-white">
 
                 {/* Queue display - Constrained height */}
-                <div className="flex-1 lg:flex-[3] h-full overflow-hidden">
+                <div className="flex-1 lg:flex-[3] h-full overflow-hidden relative">
+
+                    <button
+                        className="absolute right-4 top-4 z-10 w-7 h-7 rounded-full bg-gray-100 hover:bg-gray-200 text-gray-500 hover:text-gray-700 text-sm font-bold transition-colors flex items-center justify-center"
+                        onClick={() => setShowHelp(true)}
+                        aria-label="Open simulator help"
+                    >
+                        ?
+                    </button>
 
                     {/* Title */}
                     <div className="flex-shrink-0 mb-2 md:mb-4 pt-6">

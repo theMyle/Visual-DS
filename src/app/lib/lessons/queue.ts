@@ -6,7 +6,7 @@ export const QUEUE: Category = {
     "Learn how queues manage data in First-In, First-Out (FIFO) order. This module covers what queues are, their core properties, and the efficiency of common operations such as enqueue, dequeue, and practical queue applications.",
   lessons: [
     {
-      title: "lessons 2.0",
+      title: "lessons 2.0 - Introduction",
       href: "/lesson/queue/introduction",
       completed: false,
     },
