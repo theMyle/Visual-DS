@@ -6,6 +6,7 @@ import { createNode, createTreeNodes } from "@/app/simulator/tree/components/uti
 
 import VisualTree from "@/app/simulator/tree/components/VisualTree";
 import ActionButton, { OperationInfo } from "@/app/simulator/tree/components/ActionButton";
+import SimulatorHelp, { HelpSlide } from "@/app/simulator/components/SimulatorHelp";
 
 // ─── Operation info definitions (edit descriptions/complexities here) ───────
 const TREE_OPERATION_INFOS: Record<string, OperationInfo> = {
@@ -79,6 +80,35 @@ enum OperationType {
     Traversal,
 }
 
+const helpSlides: HelpSlide[] = [
+    {
+        title: 'Binary Tree Simulator',
+        description: 'Explore binary tree operations visually with real-time updates to structure and node states.',
+        items: [
+            { label: 'Visual Area', detail: 'You can pinch to zoom and drag the tree around. Click a node to select it, click it again to deselect, and use selected nodes for operations that need a target parent or node.' },
+            { label: 'Controls Panel', detail: 'On desktop, controls are on the right; on mobile, they move below the tree. Tabs group operations by purpose.' },
+        ],
+    },
+    {
+        title: 'Operation Tabs',
+        description: 'Use the tabs to switch between different operation categories as you explore tree behavior.',
+        items: [
+            { label: 'Category-Based Workflow', detail: 'Each tab groups related actions, so controls stay focused on your current goal rather than showing everything at once.' },
+            { label: 'Input and Selection', detail: 'Depending on the active category, actions may rely on the Value field, a selected node, or both.' },
+            { label: 'Animation Feedback', detail: 'When an action runs, node colors and motion communicate the current step so state changes are easier to follow.' },
+        ],
+    },
+    {
+        title: 'Selection and Limits',
+        description: 'A few constraints keep the visualization readable and consistent across devices.',
+        items: [
+            { label: 'Node Selection', detail: 'Click a node to select it as insertion parent; click it again (or Clear) to deselect.' },
+            { label: 'Depth Limit', detail: 'Maximum insertion depth is responsive, with stricter limits on smaller screens to keep the tree readable.' },
+            { label: 'Result Panels', detail: 'Context panels in the controls area summarize useful state, such as selected node and traversal visit order.' },
+        ],
+    },
+];
+
 export default function SimulatorTree() {
     const [nodes, setNodes] = useState<TreeNode[]>([]);
     const [rootId, setRootId] = useState<string | null>(null);
@@ -89,6 +119,7 @@ export default function SimulatorTree() {
     const [visitOrder, setVisitOrder] = useState<(string | number)[]>([]);
 
     const [operationType, setOperationType] = useState<OperationType>(OperationType.Insertion);
+    const [showHelp, setShowHelp] = useState<boolean>(true);
 
     const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
     const delay = {
@@ -710,10 +741,21 @@ export default function SimulatorTree() {
 
     return (
         <div className="h-full bg-gray-50 overflow-hidden">
+            {showHelp && (
+                <SimulatorHelp slides={helpSlides} onClose={() => setShowHelp(false)} />
+            )}
             <main className="flex flex-col lg:flex-row h-full max-w-7xl mx-auto bg-white">
 
                 {/* Tree display */}
-                <div className="flex-1 lg:flex-[3] h-full overflow-hidden">
+                <div className="flex-1 lg:flex-[3] h-full overflow-hidden relative">
+                    <button
+                        className="absolute right-4 top-4 z-10 w-7 h-7 rounded-full bg-gray-100 hover:bg-gray-200 text-gray-500 hover:text-gray-700 text-sm font-bold transition-colors flex items-center justify-center"
+                        onClick={() => setShowHelp(true)}
+                        aria-label="Open simulator help"
+                    >
+                        ?
+                    </button>
+
                     {/* Title */}
                     <div className="flex-shrink-0 mb-2 md:mb-4 pt-6">
                         <h1 className="text-base md:text-xl font-semibold text-gray-600 text-center">
