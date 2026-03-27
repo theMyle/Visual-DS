@@ -1,7 +1,7 @@
 import { Assessment } from "../types";
 
 export const stackAssessment: Assessment = {
-  id: "stack-basics-1",
+  id: "stack-1",
   title: "Stack Data Structure Basics",
   description:
     "A comprehensive assessment on LIFO logic, operation sequences, and error prevention.",

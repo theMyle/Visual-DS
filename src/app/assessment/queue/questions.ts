@@ -1,7 +1,7 @@
 import { Assessment } from "../types";
 
 export const queueBasicsAssessment: Assessment = {
-  id: "queue-logic-and-behavior",
+  id: "queue-1",
   title: "Queue Logic & Structural Analysis",
   description:
     "An assessment focused on data flow, pointer behavior, and structural comparisons.",
