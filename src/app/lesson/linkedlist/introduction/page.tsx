@@ -22,7 +22,7 @@ export default function LinkedListIntroduction() {
 
             </main>
             <BottomNav
-                next={{ href: `/lesson/${slug}/what-is-an-array`, label: "What is an Array" }}
+                next={{ href: `/lesson/${slug}/what-is-a-linkedlist`, label: "What is a Linked List" }}
             />
         </div>
     );

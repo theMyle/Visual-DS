@@ -50,7 +50,7 @@ export default function AssessmentSummary({
     }
 
     return (
-        <div className="h-full flex flex-col items-center justify-center p-4 bg-gradient-to-b from-slate-50 to-white">
+        <div className="fixed inset-0 z-[120] flex flex-col items-center justify-start md:justify-center p-4 pt-6 md:pt-4 bg-gradient-to-b from-slate-50 to-white overflow-y-auto">
             <div className="max-w-2xl w-full rounded-2xl border border-slate-200/80 bg-white/95 shadow-[0_20px_60px_-30px_rgba(15,23,42,0.35)] p-6 md:p-8 space-y-6 opacity-0 animate-fade-in">
                 <div className="flex items-center justify-between gap-4 border-b border-slate-200 pb-4">
                     <div>

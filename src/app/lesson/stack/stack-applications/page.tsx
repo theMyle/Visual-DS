@@ -9,7 +9,7 @@ import VideoEmbed from "../../components/VideoEmbed";
 
 export default function StackOperationsPage() {
     const slug = "stack";
-    const title = "stack-operations";
+    const title = "stack-applications";
     const href = `/lesson/${slug}/${title}`;
 
     return (

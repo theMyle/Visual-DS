@@ -57,7 +57,7 @@ export default function NavBar() {
                             Simulator
                         </Link>
                         <Link href="/assessment" className="px-4 py-2 text-gray-700 hover:text-gray-900 hover:bg-gray-100 rounded-md transition-colors font-medium active:transform active:scale-95">
-                            Quiz
+                            Assessment
                         </Link>
                         <Link
                             href="https://forms.gle/RFBzwqqXkiWQNyKp9"
@@ -150,7 +150,7 @@ export default function NavBar() {
                                 onClick={() => { setMenuOpen(false) }} />
 
                             <MenuItemButton
-                                text={"Quiz"}
+                                text={"Assessment"}
                                 href={"/assessment"}
                                 onClick={() => { setMenuOpen(false) }} />
 
@@ -160,7 +160,7 @@ export default function NavBar() {
                                 onClick={() => { setMenuOpen(false) }} />
 
                             {isSignedIn && (
-                                <div className="border-t border-gray-300">
+                                <div className="">
                                     <SignOutButton>
                                         <button
                                             type="button"
