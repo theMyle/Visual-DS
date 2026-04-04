@@ -12,6 +12,7 @@ type AssessmentProps = {
     assessmentData: AssessmentType;
 };
 
+
 export default function Assessment({ assessmentData }: AssessmentProps) {
     const router = useRouter();
 
@@ -140,6 +141,8 @@ export default function Assessment({ assessmentData }: AssessmentProps) {
         const correctCount = correctDots.filter(Boolean).length;
         return (
             <AssessmentSummary
+                id={assessmentData.id}
+                category={assessmentData.category.id}
                 correctCount={correctCount}
                 totalQuestions={totalQuestions}
                 onRetry={handleRetry}

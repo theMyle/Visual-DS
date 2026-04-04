@@ -1,6 +1,8 @@
 import CircularProgress from "./CircularProgress";
 
 type AssessmentSummaryProps = {
+    id: string;
+    category: string;
     correctCount: number;
     totalQuestions: number;
     onRetry: () => void;
@@ -8,6 +10,8 @@ type AssessmentSummaryProps = {
 }
 
 export default function AssessmentSummary({
+    id,
+    category,
     correctCount,
     totalQuestions,
     onRetry,
