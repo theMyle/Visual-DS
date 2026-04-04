@@ -3,10 +3,12 @@
 import { useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
+import { useClerk, useAuth } from "@clerk/nextjs";
+import { useMutation } from "@tanstack/react-query";
 import ProgressDots from "./ProgressDots";
 import AssessmentSummary from "./AssessmentSummary";
 import type { Assessment as AssessmentType, Choice } from "../types";
-import { LocalStorage } from "../../lib/localStorage";
+import { FetchWithAuth } from "../../lib/fetchWithAuth";
 
 type AssessmentProps = {
     assessmentData: AssessmentType;
@@ -15,29 +17,44 @@ type AssessmentProps = {
 
 export default function Assessment({ assessmentData }: AssessmentProps) {
     const router = useRouter();
+    const { isLoaded, isSignedIn, getToken } = useAuth();
+    const { redirectToSignIn } = useClerk();
+    const [isMounted, setIsMounted] = useState(false);
 
-    // Shuffle questions once on mount for each route-specific assessment.
-    const [assessment] = useState(() => ({
-        ...assessmentData,
-        questions: [...assessmentData.questions].sort(() => Math.random() - 0.5),
-    }));
+    const [assessment, setAssessment] = useState<AssessmentType | null>(null);
 
     const [showSummary, setShowSummary] = useState(false);
-    const totalQuestions = assessment.questions.length;
+    const totalQuestions = assessment?.questions.length ?? 0;
 
     const [currentDot, setCurrentDot] = useState(0);
     const [answeredCount, setAnsweredCount] = useState(0);
-    const [correctDots, setCorrectDots] = useState<boolean[]>(() =>
-        Array(totalQuestions).fill(false)
-    );
+    const [correctDots, setCorrectDots] = useState<boolean[]>([]);
 
-    const [currentQuestion, setCurrentQuestion] = useState(assessment.questions[0]);
+    const [currentQuestion, setCurrentQuestion] = useState<AssessmentType["questions"][number] | null>(null);
     const [shuffledChoices, setShuffledChoices] = useState<Choice[]>([]);
 
     const [correctFeedback, setCorrectFeedback] = useState("");
     const [wrongFeedback, setWrongFeedback] = useState("");
+    const hasSyncedScoreRef = useRef(false);
 
     useEffect(() => {
+        const shuffledQuestions = [...assessmentData.questions].sort(() => Math.random() - 0.5);
+        const initializedAssessment = {
+            ...assessmentData,
+            questions: shuffledQuestions,
+        };
+
+        setAssessment(initializedAssessment);
+        setCurrentQuestion(shuffledQuestions[0] ?? null);
+        setCorrectDots(Array(shuffledQuestions.length).fill(false));
+        setShowSummary(false);
+
+        setIsMounted(true);
+    }, [assessmentData]);
+
+    useEffect(() => {
+        if (!currentQuestion) return;
+
         setCorrectFeedback(currentQuestion.feedback.correct);
         setWrongFeedback(currentQuestion.feedback.incorrect);
 
@@ -50,6 +67,27 @@ export default function Assessment({ assessmentData }: AssessmentProps) {
     const [answerIsCorrect, setAnswerIsCorrect] = useState(false);
 
     const questionDiv = useRef<HTMLDivElement>(null);
+
+    const correctCount = correctDots.filter(Boolean).length;
+
+    const syncScoreMutation = useMutation({
+        mutationFn: async (payload: { score: number; total_items: number }) => {
+            return FetchWithAuth(
+                `/api/quizzes/${assessmentData.category.id}/${assessmentData.id}`,
+                getToken,
+                {
+                    method: "POST",
+                    body: JSON.stringify(payload),
+                },
+            );
+        },
+        onSuccess: () => {
+            console.log("Quiz score synced successfully.");
+        },
+        onError: (error) => {
+            console.error("Failed to sync quiz score:", error);
+        },
+    });
 
     function handleCorrectAnswer() {
         setCorrectDots((previous) => {
@@ -66,6 +104,8 @@ export default function Assessment({ assessmentData }: AssessmentProps) {
     }
 
     function handleNextQuestion() {
+        if (!assessment) return;
+
         if (answeredCount === assessment.questions.length) {
             setShowSummary(true);
             return;
@@ -75,7 +115,10 @@ export default function Assessment({ assessmentData }: AssessmentProps) {
     }
 
     function handleRetry() {
+        if (!assessment) return;
+
         setShowSummary(false);
+        hasSyncedScoreRef.current = false;
         setCurrentDot(0);
         setAnsweredCount(0);
         setCorrectDots(Array(totalQuestions).fill(false));
@@ -90,6 +133,8 @@ export default function Assessment({ assessmentData }: AssessmentProps) {
     }
 
     function handleCheck() {
+        if (!currentQuestion) return;
+
         const correctAnswer = currentQuestion.choices.find((choice) => choice.is_correct)!;
         const isCorrect = correctAnswer.id === selectedButton;
 
@@ -131,20 +176,48 @@ export default function Assessment({ assessmentData }: AssessmentProps) {
     }
 
     useEffect(() => {
-        if (!showSummary) return;
+        if (!showSummary || !isMounted || !assessment) {
+            if (!showSummary) {
+                hasSyncedScoreRef.current = false;
+            }
+            return;
+        }
 
-        const correctCount = correctDots.filter(Boolean).length;
-        LocalStorage.saveAssessmentScore(assessment.id, correctCount, totalQuestions);
-    }, [assessment.id, correctDots, showSummary, totalQuestions]);
+        if (!isLoaded || !isSignedIn) {
+            console.log("ℹ️ [Chain Interrupt] User not logged in. Skipping cloud sync.");
+            return;
+        }
+
+        if (hasSyncedScoreRef.current) {
+            return;
+        }
+
+        console.log("[Sync Chain 2/2: Cloud] Syncing score to backend...");
+        hasSyncedScoreRef.current = true;
+
+        syncScoreMutation.mutate({
+            score: correctCount,
+            total_items: totalQuestions,
+        });
+
+    }, [showSummary, isMounted, assessment, isLoaded, isSignedIn, correctCount, totalQuestions]);
+
+    const handleLoginToSaveProgress = async () => {
+        await redirectToSignIn({ redirectUrl: window.location.href });
+    };
+
+    if (!isMounted || !assessment || !currentQuestion) {
+        return null;
+    }
 
     if (showSummary) {
-        const correctCount = correctDots.filter(Boolean).length;
         return (
             <AssessmentSummary
-                id={assessmentData.id}
-                category={assessmentData.category.id}
                 correctCount={correctCount}
                 totalQuestions={totalQuestions}
+                isSyncing={syncScoreMutation.isPending}
+                showLoginButton={isLoaded && !isSignedIn}
+                onLoginToSaveProgress={handleLoginToSaveProgress}
                 onRetry={handleRetry}
                 onBackToHome={handleBackToHome}
             />
@@ -180,7 +253,8 @@ export default function Assessment({ assessmentData }: AssessmentProps) {
                                         src={currentQuestion.image_url}
                                         alt="Question diagram"
                                         width={300}
-                                        height={0}
+                                        height={300}
+                                        style={{ height: "auto" }}
                                         className="rounded-lg"
                                     />
                                 </div>

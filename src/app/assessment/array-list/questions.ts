@@ -5,9 +5,9 @@ export const arrayListAssessment: Assessment = {
   title: "Array List Basics",
   description: "Assessment on indexing, memory calculation, and performance.",
   category: {
-    id: "data-structures",
-    name: "Data Structures",
-    description: "Core data structures concepts",
+    id: "array-list",
+    name: "Array List",
+    description: "Array and dynamic array concepts",
   },
   questions: [
     {

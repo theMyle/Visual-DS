@@ -6,9 +6,9 @@ export const queueBasicsAssessment: Assessment = {
   description:
     "An assessment focused on data flow, pointer behavior, and structural comparisons.",
   category: {
-    id: "data-structures",
-    name: "Data Structures",
-    description: "Core data structures concepts",
+    id: "queue",
+    name: "Queue",
+    description: "Queue behavior and FIFO operations",
   },
   questions: [
     {

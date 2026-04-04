@@ -6,9 +6,9 @@ export const linkedListAssessment: Assessment = {
   description:
     "Assessment on node structure, memory allocation, and time complexity.",
   category: {
-    id: "data-structures",
-    name: "Data Structures",
-    description: "Core data structures concepts",
+    id: "linked-list",
+    name: "Linked List",
+    description: "Linked list structure and operations",
   },
   questions: [
     {

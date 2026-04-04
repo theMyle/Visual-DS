@@ -6,9 +6,9 @@ export const stackAssessment: Assessment = {
   description:
     "A comprehensive assessment on LIFO logic, operation sequences, and error prevention.",
   category: {
-    id: "data-structures",
-    name: "Data Structures",
-    description: "Core data structures concepts",
+    id: "stack",
+    name: "Stack",
+    description: "Stack behavior and LIFO operations",
   },
   questions: [
     {

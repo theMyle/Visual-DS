@@ -1,19 +1,21 @@
 import CircularProgress from "./CircularProgress";
 
 type AssessmentSummaryProps = {
-    id: string;
-    category: string;
     correctCount: number;
     totalQuestions: number;
+    isSyncing?: boolean;
+    showLoginButton?: boolean;
+    onLoginToSaveProgress?: () => void;
     onRetry: () => void;
     onBackToHome: () => void;
 }
 
 export default function AssessmentSummary({
-    id,
-    category,
     correctCount,
     totalQuestions,
+    isSyncing = false,
+    showLoginButton = false,
+    onLoginToSaveProgress,
     onRetry,
     onBackToHome
 }: AssessmentSummaryProps) {
@@ -98,6 +100,11 @@ export default function AssessmentSummary({
                     <p className="text-sm text-slate-600">
                         You answered <span className="font-semibold text-slate-900">{correctCount}</span> out of <span className="font-semibold text-slate-900">{totalQuestions}</span> questions correctly.
                     </p>
+                    {isSyncing && (
+                        <p className="mt-2 text-xs font-medium text-slate-500">
+                            Syncing...
+                        </p>
+                    )}
                 </div>
 
                 <div className="flex flex-col sm:flex-row gap-3 pt-1">
@@ -114,6 +121,17 @@ export default function AssessmentSummary({
                         Back to Assessments
                     </button>
                 </div>
+
+                {showLoginButton && onLoginToSaveProgress && (
+                    <div className="flex justify-center pt-1">
+                        <button
+                            onClick={onLoginToSaveProgress}
+                            className="rounded-lg bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800 text-white font-semibold py-3 px-4 text-base transition-colors"
+                        >
+                            Login to Save Progress
+                        </button>
+                    </div>
+                )}
             </div>
         </div>
     );

@@ -1,9 +1,14 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useAuth } from "@clerk/nextjs";
+import { useQuery } from "@tanstack/react-query";
 import AssessmentMenuItem from "../components/AssessmentMenuItem";
 import { ASSESSMENT_LIST } from "../lib/assessments";
-import { LocalStorage } from "../lib/localStorage";
+import { FetchWithAuth } from "../lib/fetchWithAuth";
+import { arrayListAssessment } from "./array-list/questions";
+import { linkedListAssessment } from "./linked-list/questions";
+import { queueBasicsAssessment } from "./queue/questions";
+import { stackAssessment } from "./stack/questions";
 
 type ScoreMap = Record<
     string,
@@ -14,23 +19,54 @@ type ScoreMap = Record<
     }
 >;
 
+type QuizResultSnapshot = {
+    score: number;
+};
+
+type QuizResultSummaryResponse = {
+    quiz_category: string;
+    quiz_id: string;
+    highest: QuizResultSnapshot;
+    most_recent: QuizResultSnapshot;
+};
+
+const QUESTION_TOTAL_BY_ASSESSMENT_ID: Record<string, number> = {
+    [arrayListAssessment.id]: arrayListAssessment.questions.length,
+    [linkedListAssessment.id]: linkedListAssessment.questions.length,
+    [stackAssessment.id]: stackAssessment.questions.length,
+    [queueBasicsAssessment.id]: queueBasicsAssessment.questions.length,
+};
+
 export default function LessonPage() {
-    const [scoreMap, setScoreMap] = useState<ScoreMap>({});
+    const { isLoaded, isSignedIn, getToken } = useAuth();
 
-    useEffect(() => {
-        const updates: ScoreMap = {};
+    const { data: scoreMap = {} } = useQuery({
+        queryKey: ["quiz-summary"],
+        enabled: isLoaded && isSignedIn,
+        queryFn: async () => {
+            const summaries = await FetchWithAuth<QuizResultSummaryResponse[]>(
+                "/api/quizzes",
+                getToken,
+            );
 
-        ASSESSMENT_LIST.forEach((assessment) => {
-            const result = LocalStorage.getAssessmentScore(assessment.id);
-            updates[assessment.id] = {
-                lastCorrectCount: result?.lastCorrectCount,
-                highestCorrectCount: result?.highestCorrectCount,
-                totalQuestions: result?.totalQuestions,
-            };
-        });
+            const updates: ScoreMap = {};
 
-        setScoreMap(updates);
-    }, []);
+            summaries.forEach((summary) => {
+                const totalQuestions = QUESTION_TOTAL_BY_ASSESSMENT_ID[summary.quiz_id];
+                if (!totalQuestions) {
+                    return;
+                }
+
+                updates[summary.quiz_id] = {
+                    lastCorrectCount: summary.most_recent?.score,
+                    highestCorrectCount: summary.highest?.score,
+                    totalQuestions,
+                };
+            });
+
+            return updates;
+        },
+    });
 
     return (
         <div className="flex w-full justify-center">
