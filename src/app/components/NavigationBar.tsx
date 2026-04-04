@@ -5,7 +5,6 @@ import { motion, AnimatePresence } from "framer-motion";
 import MenuItemButton from "@/app/components/MenuItemButton";
 import VisualDSIcon from "@/app/components/VisualDSIcon";
 import Link from "next/link";
-import { currentUser } from "@clerk/nextjs/server";
 import { UserButton, useUser } from "@clerk/nextjs";
 
 export default function NavBar() {
@@ -71,7 +70,7 @@ export default function NavBar() {
                         {isSignedIn ?
                             <UserButton />
                             :
-                            <Link href="/login" className="px-4 py-2 text-gray-700 hover:text-gray-900 hover:bg-gray-100 rounded-md transition-colors font-medium active:transform active:scale-95 bg-gray-100">
+                            <Link href="/login" className="px-4 py-2 rounded-md font-medium transition-all duration-200 active:transform active:scale-95 bg-gradient-to-r from-[#94A6FF] to-[#B49BFF] text-white shadow-sm hover:shadow-md hover:brightness-105 focus:outline-none focus:ring-2 focus:ring-[#94A6FF]/40 focus:ring-offset-2">
                                 Login
                             </Link>
                         }
