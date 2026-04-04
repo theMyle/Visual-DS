@@ -6,12 +6,12 @@ export const BIG_O: Category = {
     "This module discusses the universal language used to compare algorithmic efficiency. You'll learn how to classify algorithms by their worst-case growth rates; from linear O(n) to quadratic O(n²); and understand why theoretical scaling matters more than raw execution time when dealing with large datasets.",
   lessons: [
     {
-      title: "2.0 - Introduction",
+      title: "Lesson 2.0 - Introduction",
       href: "/lesson/big-o/introduction",
       completed: false,
     },
     {
-      title: "2.1 - Big-O Notation",
+      title: "Lesson 2.1 - Big-O Notation",
       href: "/lesson/big-o/big-o-notation",
       completed: false,
     },

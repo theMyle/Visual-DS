@@ -2,6 +2,8 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import NavBar from "@/app/components/NavigationBar";
+import { ClerkProvider } from "@clerk/nextjs";
+import Providers from "./providers";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -69,10 +71,14 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased h-full flex flex-col`}
       >
-        <NavBar />
-        <main className="flex-1 overflow-auto relative">
-          {children}
-        </main>
+        <ClerkProvider>
+          <Providers>
+            <NavBar />
+            <main className="flex-1 overflow-auto relative">
+              {children}
+            </main>
+          </Providers>
+        </ClerkProvider>
       </body>
     </html>
   );

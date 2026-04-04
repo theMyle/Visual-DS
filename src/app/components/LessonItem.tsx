@@ -4,12 +4,13 @@ type LessonCategoryProps = {
     icon?: React.ReactNode;
     title: string;
     path: string;
-    progress?: number;
+    progress?: number | null;
 };
 
 export default function LessonCategory({ icon, title, path, progress = 0 }: LessonCategoryProps) {
-    const isCompleted = progress === 100;
-    progress = Math.floor(progress);
+    const isLoading = progress === null;
+    const safeProgress = isLoading ? 0 : Math.floor(progress);
+    const isCompleted = safeProgress === 100;
 
     return (
         <Link
@@ -24,7 +25,7 @@ export default function LessonCategory({ icon, title, path, progress = 0 }: Less
             <div className="flex justify-between w-full items-baseline">
                 <p className="text-2xl font-bold">{title}</p>
                 <p className={`text-lg ${isCompleted ? 'text-green-600 font-semibold' : 'text-gray-500'}`}>
-                    {progress}%
+                    {isLoading ? "loading..." : `${safeProgress}%`}
                 </p>
             </div>
 
@@ -32,12 +33,14 @@ export default function LessonCategory({ icon, title, path, progress = 0 }: Less
             <div className="w-full h-5 bg-[#EEEEEE] rounded-full overflow-hidden">
                 <div
                     className={`h-full transition-all duration-500 rounded-2xl ${isCompleted ? 'bg-[#7CFF67]' : 'bg-[#7CFF67]'}`}
-                    style={{ width: `${progress}%` }}
+                    style={{ width: `${safeProgress}%` }}
                 />
             </div>
 
             <div className="w-full flex justify-end text-xs md:text-sm">
-                {progress !== 0 ?
+                {isLoading ? (
+                    <p className="text-gray-500">Loading...</p>
+                ) : safeProgress !== 0 ?
                     <p className={`font-bold ${isCompleted ? 'text-green-600' : 'text-green-600'}`}>
                         {isCompleted ? 'Completed!' : 'Continue Learning →'}
                     </p>

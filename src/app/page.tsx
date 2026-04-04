@@ -3,6 +3,8 @@ import { motion, Variants, useScroll, useTransform, useReducedMotion } from "fra
 import { useRef } from "react";
 import HomeItem from "@/app/components/HomeItem";
 import { LocalStorage } from "./lib/localStorage";
+import { useAuth } from "@clerk/nextjs";
+import { getApiUrl } from "./lib/env";
 
 const containerVariants: Variants = {
   hidden: { opacity: 0 },
@@ -50,17 +52,46 @@ const reducedHeroVariants: Variants = {
   },
 };
 
-const handleReset = (e: React.MouseEvent) => {
-  e.preventDefault();
-  if (confirm("Reset all local learning progress?")) {
-    LocalStorage.clearAll();
-    window.location.reload();
-  }
-};
-
 export default function App() {
   const containerRef = useRef<HTMLDivElement>(null);
   const shouldReduceMotion = useReducedMotion();
+  const { isLoaded, isSignedIn, getToken } = useAuth();
+
+  const handleReset = async (e: React.MouseEvent) => {
+    e.preventDefault();
+
+    if (!confirm("Reset all learning progress?")) {
+      return;
+    }
+
+    try {
+      if (isLoaded && isSignedIn) {
+        const token = await getToken();
+
+        if (!token) {
+          throw new Error("Missing auth token for reset request");
+        }
+
+        const response = await fetch(getApiUrl("/api/progress"), {
+          method: "DELETE",
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+
+        if (!response.ok) {
+          const errorText = await response.text();
+          throw new Error(`Reset failed (${response.status}): ${errorText}`);
+        }
+      }
+
+      LocalStorage.clearAll();
+      window.location.reload();
+    } catch (error) {
+      console.error("Failed to reset progress:", error);
+      alert("Failed to reset cloud progress. Please try again.");
+    }
+  };
 
   const { scrollYProgress } = useScroll({
     target: containerRef,

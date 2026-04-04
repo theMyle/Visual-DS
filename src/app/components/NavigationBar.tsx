@@ -5,8 +5,12 @@ import { motion, AnimatePresence } from "framer-motion";
 import MenuItemButton from "@/app/components/MenuItemButton";
 import VisualDSIcon from "@/app/components/VisualDSIcon";
 import Link from "next/link";
+import { currentUser } from "@clerk/nextjs/server";
+import { UserButton, useUser } from "@clerk/nextjs";
 
 export default function NavBar() {
+    const { isLoaded, isSignedIn, user } = useUser()
+
     const [menuOpen, setMenuOpen] = useState(false);
     const overlayRef = useRef<HTMLDivElement>(null);
     const hamburgerButtonRef = useRef<HTMLButtonElement>(null);
@@ -42,24 +46,36 @@ export default function NavBar() {
 
                 {/* Desktop Navigation - visible on md and up */}
                 <div className="hidden md:flex items-center space-x-1">
-                    <Link href="/" className="px-4 py-2 text-gray-700 hover:text-gray-900 hover:bg-gray-100 rounded-md transition-colors font-medium active:transform active:scale-95">
-                        Home
-                    </Link>
-                    <Link href="/lesson" className="px-4 py-2 text-gray-700 hover:text-gray-900 hover:bg-gray-100 rounded-md transition-colors font-medium active:transform active:scale-95">
-                        Lesson
-                    </Link>
-                    <Link href="/simulator" className="px-4 py-2 text-gray-700 hover:text-gray-900 hover:bg-gray-100 rounded-md transition-colors font-medium active:transform active:scale-95">
-                        Simulator
-                    </Link>
-                    <Link href="/assessment" className="px-4 py-2 text-gray-700 hover:text-gray-900 hover:bg-gray-100 rounded-md transition-colors font-medium active:transform active:scale-95">
-                        Quiz
-                    </Link>
-                    <Link
-                        href="https://forms.gle/RFBzwqqXkiWQNyKp9"
-                        target="_blank"
-                        className="px-4 py-2 text-gray-700 hover:text-gray-900 hover:bg-gray-100 rounded-md transition-colors font-medium active:transform active:scale-95">
-                        Feedback
-                    </Link>
+                    <div>
+                        <Link href="/" className="px-4 py-2 text-gray-700 hover:text-gray-900 hover:bg-gray-100 rounded-md transition-colors font-medium active:transform active:scale-95">
+                            Home
+                        </Link>
+                        <Link href="/lesson" className="px-4 py-2 text-gray-700 hover:text-gray-900 hover:bg-gray-100 rounded-md transition-colors font-medium active:transform active:scale-95">
+                            Lesson
+                        </Link>
+                        <Link href="/simulator" className="px-4 py-2 text-gray-700 hover:text-gray-900 hover:bg-gray-100 rounded-md transition-colors font-medium active:transform active:scale-95">
+                            Simulator
+                        </Link>
+                        <Link href="/assessment" className="px-4 py-2 text-gray-700 hover:text-gray-900 hover:bg-gray-100 rounded-md transition-colors font-medium active:transform active:scale-95">
+                            Quiz
+                        </Link>
+                        <Link
+                            href="https://forms.gle/RFBzwqqXkiWQNyKp9"
+                            target="_blank"
+                            className="px-4 py-2 text-gray-700 hover:text-gray-900 hover:bg-gray-100 rounded-md transition-colors font-medium active:transform active:scale-95">
+                            Feedback
+                        </Link>
+                    </div>
+
+                    <div className="pl-5 flex justify-end items-center gap-2">
+                        {isSignedIn ?
+                            <UserButton />
+                            :
+                            <Link href="/login" className="px-4 py-2 text-gray-700 hover:text-gray-900 hover:bg-gray-100 rounded-md transition-colors font-medium active:transform active:scale-95 bg-gray-100">
+                                Login
+                            </Link>
+                        }
+                    </div>
                 </div>
 
                 {/* Mobile Hamburger Menu - visible on mobile only */}

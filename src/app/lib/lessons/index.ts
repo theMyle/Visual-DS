@@ -4,7 +4,6 @@ import { INTRODUCTION } from "./introduction";
 import { LINKED_LIST } from "./linked-list";
 import { QUEUE } from "./queue";
 import { STACK } from "./stack";
-import { TREE } from "./tree";
 import { Category } from "./types";
 
 export const LESSON_MAP: Record<string, Category> = {
@@ -14,5 +13,4 @@ export const LESSON_MAP: Record<string, Category> = {
   linkedlist: LINKED_LIST,
   stack: STACK,
   queue: QUEUE,
-  // tree: TREE,
 };

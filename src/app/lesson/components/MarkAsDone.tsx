@@ -1,37 +1,86 @@
 "use client";
-import { useState, useEffect } from "react";
+
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useAuth, useClerk } from "@clerk/nextjs"; // Added useClerk
 import { cn } from "@/app/lib/utils";
-import { LocalStorage } from "@/app/lib/localStorage";
+import { FetchWithAuth } from "@/app/lib/fetchWithAuth";
 
 interface MarkAsDoneProps {
-    categorySlug: string; // e.g., "big-o-notation"
-    href: string;         // e.g., "/lesson/big-o/introduction"
+    categorySlug: string;
+    href: string;
+}
+
+interface ProgressItem {
+    lesson_category: string;
+    lesson_id: string;
 }
 
 export default function MarkAsDone({ categorySlug, href }: MarkAsDoneProps) {
-    const [isDone, setIsDone] = useState(false);
+    const { isLoaded, isSignedIn, getToken } = useAuth();
+    const { redirectToSignIn } = useClerk(); // Clerk's helper for programmatic redirect
+    const queryClient = useQueryClient();
 
-    // 1. On mount, find current state from LocalStorage
-    useEffect(() => {
-        const lessons = LocalStorage.getCategory(categorySlug);
-        const current = lessons.find((l) => l.href === href);
-        if (current) {
-            setIsDone(current.completed);
-        }
-    }, [categorySlug, href]);
+    const { data: progress } = useQuery({
+        queryKey: ["progress"],
+        queryFn: async () => {
+            const data = await FetchWithAuth<ProgressItem[]>("/api/progress", getToken);
+            return data ?? [];
+        },
+        enabled: !!(isLoaded && isSignedIn),
+    });
 
-    // 2. Handle click: Update local UI AND persistent storage
+    const progressArray = Array.isArray(progress) ? progress : [];
+    const isDone = progressArray.some(
+        (p) => p.lesson_category === categorySlug && p.lesson_id === href
+    );
+
+    const toggleMutation = useMutation({
+        mutationFn: async () => {
+            const method = isDone ? "DELETE" : "POST";
+            const encodedId = encodeURIComponent(href);
+            return FetchWithAuth(`/api/progress/${categorySlug}/${encodedId}`, getToken, { method });
+        },
+        onMutate: async () => {
+            await queryClient.cancelQueries({ queryKey: ["progress"] });
+            const previousProgress = queryClient.getQueryData<ProgressItem[]>(["progress"]) ?? [];
+
+            queryClient.setQueryData<ProgressItem[]>(["progress"], (old) => {
+                const current = old ?? [];
+                if (isDone) {
+                    return current.filter(p => !(p.lesson_category === categorySlug && p.lesson_id === href));
+                } else {
+                    return [...current, { lesson_category: categorySlug, lesson_id: href }];
+                }
+            });
+
+            return { previousProgress };
+        },
+        onError: (err, variables, context) => {
+            if (context?.previousProgress) {
+                queryClient.setQueryData(["progress"], context.previousProgress);
+            }
+        },
+        onSettled: () => {
+            queryClient.invalidateQueries({ queryKey: ["progress"] });
+        },
+    });
+
     const handleToggle = () => {
-        const newState = !isDone;
-        setIsDone(newState);
+        if (!isLoaded) return;
 
-        const lessons = LocalStorage.getCategory(categorySlug);
-        const updated = lessons.map((l) =>
-            l.href === href ? { ...l, completed: newState } : l
-        );
+        // If not signed in, redirect them to sign-in page
+        // Clerk will automatically bring them back here after login
+        if (!isSignedIn) {
+            redirectToSignIn({ redirectUrl: window.location.href });
+            return;
+        }
 
-        LocalStorage.setCategory(categorySlug, updated);
+        if (toggleMutation.isPending) return;
+        toggleMutation.mutate();
     };
+
+    // We only hide the component while the auth state is physically loading
+    if (!isLoaded) return null;
 
     return (
         <div className="flex justify-center w-full py-10">
