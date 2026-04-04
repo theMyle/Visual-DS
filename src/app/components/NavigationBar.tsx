@@ -5,10 +5,11 @@ import { motion, AnimatePresence } from "framer-motion";
 import MenuItemButton from "@/app/components/MenuItemButton";
 import VisualDSIcon from "@/app/components/VisualDSIcon";
 import Link from "next/link";
-import { UserButton, useUser } from "@clerk/nextjs";
+import { SignOutButton, UserButton, useClerk, useUser } from "@clerk/nextjs";
 
 export default function NavBar() {
-    const { isLoaded, isSignedIn, user } = useUser()
+    const { isSignedIn, user } = useUser()
+    const { openUserProfile } = useClerk();
 
     const [menuOpen, setMenuOpen] = useState(false);
     const overlayRef = useRef<HTMLDivElement>(null);
@@ -105,6 +106,34 @@ export default function NavBar() {
                         className="md:hidden fixed top-14 z-50 left-0 w-full bg-white border-l border-gray-300 shadow-lg"
                     >
                         <div className="overflow-y-auto">
+                            <div className="border-b border-gray-200 p-4">
+                                {isSignedIn ? (
+                                    <button
+                                        type="button"
+                                        onClick={() => openUserProfile()}
+                                        className="w-full flex items-center justify-between rounded-lg border border-gray-200 bg-gray-50 px-4 py-3 text-left hover:bg-gray-100 transition-colors"
+                                    >
+                                        <div className="min-w-0">
+                                            <p className="text-[11px] uppercase tracking-wide text-gray-500">Account</p>
+                                            <p className="text-sm font-semibold text-gray-800 truncate">
+                                                {user?.fullName || user?.firstName || "Signed in"}
+                                            </p>
+                                        </div>
+                                        <div onClick={(event) => event.stopPropagation()}>
+                                            <UserButton />
+                                        </div>
+                                    </button>
+                                ) : (
+                                    <Link
+                                        href="/login"
+                                        onClick={() => { setMenuOpen(false) }}
+                                        className="block w-full rounded-lg bg-gradient-to-r from-[#94A6FF] to-[#B49BFF] px-4 py-3 text-center text-sm font-semibold text-white shadow-sm"
+                                    >
+                                        Login
+                                    </Link>
+                                )}
+                            </div>
+
                             <MenuItemButton
                                 text={"Home"}
                                 href={"/"}
@@ -129,6 +158,20 @@ export default function NavBar() {
                                 text={"Feedback"}
                                 href={"https://forms.gle/RFBzwqqXkiWQNyKp9"}
                                 onClick={() => { setMenuOpen(false) }} />
+
+                            {isSignedIn && (
+                                <div className="border-t border-gray-300">
+                                    <SignOutButton>
+                                        <button
+                                            type="button"
+                                            onClick={() => setMenuOpen(false)}
+                                            className="w-full text-left bg-gray-100 border-b-[1.5px] border-gray-300 py-3 px-6 text-xl hover:bg-gray-200 active:bg-gray-300"
+                                        >
+                                            Sign out
+                                        </button>
+                                    </SignOutButton>
+                                </div>
+                            )}
                         </div>
                     </motion.div>
                 )}
