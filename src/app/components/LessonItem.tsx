@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { useEffect, useState } from "react";
 
 type LessonCategoryProps = {
     icon?: React.ReactNode;
@@ -11,6 +12,14 @@ export default function LessonCategory({ icon, title, path, progress = 0 }: Less
     const isLoading = progress === null;
     const safeProgress = isLoading ? 0 : Math.floor(progress);
     const isCompleted = safeProgress === 100;
+    const [animatedProgress, setAnimatedProgress] = useState(0);
+
+    useEffect(() => {
+        if (progress !== null) {
+            const timer = setTimeout(() => setAnimatedProgress(Math.floor(progress)), 1);
+            return () => clearTimeout(timer);
+        }
+    }, [progress]);
 
     return (
         <Link
@@ -32,8 +41,9 @@ export default function LessonCategory({ icon, title, path, progress = 0 }: Less
             {/* Progress bar container */}
             <div className="w-full h-5 bg-[#EEEEEE] rounded-full overflow-hidden">
                 <div
-                    className={`h-full transition-all duration-500 rounded-2xl ${isCompleted ? 'bg-[#7CFF67]' : 'bg-[#7CFF67]'}`}
-                    style={{ width: `${safeProgress}%` }}
+                    className="h-full transition-all duration-1000 ease-out rounded-2xl bg-[#7CFF67]"
+                    // CHANGE THIS LINE:
+                    style={{ width: `${animatedProgress}%` }}
                 />
             </div>
 

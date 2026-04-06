@@ -4,6 +4,7 @@ import "./globals.css";
 import NavBar from "@/app/components/NavigationBar";
 import { ClerkProvider } from "@clerk/nextjs";
 import Providers from "./providers";
+import { auth } from "@clerk/nextjs/server";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -61,11 +62,14 @@ export const metadata: Metadata = {
   publisher: "Visual DS",
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const { userId } = await auth();
+  const isSignedIn = !!userId;
+
   return (
     <html lang="en" className={"h-full"}>
       <body
@@ -73,7 +77,7 @@ export default function RootLayout({
       >
         <ClerkProvider>
           <Providers>
-            <NavBar />
+            <NavBar initialIsSignedIn={isSignedIn} />
             <main className="flex-1 overflow-auto relative">
               {children}
             </main>

@@ -7,8 +7,9 @@ import VisualDSIcon from "@/app/components/VisualDSIcon";
 import Link from "next/link";
 import { SignOutButton, UserButton, useClerk, useUser } from "@clerk/nextjs";
 
-export default function NavBar() {
-    const { isSignedIn, user } = useUser()
+export default function NavBar({ initialIsSignedIn }: { initialIsSignedIn: boolean }) {
+    const { isSignedIn: clerkIsSignedIn, user } = useUser();
+    const isSignedIn = clerkIsSignedIn ?? initialIsSignedIn;
     const { openUserProfile } = useClerk();
 
     const [menuOpen, setMenuOpen] = useState(false);

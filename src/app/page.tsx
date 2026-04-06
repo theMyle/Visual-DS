@@ -1,4 +1,5 @@
 "use client";
+
 import { motion, Variants, useScroll, useTransform, useReducedMotion } from "framer-motion";
 import { useRef } from "react";
 import HomeItem from "@/app/components/HomeItem";
@@ -241,14 +242,18 @@ export default function App() {
           <p className="text-sm text-gray-400">
             Visual Data Structures &copy; {new Date().getFullYear()}
           </p>
-          <a
-            href="#"
-            onClick={handleReset}
-            className="text-[10px] text-gray-300 hover:text-red-400 transition-colors mt-2 inline-block cursor-pointer"
-            title="Clear local progress"
-          >
-            [Debug: Reset Data]
-          </a>
+
+          {isSignedIn &&
+            <a
+              href="#"
+              onClick={handleReset}
+              className="text-[10px] text-gray-300 hover:text-red-400 transition-colors mt-2 inline-block cursor-pointer"
+              title="Clear local progress"
+            >
+              [Debug: Reset Data]
+            </a>
+          }
+
         </footer>
 
       </motion.section>
