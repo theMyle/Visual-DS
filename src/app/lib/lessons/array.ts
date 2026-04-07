@@ -4,6 +4,7 @@ export const ARRAY: Category = {
   title: "Array",
   description:
     "Master the foundation of linear storage. Learn how arrays organize data into indexed collections for high-speed retrieval. You will also explore which operations like insertion and deletion thrive or struggle within a fixed memory structure.",
+  challengeHref: "https://leetcode.com/problem-list/array/",
   lessons: [
     {
       title: "lessons 3.0 - Introduction",

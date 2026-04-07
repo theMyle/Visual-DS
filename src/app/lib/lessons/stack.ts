@@ -4,6 +4,7 @@ export const STACK: Category = {
   title: "Stack",
   description:
     "Master the Last-In, First-Out (LIFO) principle. This module covers what stacks are, their core properties, and the efficiency of common operations such as push, pop, and peek.",
+  challengeHref: "https://leetcode.com/problem-list/stack/",
   lessons: [
     {
       title: "lessons 5.0 - Introduction",

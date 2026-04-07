@@ -4,6 +4,7 @@ export const LINKED_LIST: Category = {
   title: "Linked List",
   description:
     "Learn how linked lists store data through connected nodes. This module covers what linked lists are, their core properties, and the efficiency of common operations such as insertion, deletion, and traversals.",
+  challengeHref: "https://leetcode.com/problem-list/linked-list/",
   lessons: [
     {
       title: "lessons 4.0 - Introduction",

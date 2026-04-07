@@ -40,6 +40,7 @@ export default async function Page({ params }: { params: Promise<{ slug: string 
         <LessonDetailClient
             title={categoryData.title}
             description={categoryData.description!}
+            challengeHref={categoryData.challengeHref}
             lessons={lessonsWithStatus}
         />
     );

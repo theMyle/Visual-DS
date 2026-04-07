@@ -3,6 +3,7 @@
 import BackButton from "@/app/components/BackButton";
 import SubLessonHeader from "@/app/components/SubLessonHeader";
 import SubLessonItem from "@/app/components/SubLessonItem";
+import ChallengeLinkCard from "../components/ChallengeLinkCard";
 
 interface LessonWithStatus {
     title: string;
@@ -13,10 +14,11 @@ interface LessonWithStatus {
 interface Props {
     title: string;
     description: string;
+    challengeHref?: string;
     lessons: LessonWithStatus[];
 }
 
-export default function LessonDetailClient({ title, description, lessons }: Props) {
+export default function LessonDetailClient({ title, description, challengeHref, lessons }: Props) {
     return (
         <div className="w-full flex justify-center">
             <div className="flex flex-col gap-6 max-w-3xl md:min-w-3xl p-6 pb-10">
@@ -26,6 +28,10 @@ export default function LessonDetailClient({ title, description, lessons }: Prop
                     title={title}
                     description={description}
                 />
+
+                {challengeHref && (
+                    <ChallengeLinkCard href={challengeHref} />
+                )}
 
                 <div className="flex flex-col gap-4">
                     {lessons.map((lesson) => (
