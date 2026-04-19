@@ -27,8 +27,8 @@ const animationVariants: Record<ArrayElementAnimationState, MotionNodeAnimationO
   },
   [ArrayElementAnimationState.HighlightedOrange]: {
     initial: { opacity: 0, scale: 1 },
-    animate: { opacity: 1, scale: 1.3, backgroundColor: "#FDBA74" },
-    transition: { duration: 0.5 }
+    animate: { opacity: 1, scale: 1.18, backgroundColor: "#FDBA74" },
+    transition: { duration: 0.42 }
   },
   [ArrayElementAnimationState.HighlightedGreen]: {
     initial: { opacity: 0, scale: 1 },
@@ -59,6 +59,14 @@ const animationVariants: Record<ArrayElementAnimationState, MotionNodeAnimationO
 
 export default function VisualArrayBox({ value, animationState }: VisualArrayBoxProps) {
   const { initial, animate, exit, transition } = animationVariants[animationState];
+  const valueText = String(value);
+  const valueLength = valueText.length;
+  const valueTextSizeClass =
+    valueLength >= 6
+      ? "text-[9px] md:text-xs"
+      : valueLength >= 4
+        ? "text-[10px] md:text-sm"
+        : "text-xs md:text-xl";
 
   return (
     <motion.div
@@ -69,8 +77,8 @@ export default function VisualArrayBox({ value, animationState }: VisualArrayBox
       exit={exit}
       transition={transition ?? { duration: 0.4 }}
     >
-      <span className={"text-center truncate px-1 text-xs md:text-xl text-white font-bold"}>
-        {value}
+      <span className={`text-center whitespace-nowrap leading-none px-1 text-white font-bold ${valueTextSizeClass}`}>
+        {valueText}
       </span>
     </motion.div>
   )
