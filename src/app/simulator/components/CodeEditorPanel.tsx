@@ -43,12 +43,13 @@ export default function CodeEditorPanel({
         if (!body) return;
 
         const maxOutputHeight = Math.floor(body.clientHeight * MAX_OUTPUT_RATIO);
+        const minAllowedHeight = Math.min(MIN_OUTPUT_HEIGHT, maxOutputHeight);
         if (outputHeight === null) {
-            setOutputHeight(maxOutputHeight);
+            setOutputHeight(minAllowedHeight);
             return;
         }
 
-        const clamped = Math.max(MIN_OUTPUT_HEIGHT, Math.min(maxOutputHeight, outputHeight));
+        const clamped = Math.max(minAllowedHeight, Math.min(maxOutputHeight, outputHeight));
         if (clamped !== outputHeight) {
             setOutputHeight(clamped);
         }
@@ -63,8 +64,9 @@ export default function CodeEditorPanel({
 
             const bounds = body.getBoundingClientRect();
             const maxOutputHeight = Math.floor(bounds.height * MAX_OUTPUT_RATIO);
+            const minAllowedHeight = Math.min(MIN_OUTPUT_HEIGHT, maxOutputHeight);
             const nextOutputHeight = bounds.bottom - event.clientY;
-            const clampedHeight = Math.max(MIN_OUTPUT_HEIGHT, Math.min(maxOutputHeight, nextOutputHeight));
+            const clampedHeight = Math.max(minAllowedHeight, Math.min(maxOutputHeight, nextOutputHeight));
             setOutputHeight(clampedHeight);
         };
 
