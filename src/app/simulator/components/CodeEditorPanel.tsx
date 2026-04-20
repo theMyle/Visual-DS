@@ -20,10 +20,13 @@ type CodeEditorPanelProps = {
     onReset: () => void;
     onResetArray: () => void;
     onSubmit: () => void;
+    onNext?: () => void;
+    showNextButton?: boolean;
     title?: string;
     resetDisabled?: boolean;
     resetArrayDisabled?: boolean;
     submitDisabled?: boolean;
+    nextDisabled?: boolean;
     className?: string;
 };
 
@@ -35,10 +38,13 @@ export default function CodeEditorPanel({
     onReset,
     onResetArray,
     onSubmit,
+    onNext,
+    showNextButton = false,
     title = "Code Editor",
     resetDisabled = false,
     resetArrayDisabled = false,
     submitDisabled = false,
+    nextDisabled = false,
     className,
 }: CodeEditorPanelProps) {
     const panelBodyRef = useRef<HTMLDivElement | null>(null);
@@ -186,6 +192,16 @@ export default function CodeEditorPanel({
                         >
                             Submit
                         </button>
+                        {showNextButton && (
+                            <button
+                                type="button"
+                                onClick={onNext}
+                                disabled={nextDisabled}
+                                className="px-2.5 md:px-3 py-1 text-[10px] md:text-xs rounded-md border border-emerald-500/70 bg-emerald-600 text-white hover:bg-emerald-500 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                            >
+                                Next
+                            </button>
+                        )}
                     </div>
                 </div>
             </div>

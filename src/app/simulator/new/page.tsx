@@ -5,6 +5,7 @@ import { useEffect, useRef, useState } from "react";
 import { ArrayElement, ArrayElementAnimationState } from "@/app/simulator/array-list/components/types";
 import { createArrayElement, createArrayElements } from "@/app/simulator/array-list/components/utils";
 import ChallengeInstructions from "@/app/simulator/components/ChallengeInstructions";
+import ChallengeCompletedModal from "@/app/simulator/components/ChallengeCompletedModal";
 import CodeEditorPanel from "@/app/simulator/components/CodeEditorPanel";
 import VisualArrayContainer from "@/app/simulator/components/VisualArrayContainer";
 import VisualArray from "@/app/simulator/array-list/components/VisualArray";
@@ -28,6 +29,19 @@ export default function SimulationArray() {
     const syncChallengeResult = async (_passed: boolean) => {
     };
 
+    const handleChallengeCompleted = () => {
+    };
+
+    const handleChallengeMenu = () => {
+        alert("Handle Back To Menu Todo")
+        setIsChallengeCompletedModalOpen(false);
+    };
+
+    const handleChallengeNext = () => {
+        alert("Handle Next TODO")
+        setIsChallengeCompletedModalOpen(false);
+    };
+
     const [array, setArray] = useState<ArrayElement[]>([]);
     const [editorCode, setEditorCode] = useState<string>(
         initialEditorCode
@@ -41,6 +55,8 @@ export default function SimulationArray() {
     const [consoleOutput, setConsoleOutput] = useState<string[]>([]);
     const [resultSummaries, setResultSummaries] = useState<ChallengeResultSummary[] | null>(null);
     const [isCompleted, setIsCompleted] = useState<boolean>(false);
+    const [isChallengeCompletedModalOpen, setIsChallengeCompletedModalOpen] = useState<boolean>(false);
+    const [showNextAction, setShowNextAction] = useState<boolean>(false);
     const workspaceRef = useRef<HTMLDivElement | null>(null);
     const arrayRef = useRef<ArrayElement[]>([]);
     const arraySizeRef = useRef<number>(initialArraySeed.length);
@@ -120,6 +136,9 @@ export default function SimulationArray() {
         setInputValue("");
         setIndex(0);
         setAnimatingState(false);
+        setIsCompleted(false);
+        setIsChallengeCompletedModalOpen(false);
+        setShowNextAction(false);
         challengeQueueRef.current = Promise.resolve();
     };
 
@@ -508,6 +527,8 @@ export default function SimulationArray() {
     const resetEditorCode = () => {
         setEditorCodeProgrammatically(initialEditorCode);
         setIsCompleted(false);
+        setIsChallengeCompletedModalOpen(false);
+        setShowNextAction(false);
         setResultSummaries(null);
         writeToConsole("Code editor reset to starter template.");
     };
@@ -663,6 +684,9 @@ export default function SimulationArray() {
         try {
             setConsoleOutput([]);
             setResultSummaries(null);
+            setIsCompleted(false);
+            setIsChallengeCompletedModalOpen(false);
+            setShowNextAction(false);
             challengeQueueRef.current = Promise.resolve();
             const runner = new Function("array", "io", `\n${editorCode}\n\nif (typeof Solution !== 'function') {\n  throw new Error('Solution(array) is required');\n}\nreturn Solution(array);`);
             const result = runner(challengeApi, challengeIoApi);
@@ -702,18 +726,30 @@ export default function SimulationArray() {
 
             // Run remaining test cases silently without visual animation.
             void runBackgroundTestCases(editorCode).then((backgroundSummaries) => {
-                if (backgroundSummaries.length === 0) return;
-                setResultSummaries((prev) => {
-                    if (!prev || prev.length === 0) {
-                        return [...backgroundSummaries];
-                    }
+                const nextResults = [primarySummary, ...backgroundSummaries];
 
-                    const next = [...prev, ...backgroundSummaries];
-                    return next;
-                });
+                if (backgroundSummaries.length === 0) {
+                    if (nextResults.every((summary) => summary.passed === true)) {
+                        setIsCompleted(true);
+                        setShowNextAction(true);
+                        handleChallengeCompleted();
+                        setIsChallengeCompletedModalOpen(true);
+                    }
+                    return;
+                }
+
+                setResultSummaries(nextResults);
+
+                if (nextResults.every((summary) => summary.passed === true)) {
+                    setIsCompleted(true);
+                    setShowNextAction(true);
+                    handleChallengeCompleted();
+                    setIsChallengeCompletedModalOpen(true);
+                }
             });
         } catch (error) {
             const message = error instanceof Error ? error.message : "Unknown editor execution error";
+            setShowNextAction(false);
             writeToConsole(`ERROR: ${message}`);
             writeToConsole("NOTICE: Execution stopped. Press Reset to restore a clean state.");
         }
@@ -721,6 +757,13 @@ export default function SimulationArray() {
 
     return (
         <div className="h-full bg-gray-50 overflow-hidden">
+            <ChallengeCompletedModal
+                isOpen={isChallengeCompletedModalOpen}
+                onClose={() => setIsChallengeCompletedModalOpen(false)}
+                onMenu={handleChallengeMenu}
+                onNext={handleChallengeNext}
+                testCaseLabels={challenge.testCases.map((_, index) => `Test Case ${index + 1}`)}
+            />
 
             <main
                 ref={workspaceRef}
@@ -760,9 +803,12 @@ export default function SimulationArray() {
                     onReset={resetEditorCode}
                     onResetArray={resetArrayOnly}
                     onSubmit={submitEditorCode}
+                    onNext={handleChallengeNext}
+                    showNextButton={showNextAction}
                     resetDisabled={isAnimating}
                     resetArrayDisabled={isAnimating}
                     submitDisabled={isAnimating}
+                    nextDisabled={isAnimating}
                 />
 
             </main >
