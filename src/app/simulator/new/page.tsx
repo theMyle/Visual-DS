@@ -8,45 +8,12 @@ import ChallengeInstructions from "@/app/simulator/components/ChallengeInstructi
 import CodeEditorPanel from "@/app/simulator/components/CodeEditorPanel";
 import VisualArrayContainer from "@/app/simulator/components/VisualArrayContainer";
 import VisualArray from "@/app/simulator/array-list/components/VisualArray";
+import { CHALLENGE_INTRO } from "./challenges";
 
 export default function SimulationArray() {
-    const initialArraySeed: (string | number)[] = ["1", "2", "3", "4", "5"];
-
-    const initialEditorCode = [
-        "/*",
-        "Array API Spec - These are array-specific methods for the coding challenge.",
-        "",
-        "Array {",
-        "  get(index)                  - Returns the item at an index.",
-        "  insertAt(index, value)      - Insert value at a specific index.",
-        "  insertBack(value)           - Insert value at the end of the array.",
-        "  insertFront(value)          - Insert value at the beginning of the array.",
-        "  removeAt(index)             - Remove the item at a specific index and returns it.",
-        "  removeBack()                - Remove the last item in the array and returns it.",
-        "  removeFront()               - Remove the first item in the array and returns it.",
-        "  setAt(index, value)         - Replace the value at a specific index.",
-        "  size()                      - Return the current array size.",
-        "  swap(indexA, indexB)        - Swap two items in the array.",
-        "}",
-        "",
-        "io {",
-        "  println(messageOrPromise)   - Write a value (or resolved Promise value) to the output panel.",
-        "}",
-        "",
-        "Put challenge logic inside `Solution` Function.",
-        "Note: use Array API methods only.",
-        "*/",
-        "",
-        "function Solution(array) {",
-        "   io.println(\"Hello World\");",
-        "",
-        "   let x = array.get(0);",
-        "   io.println(\"array at index 0 is: \" + x);",
-        "}",
-        "",
-        "",
-        "",
-    ].join("\n");
+    const challenge = CHALLENGE_INTRO;
+    const initialArraySeed = challenge.testCases[0]?.input ?? [];
+    const initialEditorCode = challenge.initialEditorCode;
 
     const [array, setArray] = useState<ArrayElement[]>([]);
     const [editorCode, setEditorCode] = useState<string>(
@@ -74,6 +41,11 @@ export default function SimulationArray() {
         focus: 150,
         scan: 50, // Faster scanning for selection sort (lower = faster)
     }
+
+    const getMaxElements = () => {
+        const isDesktop = typeof window !== "undefined" && window.innerWidth >= 1024;
+        return isDesktop ? challenge.maxCapacity.desktop : challenge.maxCapacity.mobile;
+    };
 
     const writeToConsole = (message: unknown) => {
         const nextLine =
@@ -166,7 +138,7 @@ export default function SimulationArray() {
     const insertAt = async (index: number, value: string | number) => {
         if (isAnimatingRef.current) return;
 
-        const maxElements = 20;
+        const maxElements = getMaxElements();
         const currentArray = arrayRef.current;
         if (currentArray.length >= maxElements) return;
 
@@ -220,7 +192,7 @@ export default function SimulationArray() {
     const insertBack = async (value: string | number) => {
         if (isAnimatingRef.current) return;
 
-        const maxElements = 20;
+        const maxElements = getMaxElements();
         const currentArray = arrayRef.current;
         if (currentArray.length >= maxElements) return;
 
@@ -247,9 +219,6 @@ export default function SimulationArray() {
 
     // remove item at specific index
     // shift the rest of the items forward / to the left
-    //
-    // *PUTA*
-    // *PUTA*
     const removeAt = async (index: number): Promise<string | number | undefined> => {
         // make the front invisible but keep space
         // show shifting of items
@@ -282,14 +251,11 @@ export default function SimulationArray() {
             newArray = [...temp];
         }
 
-        // remove the shit
+        // remove the item from the end
         commitArray(newArray.slice(0, -1));
         setAnimatingState(false);
         return invisible.value;
     }
-
-
-    // remove item from the front
     const removeFront = async (): Promise<string | number | undefined> => {
         return await removeAt(0);
     }
@@ -513,6 +479,7 @@ export default function SimulationArray() {
 
     return (
         <div className="h-full bg-gray-50 overflow-hidden">
+
             <main
                 ref={workspaceRef}
                 className={`flex flex-col lg:grid h-full max-w-[1500px] mx-auto bg-white ${isResizing ? "select-none" : ""}`}
@@ -520,10 +487,10 @@ export default function SimulationArray() {
             >
 
                 {/* Array display - Constrained height */}
-                <div className="flex flex-col h-full overflow-hidden border-b lg:border-b-0 lg:border-r border-gray-200">
+                <div className="flex flex-col h-[40vh] lg:h-full overflow-hidden border-b lg:border-b-0 lg:border-r border-gray-200">
                     <ChallengeInstructions
-                        title="Array Coding Challenge"
-                        description="Build your solution in the editor, then observe how each operation changes the array in the visualizer."
+                        title={challenge.title}
+                        description={challenge.description}
                         completed={isCompleted}
                     />
 

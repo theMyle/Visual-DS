@@ -63,15 +63,15 @@ export default function VisualArrayBox({ value, animationState }: VisualArrayBox
   const valueLength = valueText.length;
   const valueTextSizeClass =
     valueLength >= 6
-      ? "text-[9px] md:text-xs"
+      ? "text-[8px] md:text-xs"
       : valueLength >= 4
-        ? "text-[10px] md:text-sm"
-        : "text-xs md:text-xl";
+        ? "text-[9px] md:text-sm"
+        : "text-[10px] md:text-xl";
 
   return (
     <motion.div
       layout
-      className="flex w-8 h-8 md:w-12 md:h-12 rounded items-center justify-center text-white bg-[#94A6FF] border-[1.2px] md:border-[1.8px] border-black"
+      className="flex w-7 h-7 md:w-12 md:h-12 rounded items-center justify-center text-white bg-[#94A6FF] border-[1.2px] md:border-[1.8px] border-black"
       initial={initial}
       animate={animate}
       exit={exit}

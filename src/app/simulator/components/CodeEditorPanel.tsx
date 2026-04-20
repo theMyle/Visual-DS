@@ -35,15 +35,21 @@ export default function CodeEditorPanel({
     const [outputHeight, setOutputHeight] = useState<number | null>(null);
     const [isResizingOutput, setIsResizingOutput] = useState<boolean>(false);
 
-    const MIN_OUTPUT_HEIGHT = 120;
-    const MAX_OUTPUT_RATIO = 0.4; // Keep max at roughly the current/default output height.
+    const getOutputSizing = () => {
+        const isMobileViewport = typeof window !== "undefined" && window.innerWidth < 768;
+        return {
+            minHeight: isMobileViewport ? 96 : 120,
+            maxRatio: isMobileViewport ? 0.34 : 0.4,
+        };
+    };
 
     useEffect(() => {
         const body = panelBodyRef.current;
         if (!body) return;
 
-        const maxOutputHeight = Math.floor(body.clientHeight * MAX_OUTPUT_RATIO);
-        const minAllowedHeight = Math.min(MIN_OUTPUT_HEIGHT, maxOutputHeight);
+        const { minHeight, maxRatio } = getOutputSizing();
+        const maxOutputHeight = Math.floor(body.clientHeight * maxRatio);
+        const minAllowedHeight = Math.min(minHeight, maxOutputHeight);
         if (outputHeight === null) {
             setOutputHeight(minAllowedHeight);
             return;
@@ -63,8 +69,9 @@ export default function CodeEditorPanel({
             if (!body) return;
 
             const bounds = body.getBoundingClientRect();
-            const maxOutputHeight = Math.floor(bounds.height * MAX_OUTPUT_RATIO);
-            const minAllowedHeight = Math.min(MIN_OUTPUT_HEIGHT, maxOutputHeight);
+            const { minHeight, maxRatio } = getOutputSizing();
+            const maxOutputHeight = Math.floor(bounds.height * maxRatio);
+            const minAllowedHeight = Math.min(minHeight, maxOutputHeight);
             const nextOutputHeight = bounds.bottom - event.clientY;
             const clampedHeight = Math.max(minAllowedHeight, Math.min(maxOutputHeight, nextOutputHeight));
             setOutputHeight(clampedHeight);
@@ -82,15 +89,15 @@ export default function CodeEditorPanel({
     }, [isResizingOutput]);
 
     return (
-        <div className={className ?? "h-[45vh] lg:h-full overflow-hidden flex flex-col bg-gray-900 text-gray-100"}>
-            <div className="flex items-center justify-between px-4 py-3 border-b border-gray-700 bg-gray-900/95">
-                <p className="text-sm font-semibold tracking-wide">{title}</p>
-                <div className="flex items-center gap-2 rounded-lg border border-gray-700 bg-gray-800/40 p-1">
+        <div className={className ?? "h-[56vh] lg:h-full overflow-hidden flex flex-col bg-gray-900 text-gray-100"}>
+            <div className="flex items-center justify-between px-3 md:px-4 py-2.5 md:py-3 border-b border-gray-700 bg-gray-900/95">
+                <p className="text-xs md:text-sm font-semibold tracking-wide">{title}</p>
+                <div className="flex items-center gap-1.5 md:gap-2 rounded-lg border border-gray-700 bg-gray-800/40 p-1">
                     <button
                         type="button"
                         onClick={onResetArray}
                         disabled={resetArrayDisabled}
-                        className="px-3 py-1.5 text-xs rounded-md border border-transparent text-gray-300 hover:text-gray-100 hover:bg-gray-800/70 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                        className="px-2.5 md:px-3 py-1 text-[10px] md:text-xs rounded-md border border-transparent text-gray-300 hover:text-gray-100 hover:bg-gray-800/70 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                         Reset Simulator
                     </button>
@@ -98,7 +105,7 @@ export default function CodeEditorPanel({
                         type="button"
                         onClick={onReset}
                         disabled={resetDisabled}
-                        className="px-3 py-1.5 text-xs rounded-md border border-transparent text-gray-300 hover:text-gray-100 hover:bg-gray-800/70 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                        className="px-2.5 md:px-3 py-1 text-[10px] md:text-xs rounded-md border border-transparent text-gray-300 hover:text-gray-100 hover:bg-gray-800/70 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                         Reset Code
                     </button>
@@ -106,7 +113,7 @@ export default function CodeEditorPanel({
                         type="button"
                         onClick={onSubmit}
                         disabled={submitDisabled}
-                        className="px-3 py-1.5 text-xs rounded-md border border-gray-500/70 bg-gray-200 text-gray-900 hover:bg-gray-100 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                        className="px-2.5 md:px-3 py-1 text-[10px] md:text-xs rounded-md border border-gray-500/70 bg-gray-200 text-gray-900 hover:bg-gray-100 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                         Submit
                     </button>
@@ -145,11 +152,11 @@ export default function CodeEditorPanel({
                     className="min-h-0 border-t border-gray-700 flex flex-col"
                     style={outputHeight ? { height: `${outputHeight}px` } : undefined}
                 >
-                    <div className="px-4 py-2 border-b border-gray-700 bg-gray-900">
-                        <p className="text-xs font-semibold tracking-wide text-gray-300">Output</p>
+                    <div className="px-3 md:px-4 py-2 border-b border-gray-700 bg-gray-900">
+                        <p className="text-[11px] md:text-xs font-semibold tracking-wide text-gray-300">Output</p>
                     </div>
-                    <div className="flex-1 min-h-0 px-4 pt-2 pb-5 overflow-y-auto">
-                        <div className="space-y-1 text-xs text-gray-400 font-mono">
+                    <div className="flex-1 min-h-0 px-3 md:px-4 pt-2 pb-5 overflow-y-auto">
+                        <div className="space-y-1 text-[10px] md:text-xs text-gray-400 font-mono">
                             {output.map((line, idx) => {
                                 const renderedLine = typeof line === "string" ? line : String(line);
                                 return (
