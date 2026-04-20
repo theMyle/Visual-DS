@@ -16,6 +16,26 @@ export interface ChallengeConfig {
   };
 }
 
+export type ChallengeRunner = (...args: unknown[]) => unknown;
+
+const DEFAULT_RUNNER_PARAMETER_NAMES = ["array", "io"] as const;
+
+const buildChallengeRunnerSource = (code: string, parameterNames: readonly string[]) => `
+${code}
+
+if (typeof Solution !== 'function') {
+  throw new Error('Solution(...) is required');
+}
+
+return Solution(${parameterNames.join(", ")});`;
+
+export const createChallengeRunner = (
+  code: string,
+  parameterNames: readonly string[] = DEFAULT_RUNNER_PARAMETER_NAMES,
+) => {
+  return new Function(...parameterNames, buildChallengeRunnerSource(code, parameterNames)) as ChallengeRunner;
+};
+
 // Template for editor code (reusable across challenges)
 const API_TEMPLATE = `/*
 Array API Spec - These are array-specific methods for the coding challenge.

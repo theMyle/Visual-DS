@@ -47,10 +47,28 @@ export default function CodeEditorPanel({
     const [activeTab, setActiveTab] = useState<"output" | "result">("output");
     const [expandedResultIndexes, setExpandedResultIndexes] = useState<Set<number>>(new Set());
     const [isHelpOpen, setIsHelpOpen] = useState<boolean>(false);
+    const [isOutputCollapsed, setIsOutputCollapsed] = useState<boolean>(false);
+    const collapsedOutputHeight = 42;
 
     useEffect(() => {
         if (resultSummaries && resultSummaries.length > 0) {
             setActiveTab("result");
+            setIsOutputCollapsed(false);
+
+            const body = panelBodyRef.current;
+            if (!body) {
+                return;
+            }
+
+            const { maxRatio } = getOutputSizing();
+            const maxOutputHeight = Math.floor(body.clientHeight * maxRatio);
+            setOutputHeight((currentHeight) => {
+                if (currentHeight === null || currentHeight < maxOutputHeight) {
+                    return maxOutputHeight;
+                }
+
+                return currentHeight;
+            });
         }
     }, [resultSummaries]);
 
@@ -73,7 +91,6 @@ export default function CodeEditorPanel({
     const getOutputSizing = () => {
         const isMobileViewport = typeof window !== "undefined" && window.innerWidth < 768;
         return {
-            minHeight: isMobileViewport ? 96 : 120,
             maxRatio: isMobileViewport ? 0.34 : 0.4,
         };
     };
@@ -82,15 +99,14 @@ export default function CodeEditorPanel({
         const body = panelBodyRef.current;
         if (!body) return;
 
-        const { minHeight, maxRatio } = getOutputSizing();
+        const { maxRatio } = getOutputSizing();
         const maxOutputHeight = Math.floor(body.clientHeight * maxRatio);
-        const minAllowedHeight = Math.min(minHeight, maxOutputHeight);
         if (outputHeight === null) {
             setOutputHeight(maxOutputHeight);
             return;
         }
 
-        const clamped = Math.max(minAllowedHeight, Math.min(maxOutputHeight, outputHeight));
+        const clamped = Math.max(0, Math.min(maxOutputHeight, outputHeight));
         if (clamped !== outputHeight) {
             setOutputHeight(clamped);
         }
@@ -104,11 +120,10 @@ export default function CodeEditorPanel({
             if (!body) return;
 
             const bounds = body.getBoundingClientRect();
-            const { minHeight, maxRatio } = getOutputSizing();
+            const { maxRatio } = getOutputSizing();
             const maxOutputHeight = Math.floor(bounds.height * maxRatio);
-            const minAllowedHeight = Math.min(minHeight, maxOutputHeight);
             const nextOutputHeight = bounds.bottom - event.clientY;
-            const clampedHeight = Math.max(minAllowedHeight, Math.min(maxOutputHeight, nextOutputHeight));
+            const clampedHeight = Math.max(0, Math.min(maxOutputHeight, nextOutputHeight));
             setOutputHeight(clampedHeight);
         };
 
@@ -204,111 +219,132 @@ export default function CodeEditorPanel({
                 </div>
 
                 <div
-                    className="min-h-0 border-t border-gray-700 flex flex-col"
-                    style={outputHeight ? { height: `${outputHeight}px` } : undefined}
+                    className="border-t border-gray-700 flex flex-col overflow-hidden"
+                    style={{ height: `${isOutputCollapsed ? collapsedOutputHeight : outputHeight ?? collapsedOutputHeight}px` }}
                 >
                     <div className="px-3 md:px-4 py-2 border-b border-gray-700 bg-gray-900">
-                        <div className="inline-flex rounded-md border border-gray-700 bg-gray-800/60 p-0.5">
+                        <div className="flex items-center justify-between gap-2">
+                            <div className="inline-flex rounded-md border border-gray-700 bg-gray-800/60 p-0.5">
+                                <button
+                                    type="button"
+                                    onClick={() => {
+                                        setActiveTab("output");
+                                        setIsOutputCollapsed(false);
+                                    }}
+                                    className={`px-2.5 py-1 text-[11px] md:text-xs rounded ${activeTab === "output"
+                                        ? "bg-cyan-800/80 text-cyan-100"
+                                        : "text-gray-300 hover:text-gray-100"
+                                        }`}
+                                >
+                                    Console
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={() => {
+                                        setActiveTab("result");
+                                        setIsOutputCollapsed(false);
+                                    }}
+                                    className={`px-2.5 py-1 text-[11px] md:text-xs rounded ${activeTab === "result"
+                                        ? "bg-emerald-800/80 text-emerald-100"
+                                        : "text-gray-300 hover:text-gray-100"
+                                        }`}
+                                >
+                                    Result
+                                </button>
+                            </div>
+
                             <button
                                 type="button"
-                                onClick={() => setActiveTab("output")}
-                                className={`px-2.5 py-1 text-[11px] md:text-xs rounded ${activeTab === "output"
-                                    ? "bg-cyan-800/80 text-cyan-100"
-                                    : "text-gray-300 hover:text-gray-100"
-                                    }`}
+                                onClick={() => setIsOutputCollapsed((prev) => !prev)}
+                                title={isOutputCollapsed ? "Expand" : "Collapse"}
+                                aria-label={isOutputCollapsed ? "Expand output panel" : "Collapse output panel"}
+                                className="h-7 w-7 rounded-md border border-gray-700 bg-gray-800/80 text-gray-200 hover:bg-gray-700 transition-colors"
                             >
-                                Console
-                            </button>
-                            <button
-                                type="button"
-                                onClick={() => setActiveTab("result")}
-                                className={`px-2.5 py-1 text-[11px] md:text-xs rounded ${activeTab === "result"
-                                    ? "bg-emerald-800/80 text-emerald-100"
-                                    : "text-gray-300 hover:text-gray-100"
-                                    }`}
-                            >
-                                Result
+                                {isOutputCollapsed ? "▴" : "▾"}
                             </button>
                         </div>
                     </div>
-                    <div className="flex-1 min-h-0 px-3 md:px-4 pt-2 pb-5 overflow-y-auto">
-                        {activeTab === "output" ? (
-                            <div className="space-y-1 text-[10px] md:text-xs text-gray-400 font-mono">
-                                {output.map((line, idx) => {
-                                    const renderedLine = typeof line === "string" ? line : String(line);
-                                    const isError = renderedLine.startsWith("ERROR:");
 
-                                    return (
-                                        <p
-                                            key={`${renderedLine}-${idx}`}
-                                            className={isError ? "rounded border border-red-500/40 bg-red-950/60 px-2 py-1 text-red-200" : undefined}
-                                        >
-                                            {renderedLine}
-                                        </p>
-                                    );
-                                })}
-                            </div>
-                        ) : (
-                            <div className="space-y-2">
-                                {!resultSummaries || resultSummaries.length === 0 ? (
-                                    <p className="text-xs md:text-sm font-normal font-sans text-gray-400">Submit your solution to see challenge results here.</p>
-                                ) : (
-                                    resultSummaries.map((resultSummary, idx) => (
-                                        <div
-                                            key={`${resultSummary.name}-${idx}`}
-                                            className="rounded-lg border border-gray-700 bg-gray-900/70 p-3 md:p-4 text-[11px] md:text-xs font-mono"
-                                        >
-                                            <div className="space-y-2">
-                                                <button
-                                                    type="button"
-                                                    onClick={() => toggleResultExpanded(idx)}
-                                                    className="w-full flex items-center justify-between gap-3 text-left"
-                                                >
-                                                    <div className="flex items-center gap-2 min-w-0">
-                                                        <span className="text-gray-400">{expandedResultIndexes.has(idx) ? "▾" : "▸"}</span>
-                                                        <p className="text-gray-100 font-semibold break-all">{resultSummary.name}</p>
-                                                    </div>
-                                                    <span
-                                                        className={resultSummary.passed === true
-                                                            ? "shrink-0 rounded-full border border-emerald-500/50 bg-emerald-950/70 px-2 py-0.5 text-[10px] md:text-xs font-semibold text-emerald-200"
-                                                            : resultSummary.passed === false
-                                                                ? "shrink-0 rounded-full border border-rose-500/50 bg-rose-950/70 px-2 py-0.5 text-[10px] md:text-xs font-semibold text-rose-200"
-                                                                : "shrink-0 rounded-full border border-yellow-500/50 bg-yellow-950/70 px-2 py-0.5 text-[10px] md:text-xs font-semibold text-yellow-200"
-                                                        }
+                    {!isOutputCollapsed && (
+                        <div className="flex-1 min-h-0 px-3 md:px-4 pt-2 pb-5 overflow-y-auto">
+                            {activeTab === "output" ? (
+                                <div className="space-y-1 text-[10px] md:text-xs text-gray-400 font-mono">
+                                    {output.map((line, idx) => {
+                                        const renderedLine = typeof line === "string" ? line : String(line);
+                                        const isError = renderedLine.startsWith("ERROR:");
+
+                                        return (
+                                            <p
+                                                key={`${renderedLine}-${idx}`}
+                                                className={isError ? "rounded border border-red-500/40 bg-red-950/60 px-2 py-1 text-red-200" : undefined}
+                                            >
+                                                {renderedLine}
+                                            </p>
+                                        );
+                                    })}
+                                </div>
+                            ) : (
+                                <div className="space-y-2">
+                                    {!resultSummaries || resultSummaries.length === 0 ? (
+                                        <p className="text-xs md:text-sm font-normal font-sans text-gray-400">Submit your solution to see challenge results here.</p>
+                                    ) : (
+                                        resultSummaries.map((resultSummary, idx) => (
+                                            <div
+                                                key={`${resultSummary.name}-${idx}`}
+                                                className="rounded-lg border border-gray-700 bg-gray-900/70 p-3 md:p-4 text-[11px] md:text-xs font-mono"
+                                            >
+                                                <div className="space-y-2">
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => toggleResultExpanded(idx)}
+                                                        className="w-full flex items-center justify-between gap-3 text-left"
                                                     >
-                                                        {resultSummary.passed === true
-                                                            ? "✓ PASS"
-                                                            : resultSummary.passed === false
-                                                                ? "✗ FAIL"
-                                                                : "- PENDING"}
-                                                    </span>
-                                                </button>
-
-                                                {expandedResultIndexes.has(idx) && (
-                                                    <div className="space-y-2 pt-1">
-                                                        <p><span className="text-gray-400">Input:</span> <span className="text-gray-100 break-all">{resultSummary.input}</span></p>
-                                                        <p><span className="text-gray-400">Expected:</span> <span className="text-gray-100 break-all">{resultSummary.expected}</span></p>
-                                                        <p><span className="text-gray-400">Actual:</span> <span className="text-gray-100 break-all">{resultSummary.actual}</span></p>
-                                                        <p>
-                                                            <span className="text-gray-400">Status:</span>{" "}
-                                                            <span className={resultSummary.passed === true
-                                                                ? "text-emerald-300"
+                                                        <div className="flex items-center gap-2 min-w-0">
+                                                            <span className="text-gray-400">{expandedResultIndexes.has(idx) ? "▾" : "▸"}</span>
+                                                            <p className="text-gray-100 font-semibold break-all">{resultSummary.name}</p>
+                                                        </div>
+                                                        <span
+                                                            className={resultSummary.passed === true
+                                                                ? "shrink-0 rounded-full border border-emerald-500/50 bg-emerald-950/70 px-2 py-0.5 text-[10px] md:text-xs font-semibold text-emerald-200"
                                                                 : resultSummary.passed === false
-                                                                    ? "text-rose-300"
-                                                                    : "text-yellow-300"
-                                                            }>
-                                                                {resultSummary.statusText}
-                                                            </span>
-                                                        </p>
-                                                    </div>
-                                                )}
+                                                                    ? "shrink-0 rounded-full border border-rose-500/50 bg-rose-950/70 px-2 py-0.5 text-[10px] md:text-xs font-semibold text-rose-200"
+                                                                    : "shrink-0 rounded-full border border-yellow-500/50 bg-yellow-950/70 px-2 py-0.5 text-[10px] md:text-xs font-semibold text-yellow-200"
+                                                            }
+                                                        >
+                                                            {resultSummary.passed === true
+                                                                ? "✓ PASS"
+                                                                : resultSummary.passed === false
+                                                                    ? "✗ FAIL"
+                                                                    : "- PENDING"}
+                                                        </span>
+                                                    </button>
+
+                                                    {expandedResultIndexes.has(idx) && (
+                                                        <div className="space-y-2 pt-1">
+                                                            <p><span className="text-gray-400">Input:</span> <span className="text-gray-100 break-all">{resultSummary.input}</span></p>
+                                                            <p><span className="text-gray-400">Expected:</span> <span className="text-gray-100 break-all">{resultSummary.expected}</span></p>
+                                                            <p><span className="text-gray-400">Actual:</span> <span className="text-gray-100 break-all">{resultSummary.actual}</span></p>
+                                                            <p>
+                                                                <span className="text-gray-400">Status:</span>{" "}
+                                                                <span className={resultSummary.passed === true
+                                                                    ? "text-emerald-300"
+                                                                    : resultSummary.passed === false
+                                                                        ? "text-rose-300"
+                                                                        : "text-yellow-300"
+                                                                }>
+                                                                    {resultSummary.statusText}
+                                                                </span>
+                                                            </p>
+                                                        </div>
+                                                    )}
+                                                </div>
                                             </div>
-                                        </div>
-                                    ))
-                                )}
-                            </div>
-                        )}
-                    </div>
+                                        ))
+                                    )}
+                                </div>
+                            )}
+                        </div>
+                    )}
                 </div>
             </div>
         </div>

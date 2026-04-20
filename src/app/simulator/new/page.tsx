@@ -43,6 +43,7 @@ export default function SimulationArray() {
     const [isCompleted, setIsCompleted] = useState<boolean>(false);
     const workspaceRef = useRef<HTMLDivElement | null>(null);
     const arrayRef = useRef<ArrayElement[]>([]);
+    const arraySizeRef = useRef<number>(initialArraySeed.length);
     const isAnimatingRef = useRef<boolean>(false);
 
     const [isAnimating, setIsAnimating] = useState<boolean>(false);
@@ -77,7 +78,12 @@ export default function SimulationArray() {
 
     const commitArray = (nextArray: ArrayElement[]) => {
         arrayRef.current = nextArray;
+        arraySizeRef.current = nextArray.length;
         setArray(nextArray);
+    };
+
+    const updateLogicalSize = (delta: number) => {
+        arraySizeRef.current = Math.max(0, arraySizeRef.current + delta);
     };
 
     const setAnimatingState = (nextIsAnimating: boolean) => {
@@ -422,16 +428,53 @@ export default function SimulationArray() {
     };
 
     const challengeApi: ChallengeArrayApi = {
-        insertAt: (position, value) => enqueueChallengeAction(() => insertAt(position, value)),
-        insertFront: (value) => enqueueChallengeAction(() => insertFront(value)),
-        insertBack: (value) => enqueueChallengeAction(() => insertBack(value)),
-        removeAt: (position) => enqueueChallengeAction(() => removeAt(position)),
-        removeFront: () => enqueueChallengeAction(() => removeFront()),
-        removeBack: () => enqueueChallengeAction(() => Promise.resolve(removeBack())),
+        insertAt: (position, value) => {
+            const currentSize = arraySizeRef.current;
+            if (currentSize < getMaxElements() && position >= 0 && position <= currentSize) {
+                updateLogicalSize(1);
+            }
+
+            return enqueueChallengeAction(() => insertAt(position, value));
+        },
+        insertFront: (value) => {
+            if (arraySizeRef.current < getMaxElements()) {
+                updateLogicalSize(1);
+            }
+
+            return enqueueChallengeAction(() => insertFront(value));
+        },
+        insertBack: (value) => {
+            if (arraySizeRef.current < getMaxElements()) {
+                updateLogicalSize(1);
+            }
+
+            return enqueueChallengeAction(() => Promise.resolve(insertBack(value)));
+        },
+        removeAt: (position) => {
+            if (position >= 0 && position < arraySizeRef.current) {
+                updateLogicalSize(-1);
+            }
+
+            return enqueueChallengeAction(() => removeAt(position));
+        },
+        removeFront: () => {
+            if (arraySizeRef.current > 0) {
+                updateLogicalSize(-1);
+            }
+
+            return enqueueChallengeAction(() => removeFront());
+        },
+        removeBack: () => {
+            if (arraySizeRef.current > 0) {
+                updateLogicalSize(-1);
+            }
+
+            return enqueueChallengeAction(() => Promise.resolve(removeBack()));
+        },
         setAt: (position, newValue) => enqueueChallengeAction(() => setAt(position, newValue)),
         get: (position) => get(position),
         swap: (leftIndex, rightIndex) => enqueueChallengeAction(() => swap(leftIndex, rightIndex)),
-        size: () => arrayRef.current.length,
+        size: () => arraySizeRef.current,
     };
 
     const challengeIoApi: ChallengeIoApi = {
