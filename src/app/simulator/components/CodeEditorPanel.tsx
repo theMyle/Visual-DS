@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import CodeMirror from "@uiw/react-codemirror";
 import { javascript } from "@codemirror/lang-javascript";
+import SimulatorQuickHelpModal from "@/app/simulator/components/SimulatorQuickHelpModal";
 
 type CodeEditorPanelProps = {
     code: string;
@@ -45,6 +46,7 @@ export default function CodeEditorPanel({
     const [isResizingOutput, setIsResizingOutput] = useState<boolean>(false);
     const [activeTab, setActiveTab] = useState<"output" | "result">("output");
     const [expandedResultIndexes, setExpandedResultIndexes] = useState<Set<number>>(new Set());
+    const [isHelpOpen, setIsHelpOpen] = useState<boolean>(false);
 
     useEffect(() => {
         if (resultSummaries && resultSummaries.length > 0) {
@@ -123,9 +125,25 @@ export default function CodeEditorPanel({
 
     return (
         <div className={className ?? "h-[56vh] lg:h-full overflow-hidden flex flex-col bg-gray-900 text-gray-100"}>
+            <SimulatorQuickHelpModal
+                isOpen={isHelpOpen}
+                onClose={() => setIsHelpOpen(false)}
+            />
+
             <div className="flex items-center justify-between px-3 md:px-4 py-2.5 md:py-3 border-b border-gray-700 bg-gray-900/95">
                 <p className="text-xs md:text-sm font-semibold tracking-wide">{title}</p>
-                <div className="flex items-center gap-1.5 md:gap-2 rounded-lg border border-gray-700 bg-gray-800/40 p-1">
+                <div className="flex items-center gap-2">
+                    <button
+                        type="button"
+                        onClick={() => setIsHelpOpen(true)}
+                        title="Help"
+                        aria-label="Open help"
+                        className="h-6 w-6 md:h-7 md:w-7 rounded-full border border-gray-600 bg-gray-800 text-[11px] md:text-xs font-semibold text-gray-200 hover:bg-gray-700 transition-colors"
+                    >
+                        ?
+                    </button>
+
+                    <div className="flex items-center gap-1.5 md:gap-2 rounded-lg border border-gray-700 bg-gray-800/40 p-1">
                     <button
                         type="button"
                         onClick={() => {
@@ -153,6 +171,7 @@ export default function CodeEditorPanel({
                     >
                         Submit
                     </button>
+                    </div>
                 </div>
             </div>
 
