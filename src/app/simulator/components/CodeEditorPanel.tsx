@@ -144,33 +144,33 @@ export default function CodeEditorPanel({
                     </button>
 
                     <div className="flex items-center gap-1.5 md:gap-2 rounded-lg border border-gray-700 bg-gray-800/40 p-1">
-                    <button
-                        type="button"
-                        onClick={() => {
-                            setActiveTab("output");
-                            onResetArray();
-                        }}
-                        disabled={resetArrayDisabled}
-                        className="px-2.5 md:px-3 py-1 text-[10px] md:text-xs rounded-md border border-transparent text-gray-300 hover:text-gray-100 hover:bg-gray-800/70 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
-                        Reset Simulator
-                    </button>
-                    <button
-                        type="button"
-                        onClick={onReset}
-                        disabled={resetDisabled}
-                        className="px-2.5 md:px-3 py-1 text-[10px] md:text-xs rounded-md border border-transparent text-gray-300 hover:text-gray-100 hover:bg-gray-800/70 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
-                        Reset Code
-                    </button>
-                    <button
-                        type="button"
-                        onClick={onSubmit}
-                        disabled={submitDisabled}
-                        className="px-2.5 md:px-3 py-1 text-[10px] md:text-xs rounded-md border border-gray-500/70 bg-gray-200 text-gray-900 hover:bg-gray-100 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
-                        Submit
-                    </button>
+                        <button
+                            type="button"
+                            onClick={() => {
+                                setActiveTab("output");
+                                onResetArray();
+                            }}
+                            disabled={resetArrayDisabled}
+                            className="px-2.5 md:px-3 py-1 text-[10px] md:text-xs rounded-md border border-transparent text-gray-300 hover:text-gray-100 hover:bg-gray-800/70 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                            Reset Simulator
+                        </button>
+                        <button
+                            type="button"
+                            onClick={onReset}
+                            disabled={resetDisabled}
+                            className="px-2.5 md:px-3 py-1 text-[10px] md:text-xs rounded-md border border-transparent text-gray-300 hover:text-gray-100 hover:bg-gray-800/70 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                            Reset Code
+                        </button>
+                        <button
+                            type="button"
+                            onClick={onSubmit}
+                            disabled={submitDisabled}
+                            className="px-2.5 md:px-3 py-1 text-[10px] md:text-xs rounded-md border border-gray-500/70 bg-gray-200 text-gray-900 hover:bg-gray-100 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                            Submit
+                        </button>
                     </div>
                 </div>
             </div>
