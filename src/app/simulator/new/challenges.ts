@@ -53,7 +53,10 @@ function Solution(array) {
 
   let x = array.get(0);
   io.println("array at index 0 is: " + x);
-}`,
+}
+  
+
+`,
   testCases: [
     {name: "", input:[1,2,3,4,5], expected: [69, 1,2,3,4,5, 69]},
     {name: "", input:[1,2,3], expected: [69, 1,2,3,69]},

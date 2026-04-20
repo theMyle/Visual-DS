@@ -10,10 +10,23 @@ import VisualArrayContainer from "@/app/simulator/components/VisualArrayContaine
 import VisualArray from "@/app/simulator/array-list/components/VisualArray";
 import { CHALLENGE_INTRO } from "./challenges";
 
+type ChallengeResultSummary = {
+    name: string;
+    input: string;
+    expected: string;
+    actual: string;
+    passed: boolean | null;
+    statusText: string;
+};
+
 export default function SimulationArray() {
     const challenge = CHALLENGE_INTRO;
     const initialArraySeed = challenge.testCases[0]?.input ?? [];
     const initialEditorCode = challenge.initialEditorCode;
+
+    // Placeholder for future DB sync.
+    const syncChallengeResult = async (_passed: boolean) => {
+    };
 
     const [array, setArray] = useState<ArrayElement[]>([]);
     const [editorCode, setEditorCode] = useState<string>(
@@ -26,6 +39,7 @@ export default function SimulationArray() {
     const [leftPaneWidth, setLeftPaneWidth] = useState<number>(50);
     const [isResizing, setIsResizing] = useState<boolean>(false);
     const [consoleOutput, setConsoleOutput] = useState<string[]>([]);
+    const [resultSummaries, setResultSummaries] = useState<ChallengeResultSummary[] | null>(null);
     const [isCompleted, setIsCompleted] = useState<boolean>(false);
     const workspaceRef = useRef<HTMLDivElement | null>(null);
     const arrayRef = useRef<ArrayElement[]>([]);
@@ -451,18 +465,161 @@ export default function SimulationArray() {
     const resetEditorCode = () => {
         setEditorCodeProgrammatically(initialEditorCode);
         setIsCompleted(false);
+        setResultSummaries(null);
         writeToConsole("Code editor reset to starter template.");
     };
 
     const resetArrayOnly = () => {
         resetStructureState();
         setIsCompleted(false);
-        writeToConsole("Array reset to initial seed.");
+        setConsoleOutput([]);
+        setResultSummaries(null);
+    };
+
+    const formatArray = (items: (string | number)[]) => `[${items.join(", ")}]`;
+
+    const arraysEqual = (left: (string | number)[], right: (string | number)[]) => {
+        if (left.length !== right.length) {
+            return false;
+        }
+
+        for (let i = 0; i < left.length; i++) {
+            if (left[i] !== right[i]) {
+                return false;
+            }
+        }
+
+        return true;
+    };
+
+    const createCaseSummary = (
+        caseIndex: number,
+        input: (string | number)[],
+        expected: (string | number)[],
+        actual: (string | number)[],
+        caseName?: string,
+    ): ChallengeResultSummary => {
+        const passed = arraysEqual(actual, expected);
+        return {
+            name: caseName || `Test Case ${caseIndex + 1}`,
+            input: formatArray(input),
+            expected: formatArray(expected),
+            actual: formatArray(actual),
+            passed,
+            statusText: passed
+                ? "PASS: Challenge output matches expected."
+                : "FAIL: Challenge output does not match expected.",
+        };
+    };
+
+    const createHeadlessChallengeApi = (seed: (string | number)[]) => {
+        const values = [...seed];
+        const maxElements = challenge.maxCapacity.desktop;
+
+        const api = {
+            insertAt: async (position: number, value: string | number) => {
+                if (position < 0 || position > values.length) return;
+                if (values.length >= maxElements) return;
+                values.splice(position, 0, value);
+            },
+            insertFront: async (value: string | number) => {
+                if (values.length >= maxElements) return;
+                values.unshift(value);
+            },
+            insertBack: async (value: string | number) => {
+                if (values.length >= maxElements) return;
+                values.push(value);
+            },
+            removeAt: async (position: number): Promise<string | number | undefined> => {
+                if (position < 0 || position >= values.length) return undefined;
+                const removed = values.splice(position, 1);
+                return removed[0];
+            },
+            removeFront: async (): Promise<string | number | undefined> => {
+                if (values.length === 0) return undefined;
+                return values.shift();
+            },
+            removeBack: async (): Promise<string | number | undefined> => {
+                if (values.length === 0) return undefined;
+                return values.pop();
+            },
+            setAt: async (position: number, value: string | number) => {
+                if (position < 0 || position >= values.length) return;
+                values[position] = value;
+            },
+            get: (position: number): string | number | undefined => {
+                if (position < 0 || position >= values.length) return undefined;
+                return values[position];
+            },
+            swap: async (leftIndex: number, rightIndex: number) => {
+                if (leftIndex < 0 || rightIndex < 0 || leftIndex >= values.length || rightIndex >= values.length) {
+                    return;
+                }
+                if (leftIndex === rightIndex) return;
+
+                const temp = values[leftIndex];
+                values[leftIndex] = values[rightIndex];
+                values[rightIndex] = temp;
+            },
+            size: () => values.length,
+        };
+
+        return {
+            api,
+            getValues: () => [...values],
+        };
+    };
+
+    const runBackgroundTestCases = async (code: string): Promise<ChallengeResultSummary[]> => {
+        const additionalCases = challenge.testCases.slice(1);
+        if (additionalCases.length === 0) return [];
+
+        const runner = new Function("array", "io", `\n${code}\n\nif (typeof Solution !== 'function') {\n  throw new Error('Solution(array) is required');\n}\nreturn Solution(array);`);
+        const summaries: ChallengeResultSummary[] = [];
+
+        for (let i = 0; i < additionalCases.length; i++) {
+            const testCase = additionalCases[i];
+            const caseIndex = i + 1;
+            const { api, getValues } = createHeadlessChallengeApi(testCase.input);
+            const silentIo = {
+                println: (_message: unknown) => {
+                },
+            };
+
+            try {
+                const result = runner(api, silentIo);
+                if (result instanceof Promise) {
+                    await result;
+                }
+
+                summaries.push(
+                    createCaseSummary(
+                        caseIndex,
+                        testCase.input,
+                        testCase.expected,
+                        getValues(),
+                        testCase.name || `Test Case ${caseIndex + 1}`,
+                    ),
+                );
+            } catch {
+                summaries.push({
+                    name: testCase.name || `Test Case ${caseIndex + 1}`,
+                    input: formatArray(testCase.input),
+                    expected: formatArray(testCase.expected),
+                    actual: "Execution Error",
+                    passed: false,
+                    statusText: "FAIL: Runtime error while evaluating this test case.",
+                });
+            }
+        }
+
+        return summaries;
     };
 
     const submitEditorCode = async () => {
         try {
             setConsoleOutput([]);
+            setResultSummaries(null);
             challengeQueueRef.current = Promise.resolve();
             const runner = new Function("array", "io", `\n${editorCode}\n\nif (typeof Solution !== 'function') {\n  throw new Error('Solution(array) is required');\n}\nreturn Solution(array);`);
             const result = runner(challengeApi, challengeIoApi);
@@ -470,6 +627,48 @@ export default function SimulationArray() {
                 await result;
             }
             await challengeQueueRef.current;
+            await sleep(1000);
+
+            const finalValues = arrayRef.current.map((element) => element.value);
+            const primaryCase = challenge.testCases[0];
+
+            if (!primaryCase) {
+                setResultSummaries([
+                    {
+                        name: "Test Case 1",
+                        input: "-",
+                        expected: "-",
+                        actual: formatArray(finalValues),
+                        passed: null,
+                        statusText: "No test case configured",
+                    },
+                ]);
+                return;
+            }
+
+            const primarySummary = createCaseSummary(
+                0,
+                primaryCase.input,
+                primaryCase.expected,
+                finalValues,
+                primaryCase.name || "Test Case 1",
+            );
+
+            setResultSummaries([primarySummary]);
+            void syncChallengeResult(primarySummary.passed === true);
+
+            // Run remaining test cases silently without visual animation.
+            void runBackgroundTestCases(editorCode).then((backgroundSummaries) => {
+                if (backgroundSummaries.length === 0) return;
+                setResultSummaries((prev) => {
+                    if (!prev || prev.length === 0) {
+                        return [...backgroundSummaries];
+                    }
+
+                    const next = [...prev, ...backgroundSummaries];
+                    return next;
+                });
+            });
         } catch (error) {
             const message = error instanceof Error ? error.message : "Unknown editor execution error";
             writeToConsole(`ERROR: ${message}`);
@@ -513,6 +712,7 @@ export default function SimulationArray() {
                 <CodeEditorPanel
                     code={editorCode}
                     output={consoleOutput}
+                    resultSummaries={resultSummaries}
                     onCodeChange={setEditorCode}
                     onReset={resetEditorCode}
                     onResetArray={resetArrayOnly}
