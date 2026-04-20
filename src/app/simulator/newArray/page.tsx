@@ -9,7 +9,7 @@ import ChallengeCompletedModal from "@/app/simulator/components/ChallengeComplet
 import CodeEditorPanel from "@/app/simulator/components/CodeEditorPanel";
 import VisualArrayContainer from "@/app/simulator/components/VisualArrayContainer";
 import VisualArray from "@/app/simulator/array-list/components/VisualArray";
-import { CHALLENGE_INTRO } from "./challenges";
+import { CHALLENGE_INTRO, createChallengeRunner, DEFAULT_RUNNER_PARAMETER_NAMES } from "./challenges";
 
 type ChallengeResultSummary = {
     name: string;
@@ -22,6 +22,9 @@ type ChallengeResultSummary = {
 
 export default function SimulationArray() {
     const challenge = CHALLENGE_INTRO;
+    const runnerParameterNames = challenge.programStructure?.parameterNames
+        ?? challenge.runnerParameterNames
+        ?? DEFAULT_RUNNER_PARAMETER_NAMES;
     const initialArraySeed = challenge.testCases[0]?.input ?? [];
     const initialEditorCode = challenge.initialEditorCode;
 
@@ -70,6 +73,7 @@ export default function SimulationArray() {
     const delay = {
         interval: 150,
         focus: 150,
+        get: 50,
         scan: 50, // Faster scanning for selection sort (lower = faster)
     }
 
@@ -212,7 +216,7 @@ export default function SimulationArray() {
         invisible.animationState = ArrayElementAnimationState.NewInserted;
         commitArray([...newArray]);
 
-        await sleep(delay.focus + 200);
+        await sleep(delay.get);
 
         invisible.animationState = ArrayElementAnimationState.Default;
         commitArray([...newArray]);
@@ -542,6 +546,20 @@ export default function SimulationArray() {
 
     const formatArray = (items: (string | number)[]) => `[${items.join(", ")}]`;
 
+    const formatReturnValue = (value: unknown) => {
+        if (value === undefined) return "undefined";
+        if (value === null) return "null";
+        if (typeof value === "string" || typeof value === "number" || typeof value === "boolean") {
+            return String(value);
+        }
+
+        try {
+            return JSON.stringify(value);
+        } catch {
+            return String(value);
+        }
+    };
+
     const arraysEqual = (left: (string | number)[], right: (string | number)[]) => {
         if (left.length !== right.length) {
             return false;
@@ -559,15 +577,32 @@ export default function SimulationArray() {
     const createCaseSummary = (
         caseIndex: number,
         input: (string | number)[],
-        expected: (string | number)[],
+        expected: (string | number)[] | undefined,
         actual: (string | number)[],
         caseName?: string,
+        expectedReturn?: string | number,
+        actualReturn?: unknown,
     ): ChallengeResultSummary => {
-        const passed = arraysEqual(actual, expected);
+        if (expectedReturn !== undefined) {
+            const passed = actualReturn === expectedReturn;
+            return {
+                name: caseName || `Test Case ${caseIndex + 1}`,
+                input: formatArray(input),
+                expected: formatReturnValue(expectedReturn),
+                actual: formatReturnValue(actualReturn),
+                passed,
+                statusText: passed
+                    ? "PASS: Returned value matches expected."
+                    : "FAIL: Returned value does not match expected.",
+            };
+        }
+
+        const normalizedExpected = expected ?? [];
+        const passed = arraysEqual(actual, normalizedExpected);
         return {
             name: caseName || `Test Case ${caseIndex + 1}`,
             input: formatArray(input),
-            expected: formatArray(expected),
+            expected: formatArray(normalizedExpected),
             actual: formatArray(actual),
             passed,
             statusText: passed
@@ -634,11 +669,15 @@ export default function SimulationArray() {
         };
     };
 
+    const buildRunnerArgs = (runtimeContext: Record<string, unknown>) => {
+        return runnerParameterNames.map((parameterName) => runtimeContext[parameterName]);
+    };
+
     const runBackgroundTestCases = async (code: string): Promise<ChallengeResultSummary[]> => {
         const additionalCases = challenge.testCases.slice(1);
         if (additionalCases.length === 0) return [];
 
-        const runner = new Function("array", "io", `\n${code}\n\nif (typeof Solution !== 'function') {\n  throw new Error('Solution(array) is required');\n}\nreturn Solution(array);`);
+        const runner = createChallengeRunner(code, runnerParameterNames);
         const summaries: ChallengeResultSummary[] = [];
 
         for (let i = 0; i < additionalCases.length; i++) {
@@ -651,9 +690,10 @@ export default function SimulationArray() {
             };
 
             try {
-                const result = runner(api, silentIo);
+                const result = runner(...buildRunnerArgs({ array: api, io: silentIo }));
+                let resolvedResult: unknown = result;
                 if (result instanceof Promise) {
-                    await result;
+                    resolvedResult = await result;
                 }
 
                 summaries.push(
@@ -663,13 +703,17 @@ export default function SimulationArray() {
                         testCase.expected,
                         getValues(),
                         testCase.name || `Test Case ${caseIndex + 1}`,
+                        testCase.expectedReturn,
+                        resolvedResult,
                     ),
                 );
             } catch {
                 summaries.push({
                     name: testCase.name || `Test Case ${caseIndex + 1}`,
                     input: formatArray(testCase.input),
-                    expected: formatArray(testCase.expected),
+                    expected: testCase.expectedReturn !== undefined
+                        ? formatReturnValue(testCase.expectedReturn)
+                        : formatArray(testCase.expected ?? []),
                     actual: "Execution Error",
                     passed: false,
                     statusText: "FAIL: Runtime error while evaluating this test case.",
@@ -688,10 +732,11 @@ export default function SimulationArray() {
             setIsChallengeCompletedModalOpen(false);
             setShowNextAction(false);
             challengeQueueRef.current = Promise.resolve();
-            const runner = new Function("array", "io", `\n${editorCode}\n\nif (typeof Solution !== 'function') {\n  throw new Error('Solution(array) is required');\n}\nreturn Solution(array);`);
-            const result = runner(challengeApi, challengeIoApi);
+            const runner = createChallengeRunner(editorCode, runnerParameterNames);
+            const result = runner(...buildRunnerArgs({ array: challengeApi, io: challengeIoApi }));
+            let resolvedResult: unknown = result;
             if (result instanceof Promise) {
-                await result;
+                resolvedResult = await result;
             }
             await challengeQueueRef.current;
             await sleep(1000);
@@ -719,6 +764,8 @@ export default function SimulationArray() {
                 primaryCase.expected,
                 finalValues,
                 primaryCase.name || "Test Case 1",
+                primaryCase.expectedReturn,
+                resolvedResult,
             );
 
             setResultSummaries([primarySummary]);

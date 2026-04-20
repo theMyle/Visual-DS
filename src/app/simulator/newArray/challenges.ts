@@ -1,7 +1,22 @@
-export interface TestCase {
+type TestCaseByArrayOutput = {
+  expected: (string | number)[];
+  expectedReturn?: never;
+};
+
+type TestCaseByReturnValue = {
+  expected?: never;
+  expectedReturn: string | number;
+};
+
+export interface TestCaseBase {
   name: string;
   input: (string | number)[];
-  expected: (string | number)[];
+}
+
+export type TestCase = TestCaseBase & (TestCaseByArrayOutput | TestCaseByReturnValue);
+
+export interface ChallengeProgramStructure {
+  parameterNames: readonly string[];
 }
 
 export interface ChallengeConfig {
@@ -9,6 +24,9 @@ export interface ChallengeConfig {
   title: string;
   description: string;
   initialEditorCode: string;
+  programStructure?: ChallengeProgramStructure;
+  // Deprecated: use programStructure.parameterNames
+  runnerParameterNames?: readonly string[];
   testCases: TestCase[];
   maxCapacity: {
     desktop: number;
@@ -18,7 +36,10 @@ export interface ChallengeConfig {
 
 export type ChallengeRunner = (...args: unknown[]) => unknown;
 
-const DEFAULT_RUNNER_PARAMETER_NAMES = ["array", "io"] as const;
+export const DEFAULT_RUNNER_PARAMETER_NAMES = ["array", "io"] as const;
+export const DEFAULT_PROGRAM_STRUCTURE: ChallengeProgramStructure = {
+  parameterNames: DEFAULT_RUNNER_PARAMETER_NAMES,
+};
 
 const buildChallengeRunnerSource = (code: string, parameterNames: readonly string[]) => `
 ${code}
@@ -64,23 +85,44 @@ Note: use Array API methods only.
 // Simple intro challenge without test cases
 export const CHALLENGE_INTRO: ChallengeConfig = {
   id: "array-1",
-  title: "Two Sum",
-  description: "Add 69 at the front and back of list",
+  title: "Even Sum - Odd Sum",
+  description: "Given a list, return the difference of the sum of all even values minus the sum of all odd values. Example: [1, 2, 3, 4] => (2 + 4) - (1 + 3) = 2.",
+  programStructure: {
+    parameterNames: ["array", "io"],
+  },
   initialEditorCode: `${API_TEMPLATE}
 
 function Solution(array) {
   io.println("Hello World");
-
   let x = array.get(0);
-  io.println("array at index 0 is: " + x);
+
+  io.println(x);
+  return x;
 }
   
 
 `,
   testCases: [
-    {name: "", input:[1,2,3,4,5], expected: [69, 1,2,3,4,5, 69]},
-    {name: "", input:[1,2,3], expected: [69, 1,2,3,69]},
-    {name: "", input:[3], expected: [69,3,69]},
+    {
+      name: "Test Case 1",
+      input: [12, 7, 19, 4, 33, 28, 5, 16, 41, 10, 22, 3, 8, 27, 14, 9, 30, 11, 6, 25],
+      expectedReturn: -30,
+    },
+    {
+      name: "Test Case 2",
+      input: [45, 18, 2, 39, 24, 7, 31, 40, 13, 26, 50, 1, 34, 29, 6, 17, 8, 21, 14, 3],
+      expectedReturn: 16,
+    },
+    {
+      name: "Test Case 3",
+      input: [9, 32, 15, 48, 23, 4, 11, 36, 27, 20, 5, 42, 14, 7, 30, 19, 2, 25, 38, 13],
+      expectedReturn: 112,
+    },
+    {
+      name: "Test Case 4",
+      input: [],
+      expectedReturn: 0,
+    },
   ],
   maxCapacity: {
     desktop: 40,
