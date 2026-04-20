@@ -1,13 +1,13 @@
-'use client';
+"use client";
 
 import { useEffect, useRef, useState } from "react";
-import { ArrayElement, ArrayElementAnimationState } from "@/app/simulator/array-list/components/types";
-import { createArrayElement, createArrayElements } from "@/app/simulator/array-list/components/utils";
+import { LinkedListNode, NodeAnimationState } from "@/app/simulator/linked-list/components/types";
+import { createNode, createNodes } from "@/app/simulator/linked-list/components/utils";
 import ChallengeInstructions from "@/app/simulator/components/ChallengeInstructions";
 import ChallengeCompletedModal from "@/app/simulator/components/ChallengeCompletedModal";
 import CodeEditorPanel from "@/app/simulator/components/CodeEditorPanel";
 import VisualArrayContainer from "@/app/simulator/components/VisualArrayContainer";
-import VisualArray from "@/app/simulator/array-list/components/VisualArray";
+import VisualLinkedList from "@/app/simulator/linked-list/components/VisualLinkedList";
 import { CHALLENGE_INTRO, createChallengeRunner, DEFAULT_RUNNER_PARAMETER_NAMES } from "./challenges";
 
 type ChallengeResultSummary = {
@@ -19,54 +19,96 @@ type ChallengeResultSummary = {
     statusText: string;
 };
 
-export default function SimulationQueueChallenge() {
+type LinkedListNodeHandle = {
+    id: string;
+    getValue: () => string | number | undefined;
+    setValue: (value: string | number) => void;
+    getNext: () => LinkedListNodeHandle | null;
+    setNext: (next: LinkedListNodeHandle | null) => void;
+};
+
+export default function SimulationLinkedListChallenge() {
     const challenge = CHALLENGE_INTRO;
     const runnerParameterNames = challenge.programStructure?.parameterNames
         ?? challenge.runnerParameterNames
         ?? DEFAULT_RUNNER_PARAMETER_NAMES;
-    const initialQueueSeed = challenge.testCases[0]?.input ?? [];
+    const initialListSeed = challenge.testCases[0]?.input ?? [];
     const initialEditorCode = challenge.initialEditorCode;
 
-    const syncChallengeResult = async (_passed: boolean) => {
-    };
-
-    const handleChallengeCompleted = () => {
-    };
-
-    const handleChallengeMenu = () => {
-        setIsChallengeCompletedModalOpen(false);
-    };
-
-    const handleChallengeNext = () => {
-        setIsChallengeCompletedModalOpen(false);
-    };
-
-    const [queue, setQueue] = useState<ArrayElement[]>([]);
+    const [nodes, setNodes] = useState<LinkedListNode[]>([]);
+    const [head, setHead] = useState<string | null>(null);
+    const [tail, setTail] = useState<string | null>(null);
     const [editorCode, setEditorCode] = useState<string>(initialEditorCode);
-    const [leftPaneWidth, setLeftPaneWidth] = useState<number>(50);
-    const [isResizing, setIsResizing] = useState<boolean>(false);
     const [consoleOutput, setConsoleOutput] = useState<string[]>([]);
     const [resultSummaries, setResultSummaries] = useState<ChallengeResultSummary[] | null>(null);
     const [isCompleted, setIsCompleted] = useState<boolean>(false);
     const [isChallengeCompletedModalOpen, setIsChallengeCompletedModalOpen] = useState<boolean>(false);
     const [showNextAction, setShowNextAction] = useState<boolean>(false);
-    const [isAnimating, setIsAnimating] = useState<boolean>(false);
-    const workspaceRef = useRef<HTMLDivElement | null>(null);
-    const queueRef = useRef<ArrayElement[]>([]);
-    const logicalQueueRef = useRef<(string | number)[]>([...initialQueueSeed]);
-    const isAnimatingRef = useRef<boolean>(false);
-    const challengeQueueRef = useRef(Promise.resolve());
+    const [leftPaneWidth, setLeftPaneWidth] = useState<number>(50);
+    const [isResizing, setIsResizing] = useState<boolean>(false);
 
-    const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
-    const delay = {
-        focus: 150,
-        slide: 140,
-        peek: 120,
+    const workspaceRef = useRef<HTMLDivElement | null>(null);
+    const nodesRef = useRef<LinkedListNode[]>([]);
+    const headRef = useRef<string | null>(null);
+    const tailRef = useRef<string | null>(null);
+    const nodeActionQueueRef = useRef(Promise.resolve());
+
+    const cloneNodes = (list: LinkedListNode[]) => list.map((node) => ({ ...node }));
+
+    const recomputeEndpoints = (list: LinkedListNode[]) => {
+        if (list.length === 0) {
+            return { nextHead: null, nextTail: null };
+        }
+
+        const referenced = new Set<string>();
+        for (const node of list) {
+            if (node.next) {
+                referenced.add(node.next);
+            }
+        }
+
+        const nextHead = list.find((node) => !referenced.has(node.id))?.id ?? list[0].id;
+
+        let nextTail: string | null = null;
+        let currentId: string | null = nextHead;
+        const visited = new Set<string>();
+
+        while (currentId && !visited.has(currentId)) {
+            visited.add(currentId);
+            const current = list.find((node) => node.id === currentId);
+            if (!current) break;
+
+            nextTail = current.id;
+            currentId = current.next;
+        }
+
+        return { nextHead, nextTail };
     };
 
-    const getMaxElements = () => {
-        const isDesktop = typeof window !== "undefined" && window.innerWidth >= 1024;
-        return isDesktop ? challenge.maxCapacity.desktop : challenge.maxCapacity.mobile;
+    const commitNodes = (nextNodes: LinkedListNode[]) => {
+        const cloned = cloneNodes(nextNodes);
+        const { nextHead, nextTail } = recomputeEndpoints(cloned);
+
+        nodesRef.current = cloned;
+        headRef.current = nextHead;
+        tailRef.current = nextTail;
+        setNodes(cloned);
+        setHead(nextHead);
+        setTail(nextTail);
+    };
+
+    const enqueueNodeAction = (action: () => Promise<void>) => {
+        const next = nodeActionQueueRef.current.then(action, action);
+        nodeActionQueueRef.current = next.then(() => undefined, () => undefined);
+    };
+
+    const updateNodeAnimationState = (nodeId: string, animationState: NodeAnimationState) => {
+        const nextNodes = cloneNodes(nodesRef.current);
+        const target = nextNodes.find((node) => node.id === nodeId);
+        if (!target) return;
+
+        target.animationState = animationState;
+        commitNodes(nextNodes);
     };
 
     const writeToConsole = (message: unknown) => {
@@ -79,38 +121,141 @@ export default function SimulationQueueChallenge() {
         setConsoleOutput((prev) => [...prev, nextLine]);
     };
 
-    const commitQueue = (nextQueue: ArrayElement[]) => {
-        queueRef.current = nextQueue;
-        setQueue(nextQueue);
+    const createNodeHandle = (nodeId: string | null): LinkedListNodeHandle | null => {
+        if (!nodeId) return null;
+
+        return {
+            id: nodeId,
+            getValue: () => {
+                const currentValue = nodesRef.current.find((node) => node.id === nodeId)?.value;
+
+                enqueueNodeAction(async () => {
+                    updateNodeAnimationState(nodeId, NodeAnimationState.HighlightedGreen);
+                    await new Promise((resolve) => setTimeout(resolve, 220));
+                    updateNodeAnimationState(nodeId, NodeAnimationState.Default);
+                });
+
+                return currentValue;
+            },
+            setValue: (value) => {
+                const nextNodes = cloneNodes(nodesRef.current);
+                const target = nextNodes.find((node) => node.id === nodeId);
+                if (!target) return;
+
+                target.value = value;
+                commitNodes(nextNodes);
+
+                enqueueNodeAction(async () => {
+                    updateNodeAnimationState(nodeId, NodeAnimationState.HighlightedOrange);
+                    await new Promise((resolve) => setTimeout(resolve, 240));
+                    updateNodeAnimationState(nodeId, NodeAnimationState.Default);
+                });
+            },
+            getNext: () => createNodeHandle(nodesRef.current.find((node) => node.id === nodeId)?.next ?? null),
+            setNext: (next) => {
+                const nextNodes = cloneNodes(nodesRef.current);
+                const target = nextNodes.find((node) => node.id === nodeId);
+                if (!target) return;
+
+                target.next = next ? next.id : null;
+                commitNodes(nextNodes);
+            },
+        };
     };
 
-    const setAnimatingState = (nextIsAnimating: boolean) => {
-        isAnimatingRef.current = nextIsAnimating;
-        setIsAnimating(nextIsAnimating);
-    };
+    const linkedListApi = {
+        getHead: () => createNodeHandle(headRef.current),
+        getTail: () => createNodeHandle(tailRef.current),
+        size: () => nodesRef.current.length,
+        insertFront: (value: string | number) => {
+            const newNode = createNode(value);
+            const nextNodes = cloneNodes(nodesRef.current);
+            newNode.next = headRef.current;
+            nextNodes.unshift(newNode);
+            commitNodes(nextNodes);
+        },
+        insertBack: (value: string | number) => {
+            const newNode = createNode(value);
+            const nextNodes = cloneNodes(nodesRef.current);
 
-    const isPromiseLike = (value: unknown): value is PromiseLike<unknown> => {
-        if (typeof value !== "object" || value === null) {
-            return false;
-        }
+            if (nextNodes.length === 0) {
+                nextNodes.push(newNode);
+                commitNodes(nextNodes);
+                return;
+            }
 
-        const maybeThenable = value as { then?: unknown };
-        return typeof maybeThenable.then === "function";
+            const currentTail = nextNodes.find((node) => node.id === tailRef.current);
+            if (currentTail) {
+                currentTail.next = newNode.id;
+            }
+
+            nextNodes.push(newNode);
+            commitNodes(nextNodes);
+        },
+        removeFront: () => {
+            const currentHead = headRef.current;
+            if (!currentHead) return undefined;
+
+            const nextNodes = cloneNodes(nodesRef.current);
+            const removed = nextNodes.find((node) => node.id === currentHead);
+            const filtered = nextNodes.filter((node) => node.id !== currentHead);
+            commitNodes(filtered);
+
+            if (removed) {
+                enqueueNodeAction(async () => {
+                    updateNodeAnimationState(removed.id, NodeAnimationState.BeingRemoved);
+                    await new Promise((resolve) => setTimeout(resolve, 240));
+                    updateNodeAnimationState(removed.id, NodeAnimationState.Invisible);
+                });
+            }
+
+            return removed?.value;
+        },
+        removeBack: () => {
+            const currentHead = headRef.current;
+            if (!currentHead) return undefined;
+
+            if (headRef.current === tailRef.current) {
+                return linkedListApi.removeFront();
+            }
+
+            const nextNodes = cloneNodes(nodesRef.current);
+            let previous: LinkedListNode | undefined;
+            let currentId: string | null = currentHead;
+
+            while (currentId) {
+                const current = nextNodes.find((node) => node.id === currentId);
+                if (!current) break;
+
+                if (!current.next) {
+                    const removedValue = current.value;
+                    if (previous) {
+                        previous.next = null;
+                    }
+
+                    const filtered = nextNodes.filter((node) => node.id !== current.id);
+                    commitNodes(filtered);
+
+                    enqueueNodeAction(async () => {
+                        updateNodeAnimationState(current.id, NodeAnimationState.BeingRemoved);
+                        await new Promise((resolve) => setTimeout(resolve, 240));
+                        updateNodeAnimationState(current.id, NodeAnimationState.Invisible);
+                    });
+
+                    return removedValue;
+                }
+
+                previous = current;
+                currentId = current.next;
+            }
+
+            return undefined;
+        },
     };
 
     useEffect(() => {
-        const initial = createArrayElements(...initialQueueSeed);
-        logicalQueueRef.current = [...initialQueueSeed];
-        commitQueue(initial);
+        commitNodes(createNodes(...initialListSeed));
     }, []);
-
-    useEffect(() => {
-        queueRef.current = queue;
-    }, [queue]);
-
-    useEffect(() => {
-        isAnimatingRef.current = isAnimating;
-    }, [isAnimating]);
 
     useEffect(() => {
         if (!isResizing) return;
@@ -134,152 +279,6 @@ export default function SimulationQueueChallenge() {
             window.removeEventListener("mouseup", onMouseUp);
         };
     }, [isResizing]);
-
-    const resetStructureState = () => {
-        logicalQueueRef.current = [...initialQueueSeed];
-        commitQueue(createArrayElements(...initialQueueSeed));
-        setAnimatingState(false);
-        setIsCompleted(false);
-        setIsChallengeCompletedModalOpen(false);
-        setShowNextAction(false);
-        challengeQueueRef.current = Promise.resolve();
-    };
-
-    const enqueueChallengeAction = (action: () => Promise<void>) => {
-        const next = challengeQueueRef.current.then(action, action);
-        challengeQueueRef.current = next.then(() => undefined, () => undefined);
-    };
-
-    const enqueue = (value: string | number) => {
-        if (logicalQueueRef.current.length >= getMaxElements()) return;
-
-        logicalQueueRef.current = [...logicalQueueRef.current, value];
-
-        enqueueChallengeAction(async () => {
-            setAnimatingState(true);
-            const currentQueue = queueRef.current;
-            const inserted = createArrayElement(value, ArrayElementAnimationState.NewInserted);
-            const nextQueue = [...currentQueue, inserted];
-            commitQueue(nextQueue);
-            await sleep(delay.focus + 80);
-            inserted.animationState = ArrayElementAnimationState.Default;
-            commitQueue([...nextQueue]);
-            setAnimatingState(false);
-        });
-    };
-
-    const dequeue = (): string | number | undefined => {
-        const currentLogicalQueue = logicalQueueRef.current;
-        if (currentLogicalQueue.length === 0) return;
-
-        const returnValue = currentLogicalQueue[0];
-        logicalQueueRef.current = currentLogicalQueue.slice(1);
-
-        enqueueChallengeAction(async () => {
-            setAnimatingState(true);
-            const currentQueue = queueRef.current;
-            if (currentQueue.length === 0) {
-                setAnimatingState(false);
-                return;
-            }
-
-            const nextQueue = [...currentQueue];
-            const removed = nextQueue[0];
-            removed.animationState = ArrayElementAnimationState.RemovedInvisible;
-            commitQueue(nextQueue);
-            await sleep(delay.slide);
-            commitQueue(nextQueue.slice(1));
-            setAnimatingState(false);
-        });
-
-        return returnValue;
-    };
-
-    const peek = (): string | number | undefined => {
-        const currentLogicalQueue = logicalQueueRef.current;
-        if (currentLogicalQueue.length === 0) return;
-
-        const returnValue = currentLogicalQueue[0];
-
-        enqueueChallengeAction(async () => {
-            setAnimatingState(true);
-            const currentQueue = queueRef.current;
-            if (currentQueue.length === 0) {
-                setAnimatingState(false);
-                return;
-            }
-
-            const nextQueue = [...currentQueue];
-            nextQueue[0].animationState = ArrayElementAnimationState.HighlightedGreen;
-            commitQueue(nextQueue);
-            await sleep(delay.peek + 120);
-            nextQueue[0].animationState = ArrayElementAnimationState.Default;
-            commitQueue([...nextQueue]);
-            setAnimatingState(false);
-        });
-
-        return returnValue;
-    };
-
-    const size = () => logicalQueueRef.current.length;
-
-    type ChallengeQueueApi = {
-        enqueue: (value: string | number) => void;
-        dequeue: () => string | number | undefined;
-        peek: () => string | number | undefined;
-        size: () => number;
-    };
-
-    type ChallengeIoApi = {
-        println: (message: unknown) => void;
-    };
-
-    const queueApi: ChallengeQueueApi = {
-        enqueue,
-        dequeue,
-        peek,
-        size,
-    };
-
-    const challengeIoApi: ChallengeIoApi = {
-        println: (message) => {
-            if (!isPromiseLike(message)) {
-                writeToConsole(message);
-                return;
-            }
-
-            void enqueueChallengeAction(async () => {
-                try {
-                    const resolved = await message;
-                    writeToConsole(resolved);
-                } catch (error) {
-                    const errorMessage = error instanceof Error ? error.message : String(error);
-                    writeToConsole(`ERROR: io.println promise rejected (${errorMessage})`);
-                }
-            });
-        },
-    };
-
-    const getEditorCode = () => editorCode;
-
-    const setEditorCodeProgrammatically = (newCode: string) => {
-        setEditorCode(newCode);
-    };
-
-    const resetEditorCode = () => {
-        setEditorCodeProgrammatically(initialEditorCode);
-        setIsCompleted(false);
-        setIsChallengeCompletedModalOpen(false);
-        setShowNextAction(false);
-        setResultSummaries(null);
-        writeToConsole("Code editor reset to starter template.");
-    };
-
-    const resetQueueOnly = () => {
-        resetStructureState();
-        setConsoleOutput([]);
-        setResultSummaries(null);
-    };
 
     const formatArray = (items: (string | number)[]) => `[${items.join(", ")}]`;
 
@@ -348,24 +347,36 @@ export default function SimulationQueueChallenge() {
         };
     };
 
-    const createHeadlessChallengeApi = (seed: (string | number)[]) => {
+    const createHeadlessLinkedListApi = (seed: (string | number)[]) => {
         const values = [...seed];
-        const maxElements = challenge.maxCapacity.desktop;
+
+        const createHandle = (index: number): LinkedListNodeHandle | null => {
+            if (index < 0 || index >= values.length) return null;
+
+            return {
+                id: String(index),
+                getValue: () => values[index],
+                setValue: (value) => {
+                    values[index] = value;
+                },
+                getNext: () => createHandle(index + 1),
+                setNext: () => {
+                },
+            };
+        };
 
         const api = {
-            enqueue: async (value: string | number) => {
-                if (values.length >= maxElements) return;
+            getHead: () => createHandle(0),
+            getTail: () => createHandle(values.length - 1),
+            size: () => values.length,
+            insertFront: (value: string | number) => {
+                values.unshift(value);
+            },
+            insertBack: (value: string | number) => {
                 values.push(value);
             },
-            dequeue: async (): Promise<string | number | undefined> => {
-                if (values.length === 0) return undefined;
-                return values.shift();
-            },
-            peek: async (): Promise<string | number | undefined> => {
-                if (values.length === 0) return undefined;
-                return values[0];
-            },
-            size: () => values.length,
+            removeFront: () => values.shift(),
+            removeBack: () => values.pop(),
         };
 
         return {
@@ -388,14 +399,14 @@ export default function SimulationQueueChallenge() {
         for (let i = 0; i < additionalCases.length; i++) {
             const testCase = additionalCases[i];
             const caseIndex = i + 1;
-            const { api, getValues } = createHeadlessChallengeApi(testCase.input);
+            const { api, getValues } = createHeadlessLinkedListApi(testCase.input);
             const silentIo = {
                 println: (_message: unknown) => {
                 },
             };
 
             try {
-                const result = runner(...buildRunnerArgs({ queue: api, io: silentIo }));
+                const result = runner(...buildRunnerArgs({ list: api, io: silentIo }));
                 let resolvedResult: unknown = result;
                 if (result instanceof Promise) {
                     resolvedResult = await result;
@@ -436,19 +447,19 @@ export default function SimulationQueueChallenge() {
             setIsCompleted(false);
             setIsChallengeCompletedModalOpen(false);
             setShowNextAction(false);
-            challengeQueueRef.current = Promise.resolve();
+            nodeActionQueueRef.current = Promise.resolve();
 
             const runner = createChallengeRunner(editorCode, runnerParameterNames);
-            const result = runner(...buildRunnerArgs({ queue: queueApi, io: challengeIoApi }));
+            const result = runner(...buildRunnerArgs({ list: linkedListApi, io: { println: writeToConsole } }));
             let resolvedResult: unknown = result;
             if (result instanceof Promise) {
                 resolvedResult = await result;
             }
 
-            await challengeQueueRef.current;
-            await sleep(1000);
+            await nodeActionQueueRef.current;
+            await new Promise((resolve) => setTimeout(resolve, 1200));
 
-            const finalValues = queueRef.current.map((element) => element.value);
+            const finalValues = nodesRef.current.map((node) => node.value);
             const primaryCase = challenge.testCases[0];
 
             if (!primaryCase) {
@@ -476,7 +487,6 @@ export default function SimulationQueueChallenge() {
             );
 
             setResultSummaries([primarySummary]);
-            void syncChallengeResult(primarySummary.passed === true);
 
             void runBackgroundTestCases(editorCode).then((backgroundSummaries) => {
                 const nextResults = [primarySummary, ...backgroundSummaries];
@@ -485,7 +495,6 @@ export default function SimulationQueueChallenge() {
                     if (nextResults.every((summary) => summary.passed === true)) {
                         setIsCompleted(true);
                         setShowNextAction(true);
-                        handleChallengeCompleted();
                         setIsChallengeCompletedModalOpen(true);
                     }
                     return;
@@ -496,7 +505,6 @@ export default function SimulationQueueChallenge() {
                 if (nextResults.every((summary) => summary.passed === true)) {
                     setIsCompleted(true);
                     setShowNextAction(true);
-                    handleChallengeCompleted();
                     setIsChallengeCompletedModalOpen(true);
                 }
             });
@@ -508,13 +516,31 @@ export default function SimulationQueueChallenge() {
         }
     };
 
+    const resetEditorCode = () => {
+        setEditorCode(initialEditorCode);
+        setIsCompleted(false);
+        setIsChallengeCompletedModalOpen(false);
+        setShowNextAction(false);
+        setResultSummaries(null);
+        setConsoleOutput([]);
+    };
+
+    const resetListOnly = () => {
+        commitNodes(createNodes(...initialListSeed));
+        setIsCompleted(false);
+        setIsChallengeCompletedModalOpen(false);
+        setShowNextAction(false);
+        setConsoleOutput([]);
+        setResultSummaries(null);
+    };
+
     return (
         <div className="h-full bg-gray-50 overflow-hidden">
             <ChallengeCompletedModal
                 isOpen={isChallengeCompletedModalOpen}
                 onClose={() => setIsChallengeCompletedModalOpen(false)}
-                onMenu={handleChallengeMenu}
-                onNext={handleChallengeNext}
+                onMenu={() => setIsChallengeCompletedModalOpen(false)}
+                onNext={() => setIsChallengeCompletedModalOpen(false)}
                 testCaseLabels={challenge.testCases.map((_, index) => `Test Case ${index + 1}`)}
             />
 
@@ -531,22 +557,8 @@ export default function SimulationQueueChallenge() {
                     />
 
                     <VisualArrayContainer>
-                        <div className="px-4 md:px-9 py-4">
-                            <div className="flex w-full max-w-full min-w-0 items-stretch justify-center gap-2 md:gap-4 overflow-hidden">
-                                <div className="h-full shrink-0 flex flex-col items-center justify-start gap-1">
-                                    <p className="text-xs md:text-sm font-semibold text-green-600">FRONT</p>
-                                    <p className="text-lg md:text-2xl text-green-600">←</p>
-                                </div>
-
-                                <div className="min-w-0 flex-1 max-w-full">
-                                    <VisualArray array={queue} />
-                                </div>
-
-                                <div className="self-stretch shrink-0 flex flex-col items-center justify-end gap-1">
-                                    <p className="text-xs md:text-sm font-semibold text-blue-600">REAR</p>
-                                    <p className="text-lg md:text-2xl text-blue-600">←</p>
-                                </div>
-                            </div>
+                        <div className="w-full h-full flex items-center justify-center px-4 md:px-9 py-4 overflow-hidden">
+                            <VisualLinkedList nodes={nodes} head={head} />
                         </div>
                     </VisualArrayContainer>
                 </div>
@@ -567,14 +579,14 @@ export default function SimulationQueueChallenge() {
                     resultSummaries={resultSummaries}
                     onCodeChange={setEditorCode}
                     onReset={resetEditorCode}
-                    onResetArray={resetQueueOnly}
+                    onResetArray={resetListOnly}
                     onSubmit={submitEditorCode}
-                    onNext={handleChallengeNext}
+                    onNext={() => setIsChallengeCompletedModalOpen(false)}
                     showNextButton={showNextAction}
-                    resetDisabled={isAnimating}
-                    resetArrayDisabled={isAnimating}
-                    submitDisabled={isAnimating}
-                    nextDisabled={isAnimating}
+                    resetDisabled={false}
+                    resetArrayDisabled={false}
+                    submitDisabled={false}
+                    nextDisabled={false}
                 />
             </main>
         </div>
