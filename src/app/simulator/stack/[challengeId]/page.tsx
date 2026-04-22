@@ -8,7 +8,7 @@ import ChallengeCompletedModal from "@/app/simulator/components/ChallengeComplet
 import CodeEditorPanel from "@/app/simulator/components/CodeEditorPanel";
 import VisualStack from "@/app/simulator/components/stack/VisualStack";
 import { CHALLENGE_REGISTRY } from "../challenges/registry";
-import { useParams } from "next/navigation";
+import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { ChallengeConfig, DEFAULT_RUNNER_PARAMETER_NAMES } from "../../array/challenges/runner";
 import { createChallengeRunner } from "../challenges/runner";
 
@@ -34,6 +34,19 @@ export default function SimulationStack() {
 }
 
 function SimulationStackCore({ challenge, challengeId }: { challenge: ChallengeConfig, challengeId: string }) {
+    const router = useRouter();
+    const searchParams = useSearchParams();
+    const nextPath = searchParams.get("next");
+    const orderedChallengeIds = Object.keys(CHALLENGE_REGISTRY).sort((a, b) => {
+        const aNum = Number(a.split("-").at(-1));
+        const bNum = Number(b.split("-").at(-1));
+        return aNum - bNum;
+    });
+    const currentChallengeIndex = orderedChallengeIds.indexOf(challengeId);
+    const inferredNextPath = currentChallengeIndex >= 0 && currentChallengeIndex < orderedChallengeIds.length - 1
+        ? `/simulator/stack/${orderedChallengeIds[currentChallengeIndex + 1]}`
+        : "/simulator";
+
     const runnerParameterNames = challenge.programStructure?.parameterNames
         ?? challenge.runnerParameterNames
         ?? DEFAULT_RUNNER_PARAMETER_NAMES;
@@ -61,13 +74,13 @@ function SimulationStackCore({ challenge, challengeId }: { challenge: ChallengeC
     };
 
     const handleChallengeMenu = () => {
-        alert("Handle Back To Menu Todo")
         setIsChallengeCompletedModalOpen(false);
+        router.push("/simulator");
     };
 
     const handleChallengeNext = () => {
-        alert("Handle Next TODO")
         setIsChallengeCompletedModalOpen(false);
+        router.push(nextPath || inferredNextPath || "/simulator");
     };
 
     const [stacks, setStacks] = useState<Record<string, StackElement[]>>({});

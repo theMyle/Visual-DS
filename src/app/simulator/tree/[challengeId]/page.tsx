@@ -7,7 +7,7 @@ import ChallengeInstructions from "@/app/simulator/components/ChallengeInstructi
 import ChallengeCompletedModal from "@/app/simulator/components/ChallengeCompletedModal";
 import CodeEditorPanel from "@/app/simulator/components/CodeEditorPanel";
 import VisualTree from "@/app/simulator/components/tree/VisualTree";
-import { useParams } from "next/navigation";
+import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { CHALLENGE_REGISTRY } from "../challenges/registry";
 import { ChallengeConfig, createChallengeRunner, DEFAULT_RUNNER_PARAMETER_NAMES } from "../challenges/runner";
 
@@ -48,6 +48,19 @@ export default function SimulationTreeChallenge() {
 }
 
 function SimulationTreeCore({ challenge, challengeId }: { challenge: ChallengeConfig, challengeId: string }) {
+    const router = useRouter();
+    const searchParams = useSearchParams();
+    const nextPath = searchParams.get("next");
+    const orderedChallengeIds = Object.keys(CHALLENGE_REGISTRY).sort((a, b) => {
+        const aNum = Number(a.split("-").at(-1));
+        const bNum = Number(b.split("-").at(-1));
+        return aNum - bNum;
+    });
+    const currentChallengeIndex = orderedChallengeIds.indexOf(challengeId);
+    const inferredNextPath = currentChallengeIndex >= 0 && currentChallengeIndex < orderedChallengeIds.length - 1
+        ? `/simulator/tree/${orderedChallengeIds[currentChallengeIndex + 1]}`
+        : "/simulator";
+
     const runnerParameterNames = challenge.programStructure?.parameterNames
         ?? challenge.runnerParameterNames
         ?? DEFAULT_RUNNER_PARAMETER_NAMES;
@@ -868,11 +881,13 @@ function SimulationTreeCore({ challenge, challengeId }: { challenge: ChallengeCo
     };
 
     const handleChallengeNext = () => {
-        alert("Handle Next Todo");
+        setIsChallengeCompletedModalOpen(false);
+        router.push(nextPath || inferredNextPath || "/simulator");
     };
 
     const handleChallengeMenu = () => {
-        alert("Handle Menu Todo");
+        setIsChallengeCompletedModalOpen(false);
+        router.push("/simulator");
     };
 
     const resetEditorCode = () => {

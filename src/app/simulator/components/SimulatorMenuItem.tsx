@@ -1,11 +1,11 @@
 "use client"
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
 
 type Level = {
     id: number;
     path: string;
+    next?: string;
     isCompleted: boolean;
 };
 
@@ -41,7 +41,9 @@ export default function SimulatorMenuItem({ title, levels }: SimulatorMenuItemPr
                 {levels.map((level) => (
                     <Link
                         key={level.id}
-                        href={level.path}
+                        href={level.next
+                            ? { pathname: level.path, query: { next: level.next } }
+                            : level.path}
                         className={`
                             flex items-center justify-center aspect-square rounded-xl border-2 transition-all duration-200 
                             ${level.isCompleted

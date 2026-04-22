@@ -8,7 +8,7 @@ import ChallengeCompletedModal from "@/app/simulator/components/ChallengeComplet
 import CodeEditorPanel from "@/app/simulator/components/CodeEditorPanel";
 import VisualArrayContainer from "@/app/simulator/components/VisualArrayContainer";
 import VisualLinkedList from "@/app/simulator/components/linked-list/VisualLinkedList";
-import { useParams } from "next/navigation";
+import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { CHALLENGE_REGISTRY } from "../challenges/registry";
 import { ChallengeConfig, createChallengeRunner, DEFAULT_RUNNER_PARAMETER_NAMES } from "../challenges/runner";
 
@@ -48,6 +48,19 @@ export default function SimulationLinkedListChallenge() {
 }
 
 function SimulationLinkedListCore({ challenge, challengeId }: { challenge: ChallengeConfig, challengeId: string }) {
+    const router = useRouter();
+    const searchParams = useSearchParams();
+    const nextPath = searchParams.get("next");
+    const orderedChallengeIds = Object.keys(CHALLENGE_REGISTRY).sort((a, b) => {
+        const aNum = Number(a.split("-").at(-1));
+        const bNum = Number(b.split("-").at(-1));
+        return aNum - bNum;
+    });
+    const currentChallengeIndex = orderedChallengeIds.indexOf(challengeId);
+    const inferredNextPath = currentChallengeIndex >= 0 && currentChallengeIndex < orderedChallengeIds.length - 1
+        ? `/simulator/linked-list/${orderedChallengeIds[currentChallengeIndex + 1]}`
+        : "/simulator";
+
     const runnerParameterNames = challenge.programStructure?.parameterNames
         ?? challenge.runnerParameterNames
         ?? DEFAULT_RUNNER_PARAMETER_NAMES;
@@ -806,6 +819,16 @@ function SimulationLinkedListCore({ challenge, challengeId }: { challenge: Chall
         }
     };
 
+    const handleChallengeMenu = () => {
+        setIsChallengeCompletedModalOpen(false);
+        router.push("/simulator");
+    };
+
+    const handleChallengeNext = () => {
+        setIsChallengeCompletedModalOpen(false);
+        router.push(nextPath || inferredNextPath || "/simulator");
+    };
+
     const resetEditorCode = () => {
         setEditorCode(initialEditorCode);
         setIsCompleted(false);
@@ -847,8 +870,8 @@ function SimulationLinkedListCore({ challenge, challengeId }: { challenge: Chall
             <ChallengeCompletedModal
                 isOpen={isChallengeCompletedModalOpen}
                 onClose={() => setIsChallengeCompletedModalOpen(false)}
-                onMenu={() => setIsChallengeCompletedModalOpen(false)}
-                onNext={() => setIsChallengeCompletedModalOpen(false)}
+                onMenu={handleChallengeMenu}
+                onNext={handleChallengeNext}
                 testCaseLabels={challenge.testCases.map((_, index) => `Test Case ${index + 1}`)}
             />
 
@@ -898,7 +921,7 @@ function SimulationLinkedListCore({ challenge, challengeId }: { challenge: Chall
                     onReset={resetEditorCode}
                     onResetArray={resetListsOnly}
                     onSubmit={submitEditorCode}
-                    onNext={() => setIsChallengeCompletedModalOpen(false)}
+                    onNext={handleChallengeNext}
                     showNextButton={showNextAction}
                     resetDisabled={false}
                     resetArrayDisabled={false}
