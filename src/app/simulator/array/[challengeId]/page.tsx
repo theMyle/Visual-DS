@@ -359,7 +359,7 @@ function SimulationArrayCore({ challenge, challengeId }: { challenge: ChallengeC
         const newArray = [...(arraysRef.current[arrayName] || [])];
         newArray[index].animationState = ArrayElementAnimationState.HighlightedGreen;
         commitArray(arrayName, [...newArray]);
-        await sleep(delay.focus + 200);
+        await sleep(delay.get + 200);
 
         newArray[index].animationState = ArrayElementAnimationState.Default;
         commitArray(arrayName, [...newArray]);

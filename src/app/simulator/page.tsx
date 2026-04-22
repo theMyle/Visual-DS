@@ -101,6 +101,29 @@ export default function SimulatorPage() {
           },
         ]} />
 
+        <SimulatorMenuItem title={"Tree"} levels={[
+          {
+            id: 1, path: "/simulator/tree/challenge-1",
+            isCompleted: false
+          },
+          {
+            id: 2, path: "/simulator/tree/challenge-2",
+            isCompleted: false
+          },
+          {
+            id: 3, path: "/simulator/tree/challenge-3",
+            isCompleted: false
+          },
+          {
+            id: 4, path: "/simulator/tree/challenge-4",
+            isCompleted: false
+          },
+          {
+            id: 5, path: "/simulator/tree/challenge-5",
+            isCompleted: false
+          },
+        ]} />
+
       </div>
     </div>
   )

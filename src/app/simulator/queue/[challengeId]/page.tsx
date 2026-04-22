@@ -616,18 +616,18 @@ function SimulationQueueCore({ challenge, challengeId }: { challenge: ChallengeC
                                 )}
                                 <div className="flex-1 w-full relative min-h-0 flex flex-col">
                                     <VisualArrayContainer>
-                                        <div className="px-4 md:px-9 py-4 h-full">
-                                            <div className="flex w-full h-full max-w-full min-w-0 items-stretch justify-center gap-2 md:gap-4 overflow-hidden">
-                                                <div className="h-full shrink-0 flex flex-col items-center justify-start gap-1">
+                                        <div className="flex flex-col justify-center px-4 md:px-9 py-4 h-full">
+                                            <div className="flex w-full max-w-full min-w-0 items-stretch justify-center gap-2 md:gap-4 overflow-hidden">
+                                                <div className="shrink-0 flex flex-col items-center justify-start gap-1 pt-1.5 md:pt-4">
                                                     <p className="text-xs md:text-sm font-semibold text-green-600">FRONT</p>
                                                     <p className="text-lg md:text-2xl text-green-600">←</p>
                                                 </div>
 
-                                                <div className="min-w-0 flex-1 max-w-full h-full relative">
+                                                <div className="min-w-0 max-w-full relative flex flex-col">
                                                     <VisualArray array={queueElements} />
                                                 </div>
 
-                                                <div className="self-stretch shrink-0 flex flex-col items-center justify-end gap-1">
+                                                <div className="shrink-0 flex flex-col items-center justify-end gap-1 pb-1.5 md:pb-4">
                                                     <p className="text-xs md:text-sm font-semibold text-blue-600">REAR</p>
                                                     <p className="text-lg md:text-2xl text-blue-600">←</p>
                                                 </div>
