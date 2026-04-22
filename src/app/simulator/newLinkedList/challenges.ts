@@ -61,12 +61,11 @@ Linked List API Spec - Use the list and node helpers to traverse the structure.
 
 list {
   getHead()                  - Returns the first node, or null when the list is empty.
+  setHead(nodeOrNull)        - Updates the head pointer.
   getTail()                  - Returns the last node, or null when the list is empty.
+  setTail(nodeOrNull)        - Updates the tail pointer.
   size()                     - Returns the current number of nodes.
-  insertFront(value)         - Adds a node to the front of the list.
-  insertBack(value)          - Adds a node to the back of the list.
-  removeFront()              - Removes and returns the front value.
-  removeBack()               - Removes and returns the back value.
+  newNode(value)             - Creates a detached node and returns it.
 }
 
 node {
@@ -77,7 +76,7 @@ node {
 }
 
 io {
-  println(messageOrPromise)   - Write a value (or resolved Promise value) to the output panel.
+  println(value)              - Write a value to the output panel.
 }
 
 Put challenge logic inside \`Solution\` function.

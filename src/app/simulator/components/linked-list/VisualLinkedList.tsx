@@ -5,6 +5,7 @@ import ReactFlow, {
     Node,
     Edge,
     Background,
+    Controls,
     ReactFlowProvider,
     useNodesState,
     useEdgesState,
@@ -13,7 +14,7 @@ import ReactFlow, {
 } from 'reactflow';
 import 'reactflow/dist/style.css';
 import { LinkedListNode } from './types';
-import LinkedListNodeComponent from '@/app/simulator/linked-list/components/LinkedListNodeComponent';
+import LinkedListNodeComponent from './LinkedListNodeComponent';
 
 interface VisualLinkedListProps {
     nodes: LinkedListNode[];
@@ -46,9 +47,6 @@ const VisualLinkedListInner = ({ nodes, head }: VisualLinkedListProps) => {
         // Zigzag layout - alternating top/bottom for better space usage
         const horizontalSpacing = isMobile ? 40 : 60;
         const verticalOffset = isMobile ? 70 : 100;
-
-        // Always create null node at the end
-        const nullNodeId = 'null-node';
 
         // Build ordered array by following the linked list chain from head
         const orderedNodes: LinkedListNode[] = [];
@@ -88,33 +86,6 @@ const VisualLinkedListInner = ({ nodes, head }: VisualLinkedListProps) => {
             };
         });
 
-        // Add permanent null node
-        if (orderedNodes.length > 0) {
-            const lastIndex = orderedNodes.length;
-            const isBottom = lastIndex % 2 === 1;
-
-            flowNodes.push({
-                id: nullNodeId,
-                type: 'linkedListNode',
-                position: {
-                    x: lastIndex * horizontalSpacing,
-                    y: isBottom ? verticalOffset : 0
-                },
-                data: {
-                    value: 'X',
-                    animationState: 0, // Default state
-                    isHead: false,
-                    isTail: false,
-                },
-                sourcePosition: Position.Right,
-                targetPosition: Position.Left,
-                draggable: false,
-                style: {
-                    opacity: 0.7,
-                },
-            });
-        }
-
         // Create edges
         const flowEdges: Edge[] = [];
         orderedNodes.forEach((node) => {
@@ -123,20 +94,6 @@ const VisualLinkedListInner = ({ nodes, head }: VisualLinkedListProps) => {
                     id: `${node.id}-${node.next}`,
                     source: node.id,
                     target: node.next,
-                    type: 'default',
-                    animated: false,
-                    style: { stroke: '#94A6FF', strokeWidth: 2 },
-                    markerEnd: {
-                        type: MarkerType.ArrowClosed,
-                        color: '#94A6FF',
-                    },
-                });
-            } else if (orderedNodes.length > 0) {
-                // Tail node points to null
-                flowEdges.push({
-                    id: `${node.id}-null`,
-                    source: node.id,
-                    target: nullNodeId,
                     type: 'default',
                     animated: false,
                     style: { stroke: '#94A6FF', strokeWidth: 2 },
@@ -160,9 +117,9 @@ const VisualLinkedListInner = ({ nodes, head }: VisualLinkedListProps) => {
                 onNodesChange={onNodesChange}
                 onEdgesChange={onEdgesChange}
                 nodeTypes={nodeTypes}
-                defaultViewport={{ x: 50, y: 50, zoom: 0.7 }}
+                defaultViewport={{ x: 0, y: 0, zoom: 0.55 }}
                 fitView
-                fitViewOptions={{ padding: 0.1, minZoom: 0.7, maxZoom: 0.7 }}
+                fitViewOptions={{ padding: 0.2, minZoom: 0.4, maxZoom: 1.1 }}
                 attributionPosition="bottom-right"
                 nodesDraggable={false}
                 nodesConnectable={false}
@@ -170,10 +127,11 @@ const VisualLinkedListInner = ({ nodes, head }: VisualLinkedListProps) => {
                 panOnDrag={true}
                 selectionOnDrag={false}
                 zoomOnScroll={true}
-                minZoom={0.5}
+                minZoom={0.4}
                 maxZoom={2}
             >
                 <Background />
+                <Controls showInteractive={false} />
             </ReactFlow>
         </div>
     );

@@ -1,13 +1,13 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { LinkedListNode, NodeAnimationState } from "@/app/simulator/linked-list/components/types";
-import { createNode, createNodes } from "@/app/simulator/linked-list/components/utils";
+import { LinkedListNode, NodeAnimationState } from "@/app/simulator/components/linked-list/types";
+import { createNode, createNodes } from "@/app/simulator/components/linked-list/utils";
 import ChallengeInstructions from "@/app/simulator/components/ChallengeInstructions";
 import ChallengeCompletedModal from "@/app/simulator/components/ChallengeCompletedModal";
 import CodeEditorPanel from "@/app/simulator/components/CodeEditorPanel";
 import VisualArrayContainer from "@/app/simulator/components/VisualArrayContainer";
-import VisualLinkedList from "@/app/simulator/linked-list/components/VisualLinkedList";
+import VisualLinkedList from "@/app/simulator/components/linked-list/VisualLinkedList";
 import { CHALLENGE_INTRO, createChallengeRunner, DEFAULT_RUNNER_PARAMETER_NAMES } from "./challenges";
 
 type ChallengeResultSummary = {
@@ -22,9 +22,9 @@ type ChallengeResultSummary = {
 type LinkedListNodeHandle = {
     id: string;
     getValue: () => string | number | undefined;
-    setValue: (value: string | number) => void;
+    setValue: (value: string | number) => Promise<void>;
     getNext: () => LinkedListNodeHandle | null;
-    setNext: (next: LinkedListNodeHandle | null) => void;
+    setNext: (next: LinkedListNodeHandle | null) => LinkedListNodeHandle;
 };
 
 export default function SimulationLinkedListChallenge() {
@@ -52,6 +52,8 @@ export default function SimulationLinkedListChallenge() {
     const headRef = useRef<string | null>(null);
     const tailRef = useRef<string | null>(null);
     const nodeActionQueueRef = useRef(Promise.resolve());
+    const consoleWriteQueueRef = useRef(Promise.resolve());
+    const sleep = (ms: number) => new Promise<void>((resolve) => setTimeout(resolve, ms));
 
     const cloneNodes = (list: LinkedListNode[]) => list.map((node) => ({ ...node }));
 
@@ -97,9 +99,10 @@ export default function SimulationLinkedListChallenge() {
         setTail(nextTail);
     };
 
-    const enqueueNodeAction = (action: () => Promise<void>) => {
+    const enqueueNodeAction = <T,>(action: () => Promise<T>): Promise<T> => {
         const next = nodeActionQueueRef.current.then(action, action);
         nodeActionQueueRef.current = next.then(() => undefined, () => undefined);
+        return next;
     };
 
     const updateNodeAnimationState = (nodeId: string, animationState: NodeAnimationState) => {
@@ -112,19 +115,25 @@ export default function SimulationLinkedListChallenge() {
     };
 
     const writeToConsole = (message: unknown) => {
-        const nextLine =
-            typeof message === "string"
-                ? message
-                : message instanceof Error
-                    ? message.message
-                    : String(message);
-        setConsoleOutput((prev) => [...prev, nextLine]);
+        const nextWrite = consoleWriteQueueRef.current.then(async () => {
+            const resolvedMessage = await Promise.resolve(message);
+            const nextLine =
+                typeof resolvedMessage === "string"
+                    ? resolvedMessage
+                    : resolvedMessage instanceof Error
+                        ? resolvedMessage.message
+                        : String(resolvedMessage);
+            setConsoleOutput((prev) => [...prev, nextLine]);
+        });
+
+        consoleWriteQueueRef.current = nextWrite.then(() => undefined, () => undefined);
+        return nextWrite;
     };
 
     const createNodeHandle = (nodeId: string | null): LinkedListNodeHandle | null => {
         if (!nodeId) return null;
 
-        return {
+        const self: LinkedListNodeHandle = {
             id: nodeId,
             getValue: () => {
                 const currentValue = nodesRef.current.find((node) => node.id === nodeId)?.value;
@@ -138,118 +147,155 @@ export default function SimulationLinkedListChallenge() {
                 return currentValue;
             },
             setValue: (value) => {
-                const nextNodes = cloneNodes(nodesRef.current);
-                const target = nextNodes.find((node) => node.id === nodeId);
-                if (!target) return;
+                return enqueueNodeAction(async () => {
+                    const nextNodes = cloneNodes(nodesRef.current);
+                    const target = nextNodes.find((node) => node.id === nodeId);
+                    if (!target) return;
 
-                target.value = value;
-                commitNodes(nextNodes);
-
-                enqueueNodeAction(async () => {
                     updateNodeAnimationState(nodeId, NodeAnimationState.HighlightedOrange);
-                    await new Promise((resolve) => setTimeout(resolve, 240));
+                    await sleep(180);
+
+                    target.value = value;
+                    commitNodes([...nextNodes]);
+                    await sleep(120);
+
                     updateNodeAnimationState(nodeId, NodeAnimationState.Default);
                 });
             },
-            getNext: () => createNodeHandle(nodesRef.current.find((node) => node.id === nodeId)?.next ?? null),
-            setNext: (next) => {
-                const nextNodes = cloneNodes(nodesRef.current);
-                const target = nextNodes.find((node) => node.id === nodeId);
-                if (!target) return;
+            getNext: () => {
+                const nextHandle = createNodeHandle(nodesRef.current.find((node) => node.id === nodeId)?.next ?? null);
 
-                target.next = next ? next.id : null;
-                commitNodes(nextNodes);
+                enqueueNodeAction(async () => {
+                    updateNodeAnimationState(nodeId, NodeAnimationState.Traversing);
+                    await sleep(180);
+                    updateNodeAnimationState(nodeId, NodeAnimationState.Default);
+                });
+
+                return nextHandle;
+            },
+            setNext: (next) => {
+                void enqueueNodeAction(async () => {
+                    const nextNodes = cloneNodes(nodesRef.current);
+                    const target = nextNodes.find((node) => node.id === nodeId);
+                    if (!target) return;
+
+                    target.animationState = NodeAnimationState.HighlightedOrange;
+                    commitNodes([...nextNodes]);
+                    await sleep(140);
+
+                    target.next = next ? next.id : null;
+                    commitNodes([...nextNodes]);
+                    await sleep(100);
+
+                    target.animationState = NodeAnimationState.Default;
+                    commitNodes([...nextNodes]);
+                });
+
+                return self;
             },
         };
+
+        return self;
     };
 
     const linkedListApi = {
-        getHead: () => createNodeHandle(headRef.current),
-        getTail: () => createNodeHandle(tailRef.current),
-        size: () => nodesRef.current.length,
-        insertFront: (value: string | number) => {
-            const newNode = createNode(value);
-            const nextNodes = cloneNodes(nodesRef.current);
-            newNode.next = headRef.current;
-            nextNodes.unshift(newNode);
-            commitNodes(nextNodes);
-        },
-        insertBack: (value: string | number) => {
-            const newNode = createNode(value);
-            const nextNodes = cloneNodes(nodesRef.current);
+        getHead: () => {
+            const handle = createNodeHandle(headRef.current);
+            if (!handle) return null;
 
-            if (nextNodes.length === 0) {
+            enqueueNodeAction(async () => {
+                updateNodeAnimationState(handle.id, NodeAnimationState.HighlightedGreen);
+                await sleep(180);
+                updateNodeAnimationState(handle.id, NodeAnimationState.Default);
+            });
+
+            return handle;
+        },
+        setHead: (nextHead: LinkedListNodeHandle | null) => {
+            return enqueueNodeAction(async () => {
+                const nextNodes = cloneNodes(nodesRef.current);
+                const nextHeadId = nextHead?.id ?? null;
+
+                if (nextHeadId) {
+                    const target = nextNodes.find((node) => node.id === nextHeadId);
+                    if (target) {
+                        target.animationState = NodeAnimationState.HighlightedOrange;
+                        commitNodes([...nextNodes]);
+                        await sleep(140);
+                    }
+                }
+
+                headRef.current = nextHeadId;
+                setHead(nextHeadId);
+
+                if (nextHeadId) {
+                    const target = nextNodes.find((node) => node.id === nextHeadId);
+                    if (target) {
+                        target.animationState = NodeAnimationState.Default;
+                        commitNodes([...nextNodes]);
+                    }
+                }
+            });
+        },
+        getTail: () => {
+            const handle = createNodeHandle(tailRef.current);
+            if (!handle) return null;
+
+            enqueueNodeAction(async () => {
+                updateNodeAnimationState(handle.id, NodeAnimationState.HighlightedGreen);
+                await sleep(180);
+                updateNodeAnimationState(handle.id, NodeAnimationState.Default);
+            });
+
+            return handle;
+        },
+        setTail: (nextTail: LinkedListNodeHandle | null) => {
+            return enqueueNodeAction(async () => {
+                const nextNodes = cloneNodes(nodesRef.current);
+                const nextTailId = nextTail?.id ?? null;
+
+                if (nextTailId) {
+                    const target = nextNodes.find((node) => node.id === nextTailId);
+                    if (target) {
+                        target.animationState = NodeAnimationState.HighlightedOrange;
+                        commitNodes([...nextNodes]);
+                        await sleep(140);
+                    }
+                }
+
+                tailRef.current = nextTailId;
+                setTail(nextTailId);
+
+                if (nextTailId) {
+                    const target = nextNodes.find((node) => node.id === nextTailId);
+                    if (target) {
+                        target.animationState = NodeAnimationState.Default;
+                        commitNodes([...nextNodes]);
+                    }
+                }
+            });
+        },
+        size: () => nodesRef.current.length,
+        newNode: (value: string | number) => {
+            const newNode = createNode(value);
+            const nextNodes = cloneNodes(nodesRef.current);
+            if (!nextNodes.some((node) => node.id === newNode.id)) {
+                newNode.animationState = NodeAnimationState.NewInserted;
                 nextNodes.push(newNode);
                 commitNodes(nextNodes);
-                return;
-            }
 
-            const currentTail = nextNodes.find((node) => node.id === tailRef.current);
-            if (currentTail) {
-                currentTail.next = newNode.id;
-            }
+                void enqueueNodeAction(async () => {
+                    await sleep(220);
+                    const settledNodes = cloneNodes(nodesRef.current);
+                    const target = settledNodes.find((node) => node.id === newNode.id);
+                    if (!target) return;
 
-            nextNodes.push(newNode);
-            commitNodes(nextNodes);
-        },
-        removeFront: () => {
-            const currentHead = headRef.current;
-            if (!currentHead) return undefined;
-
-            const nextNodes = cloneNodes(nodesRef.current);
-            const removed = nextNodes.find((node) => node.id === currentHead);
-            const filtered = nextNodes.filter((node) => node.id !== currentHead);
-            commitNodes(filtered);
-
-            if (removed) {
-                enqueueNodeAction(async () => {
-                    updateNodeAnimationState(removed.id, NodeAnimationState.BeingRemoved);
-                    await new Promise((resolve) => setTimeout(resolve, 240));
-                    updateNodeAnimationState(removed.id, NodeAnimationState.Invisible);
+                    target.animationState = NodeAnimationState.Default;
+                    commitNodes(settledNodes);
                 });
             }
 
-            return removed?.value;
-        },
-        removeBack: () => {
-            const currentHead = headRef.current;
-            if (!currentHead) return undefined;
-
-            if (headRef.current === tailRef.current) {
-                return linkedListApi.removeFront();
-            }
-
-            const nextNodes = cloneNodes(nodesRef.current);
-            let previous: LinkedListNode | undefined;
-            let currentId: string | null = currentHead;
-
-            while (currentId) {
-                const current = nextNodes.find((node) => node.id === currentId);
-                if (!current) break;
-
-                if (!current.next) {
-                    const removedValue = current.value;
-                    if (previous) {
-                        previous.next = null;
-                    }
-
-                    const filtered = nextNodes.filter((node) => node.id !== current.id);
-                    commitNodes(filtered);
-
-                    enqueueNodeAction(async () => {
-                        updateNodeAnimationState(current.id, NodeAnimationState.BeingRemoved);
-                        await new Promise((resolve) => setTimeout(resolve, 240));
-                        updateNodeAnimationState(current.id, NodeAnimationState.Invisible);
-                    });
-
-                    return removedValue;
-                }
-
-                previous = current;
-                currentId = current.next;
-            }
-
-            return undefined;
+            return createNodeHandle(newNode.id);
         },
     };
 
@@ -348,40 +394,115 @@ export default function SimulationLinkedListChallenge() {
     };
 
     const createHeadlessLinkedListApi = (seed: (string | number)[]) => {
-        const values = [...seed];
+        type HeadlessNode = {
+            id: string;
+            value: string | number;
+            next: string | null;
+        };
 
-        const createHandle = (index: number): LinkedListNodeHandle | null => {
-            if (index < 0 || index >= values.length) return null;
+        const store = new Map<string, HeadlessNode>();
+        let headId: string | null = null;
+        let tailId: string | null = null;
+        let idCounter = 0;
+
+        const makeId = () => `n-${idCounter++}`;
+
+        const seededIds = seed.map((value) => {
+            const id = makeId();
+            store.set(id, { id, value, next: null });
+            return id;
+        });
+
+        for (let i = 0; i < seededIds.length - 1; i++) {
+            const node = store.get(seededIds[i]);
+            if (node) {
+                node.next = seededIds[i + 1];
+            }
+        }
+
+        if (seededIds.length > 0) {
+            headId = seededIds[0];
+            tailId = seededIds[seededIds.length - 1];
+        }
+
+        const materializeValues = () => {
+            const out: (string | number)[] = [];
+            const visited = new Set<string>();
+            let currentId = headId;
+
+            while (currentId && !visited.has(currentId)) {
+                visited.add(currentId);
+                const current = store.get(currentId);
+                if (!current) break;
+
+                out.push(current.value);
+                currentId = current.next;
+            }
+
+            return out;
+        };
+
+        const recomputeTail = () => {
+            const visited = new Set<string>();
+            let currentId = headId;
+            let last: string | null = null;
+
+            while (currentId && !visited.has(currentId)) {
+                visited.add(currentId);
+                const current = store.get(currentId);
+                if (!current) break;
+
+                last = current.id;
+                currentId = current.next;
+            }
+
+            tailId = last;
+        };
+
+        const createHandle = (nodeId: string | null): LinkedListNodeHandle | null => {
+            if (!nodeId) return null;
+            if (!store.has(nodeId)) return null;
 
             return {
-                id: String(index),
-                getValue: () => values[index],
-                setValue: (value) => {
-                    values[index] = value;
+                id: nodeId,
+                getValue: () => store.get(nodeId)?.value,
+                setValue: async (value) => {
+                    const target = store.get(nodeId);
+                    if (!target) return;
+                    target.value = value;
                 },
-                getNext: () => createHandle(index + 1),
-                setNext: () => {
+                getNext: () => createHandle(store.get(nodeId)?.next ?? null),
+                setNext: (next) => {
+                    const target = store.get(nodeId);
+                    if (!target) return createHandle(nodeId)!;
+                    target.next = next?.id ?? null;
+                    recomputeTail();
+                    return createHandle(nodeId)!;
                 },
             };
         };
 
         const api = {
-            getHead: () => createHandle(0),
-            getTail: () => createHandle(values.length - 1),
-            size: () => values.length,
-            insertFront: (value: string | number) => {
-                values.unshift(value);
+            getHead: () => createHandle(headId),
+            setHead: async (nextHead: LinkedListNodeHandle | null) => {
+                headId = nextHead?.id ?? null;
+                recomputeTail();
             },
-            insertBack: (value: string | number) => {
-                values.push(value);
+            getTail: () => createHandle(tailId),
+            setTail: async (nextTail: LinkedListNodeHandle | null) => {
+                tailId = nextTail?.id ?? null;
             },
-            removeFront: () => values.shift(),
-            removeBack: () => values.pop(),
+            size: () => materializeValues().length,
+            newNode: (value: string | number) => {
+                const id = makeId();
+                store.set(id, { id, value, next: null });
+                return createHandle(id);
+            },
         };
 
         return {
             api,
-            getValues: () => [...values],
+            getValues: () => materializeValues(),
         };
     };
 
@@ -448,6 +569,7 @@ export default function SimulationLinkedListChallenge() {
             setIsChallengeCompletedModalOpen(false);
             setShowNextAction(false);
             nodeActionQueueRef.current = Promise.resolve();
+            consoleWriteQueueRef.current = Promise.resolve();
 
             const runner = createChallengeRunner(editorCode, runnerParameterNames);
             const result = runner(...buildRunnerArgs({ list: linkedListApi, io: { println: writeToConsole } }));
@@ -457,6 +579,7 @@ export default function SimulationLinkedListChallenge() {
             }
 
             await nodeActionQueueRef.current;
+            await consoleWriteQueueRef.current;
             await new Promise((resolve) => setTimeout(resolve, 1200));
 
             const finalValues = nodesRef.current.map((node) => node.value);
@@ -557,7 +680,7 @@ export default function SimulationLinkedListChallenge() {
                     />
 
                     <VisualArrayContainer>
-                        <div className="w-full h-full flex items-center justify-center px-4 md:px-9 py-4 overflow-hidden">
+                        <div className="w-full h-full overflow-hidden">
                             <VisualLinkedList nodes={nodes} head={head} />
                         </div>
                     </VisualArrayContainer>

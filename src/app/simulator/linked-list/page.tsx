@@ -2,11 +2,11 @@
 'use client';
 
 import { useEffect, useState } from "react";
-import { LinkedListNode, NodeAnimationState } from "@/app/simulator/linked-list/components/types";
-import { createNode, createNodes } from "@/app/simulator/linked-list/components/utils";
+import { LinkedListNode, NodeAnimationState } from "@/app/simulator/components/linked-list/types";
+import { createNode, createNodes } from "@/app/simulator/components/linked-list/utils";
 
-import VisualLinkedList from "@/app/simulator/linked-list/components/VisualLinkedList";
-import ActionButton from "@/app/simulator/linked-list/components/ActionButton";
+import VisualLinkedList from "@/app/simulator/components/linked-list/VisualLinkedList";
+import ActionButton from "@/app/simulator/components/linked-list/ActionButton";
 import SimulatorHelp, { HelpSlide } from "@/app/simulator/components/SimulatorHelp";
 
 enum OperationType {
