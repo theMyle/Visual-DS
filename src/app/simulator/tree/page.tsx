@@ -1,11 +1,11 @@
 'use client';
 
 import { useEffect, useState } from "react";
-import { TreeNode, TreeNodeAnimationState } from "@/app/simulator/tree/components/types";
-import { createNode, createTreeNodes } from "@/app/simulator/tree/components/utils";
+import { TreeNode, TreeNodeAnimationState } from "@/app/simulator/components/tree/types";
+import { createNode, createTreeNodes } from "@/app/simulator/components/tree/utils";
 
-import VisualTree from "@/app/simulator/tree/components/VisualTree";
-import ActionButton, { OperationInfo } from "@/app/simulator/tree/components/ActionButton";
+import VisualTree from "@/app/simulator/components/tree/VisualTree";
+import ActionButton, { OperationInfo } from "@/app/simulator/components/tree/ActionButton";
 import SimulatorHelp, { HelpSlide } from "@/app/simulator/components/SimulatorHelp";
 
 // ─── Operation info definitions (edit descriptions/complexities here) ───────

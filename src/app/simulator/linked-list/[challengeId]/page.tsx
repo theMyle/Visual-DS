@@ -8,7 +8,9 @@ import ChallengeCompletedModal from "@/app/simulator/components/ChallengeComplet
 import CodeEditorPanel from "@/app/simulator/components/CodeEditorPanel";
 import VisualArrayContainer from "@/app/simulator/components/VisualArrayContainer";
 import VisualLinkedList from "@/app/simulator/components/linked-list/VisualLinkedList";
-import { CHALLENGE_INTRO, createChallengeRunner, DEFAULT_RUNNER_PARAMETER_NAMES } from "./challenges";
+import { useParams } from "next/navigation";
+import { CHALLENGE_REGISTRY } from "../challenges/registry";
+import { ChallengeConfig, createChallengeRunner, DEFAULT_RUNNER_PARAMETER_NAMES } from "../challenges/runner";
 
 type ChallengeResultSummary = {
     name: string;
@@ -27,17 +29,35 @@ type LinkedListNodeHandle = {
     setNext: (next: LinkedListNodeHandle | null) => LinkedListNodeHandle;
 };
 
+type ListData = {
+    nodes: LinkedListNode[];
+    head: string | null;
+    tail: string | null;
+};
+
 export default function SimulationLinkedListChallenge() {
-    const challenge = CHALLENGE_INTRO;
+    const params = useParams<{ challengeId: string }>();
+    const challengeId = params?.challengeId;
+    const challenge = challengeId ? CHALLENGE_REGISTRY[challengeId] : undefined;
+
+    if (!challenge) {
+        return <div className="p-8 text-center text-gray-500">Challenge not found</div>;
+    }
+
+    return <SimulationLinkedListCore challenge={challenge} challengeId={challengeId} />;
+}
+
+function SimulationLinkedListCore({ challenge, challengeId }: { challenge: ChallengeConfig, challengeId: string }) {
     const runnerParameterNames = challenge.programStructure?.parameterNames
         ?? challenge.runnerParameterNames
         ?? DEFAULT_RUNNER_PARAMETER_NAMES;
-    const initialListSeed = challenge.testCases[0]?.input ?? [];
+
+    const initialInputs = challenge.testCases[0]?.inputs
+        ?? { list: challenge.testCases[0]?.input ?? [] };
+
     const initialEditorCode = challenge.initialEditorCode;
 
-    const [nodes, setNodes] = useState<LinkedListNode[]>([]);
-    const [head, setHead] = useState<string | null>(null);
-    const [tail, setTail] = useState<string | null>(null);
+    const [lists, setLists] = useState<Record<string, ListData>>({});
     const [editorCode, setEditorCode] = useState<string>(initialEditorCode);
     const [consoleOutput, setConsoleOutput] = useState<string[]>([]);
     const [resultSummaries, setResultSummaries] = useState<ChallengeResultSummary[] | null>(null);
@@ -48,9 +68,7 @@ export default function SimulationLinkedListChallenge() {
     const [isResizing, setIsResizing] = useState<boolean>(false);
 
     const workspaceRef = useRef<HTMLDivElement | null>(null);
-    const nodesRef = useRef<LinkedListNode[]>([]);
-    const headRef = useRef<string | null>(null);
-    const tailRef = useRef<string | null>(null);
+    const listsRef = useRef<Record<string, ListData>>({});
     const nodeActionQueueRef = useRef(Promise.resolve());
     const consoleWriteQueueRef = useRef(Promise.resolve());
     const nextPointerShadowRef = useRef<Map<string, string | null>>(new Map());
@@ -89,16 +107,29 @@ export default function SimulationLinkedListChallenge() {
         return { nextHead, nextTail };
     };
 
-    const commitNodes = (nextNodes: LinkedListNode[]) => {
-        const cloned = cloneNodes(nextNodes);
-        const { nextHead, nextTail } = recomputeEndpoints(cloned);
+    const commitLists = (nextLists: Record<string, ListData>) => {
+        listsRef.current = nextLists;
+        setLists(nextLists);
+    };
 
-        nodesRef.current = cloned;
-        headRef.current = nextHead;
-        tailRef.current = nextTail;
-        setNodes(cloned);
-        setHead(nextHead);
-        setTail(nextTail);
+    const commitList = (listName: string, nextNodes: LinkedListNode[], forceHead?: string | null, forceTail?: string | null) => {
+        const cloned = cloneNodes(nextNodes);
+        let nextHead = forceHead;
+        let nextTail = forceTail;
+
+        if (nextHead === undefined || nextTail === undefined) {
+            const endpoints = recomputeEndpoints(cloned);
+            if (nextHead === undefined) nextHead = endpoints.nextHead;
+            if (nextTail === undefined) nextTail = endpoints.nextTail;
+        }
+
+        const newListData: ListData = {
+            nodes: cloned,
+            head: nextHead ?? null,
+            tail: nextTail ?? null,
+        };
+
+        commitLists({ ...listsRef.current, [listName]: newListData });
     };
 
     const enqueueNodeAction = <T,>(action: () => Promise<T>): Promise<T> => {
@@ -107,13 +138,16 @@ export default function SimulationLinkedListChallenge() {
         return next;
     };
 
-    const updateNodeAnimationState = (nodeId: string, animationState: NodeAnimationState) => {
-        const nextNodes = cloneNodes(nodesRef.current);
+    const updateNodeAnimationState = (listName: string, nodeId: string, animationState: NodeAnimationState) => {
+        const currentData = listsRef.current[listName];
+        if (!currentData) return;
+
+        const nextNodes = cloneNodes(currentData.nodes);
         const target = nextNodes.find((node) => node.id === nodeId);
         if (!target) return;
 
         target.animationState = animationState;
-        commitNodes(nextNodes);
+        commitList(listName, nextNodes, currentData.head, currentData.tail);
     };
 
     const writeToConsole = (message: unknown) => {
@@ -132,21 +166,22 @@ export default function SimulationLinkedListChallenge() {
         return nextWrite;
     };
 
-    const createNodeHandle = (nodeId: string | null): LinkedListNodeHandle | null => {
+    const createNodeHandle = (listName: string, nodeId: string | null): LinkedListNodeHandle | null => {
         if (!nodeId) return null;
 
         const self: LinkedListNodeHandle = {
             id: nodeId,
             getValue: () => {
                 const shadowValue = valueShadowRef.current.get(nodeId);
+                const currentData = listsRef.current[listName];
                 const currentValue = shadowValue !== undefined
                     ? shadowValue
-                    : nodesRef.current.find((node) => node.id === nodeId)?.value;
+                    : currentData?.nodes.find((node) => node.id === nodeId)?.value;
 
                 enqueueNodeAction(async () => {
-                    updateNodeAnimationState(nodeId, NodeAnimationState.HighlightedGreen);
+                    updateNodeAnimationState(listName, nodeId, NodeAnimationState.HighlightedGreen);
                     await new Promise((resolve) => setTimeout(resolve, 220));
-                    updateNodeAnimationState(nodeId, NodeAnimationState.Default);
+                    updateNodeAnimationState(listName, nodeId, NodeAnimationState.Default);
                 });
 
                 return currentValue;
@@ -155,15 +190,18 @@ export default function SimulationLinkedListChallenge() {
                 valueShadowRef.current.set(nodeId, value);
 
                 return enqueueNodeAction(async () => {
-                    const nextNodes = cloneNodes(nodesRef.current);
+                    const currentData = listsRef.current[listName];
+                    if (!currentData) return;
+
+                    const nextNodes = cloneNodes(currentData.nodes);
                     const target = nextNodes.find((node) => node.id === nodeId);
                     if (!target) return;
 
-                    updateNodeAnimationState(nodeId, NodeAnimationState.HighlightedOrange);
+                    updateNodeAnimationState(listName, nodeId, NodeAnimationState.HighlightedOrange);
                     await sleep(180);
 
                     target.value = value;
-                    commitNodes([...nextNodes]);
+                    commitList(listName, nextNodes, currentData.head, currentData.tail);
 
                     const shadowValue = valueShadowRef.current.get(nodeId);
                     if (shadowValue === value) {
@@ -172,20 +210,23 @@ export default function SimulationLinkedListChallenge() {
 
                     await sleep(120);
 
-                    updateNodeAnimationState(nodeId, NodeAnimationState.Default);
+                    updateNodeAnimationState(listName, nodeId, NodeAnimationState.Default);
                 });
             },
             getNext: () => {
                 const shadowNext = nextPointerShadowRef.current.get(nodeId);
+                const currentData = listsRef.current[listName];
                 const resolvedNextId = shadowNext !== undefined
                     ? shadowNext
-                    : (nodesRef.current.find((node) => node.id === nodeId)?.next ?? null);
-                const nextHandle = createNodeHandle(resolvedNextId);
+                    : (currentData?.nodes.find((node) => node.id === nodeId)?.next ?? null);
+
+                // We assume pointers stay within the same list for simplicity
+                const nextHandle = createNodeHandle(listName, resolvedNextId);
 
                 enqueueNodeAction(async () => {
-                    updateNodeAnimationState(nodeId, NodeAnimationState.Traversing);
+                    updateNodeAnimationState(listName, nodeId, NodeAnimationState.Traversing);
                     await sleep(180);
-                    updateNodeAnimationState(nodeId, NodeAnimationState.Default);
+                    updateNodeAnimationState(listName, nodeId, NodeAnimationState.Default);
                 });
 
                 return nextHandle;
@@ -195,16 +236,19 @@ export default function SimulationLinkedListChallenge() {
                 nextPointerShadowRef.current.set(nodeId, nextId);
 
                 void enqueueNodeAction(async () => {
-                    const nextNodes = cloneNodes(nodesRef.current);
+                    const currentData = listsRef.current[listName];
+                    if (!currentData) return;
+
+                    const nextNodes = cloneNodes(currentData.nodes);
                     const target = nextNodes.find((node) => node.id === nodeId);
                     if (!target) return;
 
                     target.animationState = NodeAnimationState.HighlightedOrange;
-                    commitNodes([...nextNodes]);
+                    commitList(listName, nextNodes, currentData.head, currentData.tail);
                     await sleep(140);
 
                     target.next = nextId;
-                    commitNodes([...nextNodes]);
+                    commitList(listName, nextNodes, currentData.head, currentData.tail);
 
                     const shadowNext = nextPointerShadowRef.current.get(nodeId);
                     if (shadowNext === nextId) {
@@ -214,7 +258,7 @@ export default function SimulationLinkedListChallenge() {
                     await sleep(100);
 
                     target.animationState = NodeAnimationState.Default;
-                    commitNodes([...nextNodes]);
+                    commitList(listName, nextNodes, currentData.head, currentData.tail);
                 });
 
                 return self;
@@ -224,35 +268,36 @@ export default function SimulationLinkedListChallenge() {
         return self;
     };
 
-    const linkedListApi = {
+    const createChallengeApi = (listName: string) => ({
         getHead: () => {
-            const handle = createNodeHandle(headRef.current);
+            const currentData = listsRef.current[listName];
+            const handle = createNodeHandle(listName, currentData?.head ?? null);
             if (!handle) return null;
 
             enqueueNodeAction(async () => {
-                updateNodeAnimationState(handle.id, NodeAnimationState.HighlightedGreen);
+                updateNodeAnimationState(listName, handle.id, NodeAnimationState.HighlightedGreen);
                 await sleep(180);
-                updateNodeAnimationState(handle.id, NodeAnimationState.Default);
+                updateNodeAnimationState(listName, handle.id, NodeAnimationState.Default);
             });
 
             return handle;
         },
         setHead: (nextHead: LinkedListNodeHandle | null) => {
             return enqueueNodeAction(async () => {
-                const nextNodes = cloneNodes(nodesRef.current);
+                const currentData = listsRef.current[listName];
+                if (!currentData) return;
+
+                const nextNodes = cloneNodes(currentData.nodes);
                 const nextHeadId = nextHead?.id ?? null;
 
                 if (nextHeadId) {
                     const target = nextNodes.find((node) => node.id === nextHeadId);
                     if (target) {
                         target.animationState = NodeAnimationState.HighlightedOrange;
-                        commitNodes([...nextNodes]);
+                        commitList(listName, nextNodes, currentData.head, currentData.tail);
                         await sleep(140);
                     }
                 }
-
-                headRef.current = nextHeadId;
-                setHead(nextHeadId);
 
                 if (nextHeadId) {
                     // Recompute tail based on the new head
@@ -269,81 +314,104 @@ export default function SimulationLinkedListChallenge() {
                         currentId = current.next;
                     }
 
-                    tailRef.current = nextTailId;
-                    setTail(nextTailId);
+                    commitList(listName, nextNodes, nextHeadId, nextTailId);
 
                     const target = nextNodes.find((node) => node.id === nextHeadId);
                     if (target) {
                         target.animationState = NodeAnimationState.Default;
-                        commitNodes([...nextNodes]);
+                        commitList(listName, nextNodes, nextHeadId, nextTailId);
                     }
+                } else {
+                    commitList(listName, nextNodes, null, null);
                 }
             });
         },
         getTail: () => {
-            const handle = createNodeHandle(tailRef.current);
+            const currentData = listsRef.current[listName];
+            const handle = createNodeHandle(listName, currentData?.tail ?? null);
             if (!handle) return null;
 
             enqueueNodeAction(async () => {
-                updateNodeAnimationState(handle.id, NodeAnimationState.HighlightedGreen);
+                updateNodeAnimationState(listName, handle.id, NodeAnimationState.HighlightedGreen);
                 await sleep(180);
-                updateNodeAnimationState(handle.id, NodeAnimationState.Default);
+                updateNodeAnimationState(listName, handle.id, NodeAnimationState.Default);
             });
 
             return handle;
         },
         setTail: (nextTail: LinkedListNodeHandle | null) => {
             return enqueueNodeAction(async () => {
-                const nextNodes = cloneNodes(nodesRef.current);
+                const currentData = listsRef.current[listName];
+                if (!currentData) return;
+
+                const nextNodes = cloneNodes(currentData.nodes);
                 const nextTailId = nextTail?.id ?? null;
 
                 if (nextTailId) {
                     const target = nextNodes.find((node) => node.id === nextTailId);
                     if (target) {
                         target.animationState = NodeAnimationState.HighlightedOrange;
-                        commitNodes([...nextNodes]);
+                        commitList(listName, nextNodes, currentData.head, currentData.tail);
                         await sleep(140);
                     }
                 }
 
-                tailRef.current = nextTailId;
-                setTail(nextTailId);
+                commitList(listName, nextNodes, currentData.head, nextTailId);
 
                 if (nextTailId) {
                     const target = nextNodes.find((node) => node.id === nextTailId);
                     if (target) {
                         target.animationState = NodeAnimationState.Default;
-                        commitNodes([...nextNodes]);
+                        commitList(listName, nextNodes, currentData.head, nextTailId);
                     }
                 }
             });
         },
-        size: () => nodesRef.current.length,
+        size: () => {
+            const currentData = listsRef.current[listName];
+            return currentData?.nodes.length || 0;
+        },
         newNode: (value: string | number) => {
             const newNode = createNode(value);
-            const nextNodes = cloneNodes(nodesRef.current);
+            const currentData = listsRef.current[listName];
+            if (!currentData) return null;
+
+            const nextNodes = cloneNodes(currentData.nodes);
+
             if (!nextNodes.some((node) => node.id === newNode.id)) {
                 newNode.animationState = NodeAnimationState.NewInserted;
                 nextNodes.push(newNode);
-                commitNodes(nextNodes);
+                commitList(listName, nextNodes, currentData.head, currentData.tail);
 
                 void enqueueNodeAction(async () => {
                     await sleep(220);
-                    const settledNodes = cloneNodes(nodesRef.current);
+                    const settledData = listsRef.current[listName];
+                    const settledNodes = cloneNodes(settledData.nodes);
                     const target = settledNodes.find((node) => node.id === newNode.id);
                     if (!target) return;
 
                     target.animationState = NodeAnimationState.Default;
-                    commitNodes(settledNodes);
+                    commitList(listName, settledNodes, settledData.head, settledData.tail);
                 });
             }
 
-            return createNodeHandle(newNode.id);
+            return createNodeHandle(listName, newNode.id);
         },
-    };
+    });
 
     useEffect(() => {
-        commitNodes(createNodes(...initialListSeed));
+        const initialLists: Record<string, ListData> = {};
+        for (const [key, arr] of Object.entries(initialInputs)) {
+            const nodes = createNodes(...arr);
+            let head = null;
+            let tail = null;
+            if (nodes.length > 0) {
+                head = nodes[0].id;
+                tail = nodes[nodes.length - 1].id;
+            }
+            initialLists[key] = { nodes, head, tail };
+        }
+        commitLists(initialLists);
     }, []);
 
     useEffect(() => {
@@ -371,39 +439,47 @@ export default function SimulationLinkedListChallenge() {
 
     const formatArray = (items: (string | number)[]) => `[${items.join(", ")}]`;
 
-    const formatReturnValue = (value: unknown) => {
-        if (value === undefined) return "undefined";
-        if (value === null) return "null";
-        if (typeof value === "string" || typeof value === "number" || typeof value === "boolean") {
-            return String(value);
+    const formatOutput = (out: unknown) => {
+        if (out === undefined) return "undefined";
+        if (out === null) return "null";
+        if (Array.isArray(out)) return formatArray(out);
+        if (typeof out === 'object' && out !== null) {
+            return Object.entries(out).map(([k, v]) => `${k}: ${formatArray(v as any)}`).join(" | ");
         }
-
-        try {
-            return JSON.stringify(value);
-        } catch {
-            return String(value);
-        }
-    };
+        return String(out);
+    }
 
     const arraysEqual = (left: (string | number)[], right: (string | number)[]) => {
         if (left.length !== right.length) {
             return false;
         }
-
         for (let i = 0; i < left.length; i++) {
             if (left[i] !== right[i]) {
                 return false;
             }
         }
-
         return true;
+    };
+
+    const outputsEqual = (left: any, right: any) => {
+        if (Array.isArray(left) && Array.isArray(right)) return arraysEqual(left, right);
+        if (typeof left === 'object' && typeof right === 'object' && left !== null && right !== null) {
+            const leftKeys = Object.keys(left);
+            const rightKeys = Object.keys(right);
+            if (leftKeys.length !== rightKeys.length) return false;
+            for (const key of leftKeys) {
+                if (!arraysEqual(left[key], right[key])) return false;
+            }
+            return true;
+        }
+        return left === right;
     };
 
     const createCaseSummary = (
         caseIndex: number,
-        input: (string | number)[],
-        expected: (string | number)[] | undefined,
-        actual: (string | number)[],
+        inputs: Record<string, (string | number)[]> | (string | number)[],
+        expected: Record<string, (string | number)[]> | (string | number)[] | undefined,
+        actual: Record<string, (string | number)[]> | (string | number)[],
         caseName?: string,
         expectedReturn?: string | number,
         actualReturn?: unknown,
@@ -412,9 +488,9 @@ export default function SimulationLinkedListChallenge() {
             const passed = actualReturn === expectedReturn;
             return {
                 name: caseName || `Test Case ${caseIndex + 1}`,
-                input: formatArray(input),
-                expected: formatReturnValue(expectedReturn),
-                actual: formatReturnValue(actualReturn),
+                input: formatOutput(inputs),
+                expected: formatOutput(expectedReturn),
+                actual: formatOutput(actualReturn),
                 passed,
                 statusText: passed
                     ? "PASS: Returned value matches expected."
@@ -423,12 +499,12 @@ export default function SimulationLinkedListChallenge() {
         }
 
         const normalizedExpected = expected ?? [];
-        const passed = arraysEqual(actual, normalizedExpected);
+        const passed = outputsEqual(actual, normalizedExpected);
         return {
             name: caseName || `Test Case ${caseIndex + 1}`,
-            input: formatArray(input),
-            expected: formatArray(normalizedExpected),
-            actual: formatArray(actual),
+            input: formatOutput(inputs),
+            expected: formatOutput(normalizedExpected),
+            actual: formatOutput(actual),
             passed,
             statusText: passed
                 ? "PASS: Challenge output matches expected."
@@ -436,124 +512,136 @@ export default function SimulationLinkedListChallenge() {
         };
     };
 
-    const createHeadlessLinkedListApi = (seed: (string | number)[]) => {
-        type HeadlessNode = {
-            id: string;
-            value: string | number;
-            next: string | null;
-        };
+    const createHeadlessChallengeApi = (seedInputs: Record<string, (string | number)[]>) => {
+        type HeadlessNode = { id: string; value: string | number; next: string | null; };
 
-        const store = new Map<string, HeadlessNode>();
-        let headId: string | null = null;
-        let tailId: string | null = null;
-        let idCounter = 0;
+        const apis: Record<string, any> = {};
+        const getValuesMap: Record<string, () => (string | number)[]> = {};
 
-        const makeId = () => `n-${idCounter++}`;
+        for (const [name, seedArr] of Object.entries(seedInputs)) {
+            const store = new Map<string, HeadlessNode>();
+            let headId: string | null = null;
+            let tailId: string | null = null;
+            let idCounter = 0;
 
-        const seededIds = seed.map((value) => {
-            const id = makeId();
-            store.set(id, { id, value, next: null });
-            return id;
-        });
+            const makeId = () => `${name}-n-${idCounter++}`;
 
-        for (let i = 0; i < seededIds.length - 1; i++) {
-            const node = store.get(seededIds[i]);
-            if (node) {
-                node.next = seededIds[i + 1];
-            }
-        }
-
-        if (seededIds.length > 0) {
-            headId = seededIds[0];
-            tailId = seededIds[seededIds.length - 1];
-        }
-
-        const materializeValues = () => {
-            const out: (string | number)[] = [];
-            const visited = new Set<string>();
-            let currentId = headId;
-
-            while (currentId && !visited.has(currentId)) {
-                visited.add(currentId);
-                const current = store.get(currentId);
-                if (!current) break;
-
-                out.push(current.value);
-                currentId = current.next;
-            }
-
-            return out;
-        };
-
-        const recomputeTail = () => {
-            const visited = new Set<string>();
-            let currentId = headId;
-            let last: string | null = null;
-
-            while (currentId && !visited.has(currentId)) {
-                visited.add(currentId);
-                const current = store.get(currentId);
-                if (!current) break;
-
-                last = current.id;
-                currentId = current.next;
-            }
-
-            tailId = last;
-        };
-
-        const createHandle = (nodeId: string | null): LinkedListNodeHandle | null => {
-            if (!nodeId) return null;
-            if (!store.has(nodeId)) return null;
-
-            return {
-                id: nodeId,
-                getValue: () => store.get(nodeId)?.value,
-                setValue: async (value) => {
-                    const target = store.get(nodeId);
-                    if (!target) return;
-                    target.value = value;
-                },
-                getNext: () => createHandle(store.get(nodeId)?.next ?? null),
-                setNext: (next) => {
-                    const target = store.get(nodeId);
-                    if (!target) return createHandle(nodeId)!;
-                    target.next = next?.id ?? null;
-                    recomputeTail();
-                    return createHandle(nodeId)!;
-                },
-            };
-        };
-
-        const api = {
-            getHead: () => createHandle(headId),
-            setHead: async (nextHead: LinkedListNodeHandle | null) => {
-                headId = nextHead?.id ?? null;
-                recomputeTail();
-            },
-            getTail: () => createHandle(tailId),
-            setTail: async (nextTail: LinkedListNodeHandle | null) => {
-                tailId = nextTail?.id ?? null;
-            },
-            size: () => materializeValues().length,
-            newNode: (value: string | number) => {
+            const seededIds = seedArr.map((value) => {
                 const id = makeId();
                 store.set(id, { id, value, next: null });
-                return createHandle(id);
-            },
-        };
+                return id;
+            });
+
+            for (let i = 0; i < seededIds.length - 1; i++) {
+                const node = store.get(seededIds[i]);
+                if (node) {
+                    node.next = seededIds[i + 1];
+                }
+            }
+
+            if (seededIds.length > 0) {
+                headId = seededIds[0];
+                tailId = seededIds[seededIds.length - 1];
+            }
+
+            const materializeValues = () => {
+                const out: (string | number)[] = [];
+                const visited = new Set<string>();
+                let currentId = headId;
+
+                while (currentId && !visited.has(currentId)) {
+                    visited.add(currentId);
+                    const current = store.get(currentId);
+                    if (!current) break;
+
+                    out.push(current.value);
+                    currentId = current.next;
+                }
+
+                return out;
+            };
+
+            const recomputeTail = () => {
+                const visited = new Set<string>();
+                let currentId = headId;
+                let last: string | null = null;
+
+                while (currentId && !visited.has(currentId)) {
+                    visited.add(currentId);
+                    const current = store.get(currentId);
+                    if (!current) break;
+
+                    last = current.id;
+                    currentId = current.next;
+                }
+
+                tailId = last;
+            };
+
+            const createHandle = (nodeId: string | null): LinkedListNodeHandle | null => {
+                if (!nodeId) return null;
+                if (!store.has(nodeId)) return null;
+
+                return {
+                    id: nodeId,
+                    getValue: () => store.get(nodeId)?.value,
+                    setValue: async (value) => {
+                        const target = store.get(nodeId);
+                        if (!target) return;
+                        target.value = value;
+                    },
+                    getNext: () => createHandle(store.get(nodeId)?.next ?? null),
+                    setNext: (next) => {
+                        const target = store.get(nodeId);
+                        if (!target) return createHandle(nodeId)!;
+                        target.next = next?.id ?? null;
+                        recomputeTail();
+                        return createHandle(nodeId)!;
+                    },
+                };
+            };
+
+            apis[name] = {
+                getHead: () => createHandle(headId),
+                setHead: async (nextHead: LinkedListNodeHandle | null) => {
+                    headId = nextHead?.id ?? null;
+                    recomputeTail();
+                },
+                getTail: () => createHandle(tailId),
+                setTail: async (nextTail: LinkedListNodeHandle | null) => {
+                    tailId = nextTail?.id ?? null;
+                },
+                size: () => materializeValues().length,
+                newNode: (value: string | number) => {
+                    const id = makeId();
+                    store.set(id, { id, value, next: null });
+                    return createHandle(id);
+                },
+            };
+
+            getValuesMap[name] = materializeValues;
+        }
 
         return {
-            api,
-            getValues: () => materializeValues(),
+            apis,
+            getValues: () => {
+                const res: Record<string, (string | number)[]> = {};
+                for (const [name, fn] of Object.entries(getValuesMap)) {
+                    res[name] = fn();
+                }
+                return res;
+            },
         };
     };
 
-    const materializeVisualList = () => {
+    const materializeVisualList = (listName: string) => {
         const out: (string | number)[] = [];
         const visited = new Set<string>();
-        let currentId = headRef.current;
-        const list = nodesRef.current;
+        const currentData = listsRef.current[listName];
+        if (!currentData) return out;
+
+        let currentId = currentData.head;
+        const list = currentData.nodes;
 
         while (currentId && !visited.has(currentId)) {
             visited.add(currentId);
@@ -581,14 +669,20 @@ export default function SimulationLinkedListChallenge() {
         for (let i = 0; i < additionalCases.length; i++) {
             const testCase = additionalCases[i];
             const caseIndex = i + 1;
-            const { api, getValues } = createHeadlessLinkedListApi(testCase.input);
+            const caseInputs = testCase.inputs ?? { list: testCase.input ?? [] };
+            const { apis, getValues } = createHeadlessChallengeApi(caseInputs);
             const silentIo = {
                 println: (_message: unknown) => {
                 },
             };
 
+            const context: Record<string, unknown> = { io: silentIo };
+            for (const [name, api] of Object.entries(apis)) {
+                context[name] = api;
+            }
+
             try {
-                const result = runner(...buildRunnerArgs({ list: api, io: silentIo }));
+                const result = runner(...buildRunnerArgs(context));
                 let resolvedResult: unknown = result;
                 if (result instanceof Promise) {
                     resolvedResult = await result;
@@ -597,7 +691,7 @@ export default function SimulationLinkedListChallenge() {
                 summaries.push(
                     createCaseSummary(
                         caseIndex,
-                        testCase.input,
+                        testCase.inputs ?? testCase.input ?? [],
                         testCase.expected,
                         getValues(),
                         testCase.name || `Test Case ${caseIndex + 1}`,
@@ -608,10 +702,10 @@ export default function SimulationLinkedListChallenge() {
             } catch {
                 summaries.push({
                     name: testCase.name || `Test Case ${caseIndex + 1}`,
-                    input: formatArray(testCase.input),
+                    input: formatOutput(testCase.inputs ?? testCase.input ?? []),
                     expected: testCase.expectedReturn !== undefined
-                        ? formatReturnValue(testCase.expectedReturn)
-                        : formatArray(testCase.expected ?? []),
+                        ? formatOutput(testCase.expectedReturn)
+                        : formatOutput(testCase.expected ?? []),
                     actual: "Execution Error",
                     passed: false,
                     statusText: "FAIL: Runtime error while evaluating this test case.",
@@ -635,7 +729,13 @@ export default function SimulationLinkedListChallenge() {
             valueShadowRef.current.clear();
 
             const runner = createChallengeRunner(editorCode, runnerParameterNames);
-            const result = runner(...buildRunnerArgs({ list: linkedListApi, io: { println: writeToConsole } }));
+            const context: Record<string, unknown> = { io: { println: writeToConsole } };
+            const listNames = Object.keys(initialInputs);
+            for (const name of listNames) {
+                context[name] = createChallengeApi(name);
+            }
+
+            const result = runner(...buildRunnerArgs(context));
             let resolvedResult: unknown = result;
             if (result instanceof Promise) {
                 resolvedResult = await result;
@@ -645,7 +745,11 @@ export default function SimulationLinkedListChallenge() {
             await consoleWriteQueueRef.current;
             await new Promise((resolve) => setTimeout(resolve, 1200));
 
-            const finalValues = materializeVisualList();
+            const finalValues: Record<string, (string | number)[]> = {};
+            for (const name of Object.keys(listsRef.current)) {
+                finalValues[name] = materializeVisualList(name);
+            }
+
             const primaryCase = challenge.testCases[0];
 
             if (!primaryCase) {
@@ -654,7 +758,7 @@ export default function SimulationLinkedListChallenge() {
                         name: "Test Case 1",
                         input: "-",
                         expected: "-",
-                        actual: formatArray(finalValues),
+                        actual: formatOutput(finalValues),
                         passed: null,
                         statusText: "No test case configured",
                     },
@@ -664,7 +768,7 @@ export default function SimulationLinkedListChallenge() {
 
             const primarySummary = createCaseSummary(
                 0,
-                primaryCase.input,
+                primaryCase.inputs ?? primaryCase.input ?? [],
                 primaryCase.expected,
                 finalValues,
                 primaryCase.name || "Test Case 1",
@@ -711,11 +815,22 @@ export default function SimulationLinkedListChallenge() {
         setConsoleOutput([]);
         nextPointerShadowRef.current.clear();
         valueShadowRef.current.clear();
-        resetListOnly();
+        resetListsOnly();
     };
 
-    const resetListOnly = () => {
-        commitNodes(createNodes(...initialListSeed));
+    const resetListsOnly = () => {
+        const initialLists: Record<string, ListData> = {};
+        for (const [key, arr] of Object.entries(initialInputs)) {
+            const nodes = createNodes(...arr);
+            let head = null;
+            let tail = null;
+            if (nodes.length > 0) {
+                head = nodes[0].id;
+                tail = nodes[nodes.length - 1].id;
+            }
+            initialLists[key] = { nodes, head, tail };
+        }
+        commitLists(initialLists);
         setIsCompleted(false);
         setIsChallengeCompletedModalOpen(false);
         setShowNextAction(false);
@@ -724,6 +839,8 @@ export default function SimulationLinkedListChallenge() {
         nextPointerShadowRef.current.clear();
         valueShadowRef.current.clear();
     };
+
+    const numLists = Object.keys(lists).length;
 
     return (
         <div className="h-full bg-gray-50 overflow-hidden">
@@ -747,11 +864,20 @@ export default function SimulationLinkedListChallenge() {
                         completed={isCompleted}
                     />
 
-                    <VisualArrayContainer>
-                        <div className="w-full h-full overflow-hidden">
-                            <VisualLinkedList nodes={nodes} head={head} />
-                        </div>
-                    </VisualArrayContainer>
+                    <div className="flex-1 overflow-y-auto relative flex flex-col min-h-0">
+                        {Object.entries(lists).map(([name, listData]) => (
+                            <div key={name} className="flex-1 flex flex-col items-center border-b border-gray-100 last:border-b-0 min-h-[200px]">
+                                {numLists > 1 && (
+                                    <div className="text-sm font-semibold text-gray-500 pt-2 pb-1 bg-gray-50 w-full text-center border-b border-gray-200 shadow-sm flex-shrink-0">
+                                        {name}
+                                    </div>
+                                )}
+                                <div className="flex-1 w-full relative min-h-0 flex flex-col">
+                                    <VisualLinkedList nodes={listData.nodes} head={listData.head} />
+                                </div>
+                            </div>
+                        ))}
+                    </div>
                 </div>
 
                 <div
@@ -770,7 +896,7 @@ export default function SimulationLinkedListChallenge() {
                     resultSummaries={resultSummaries}
                     onCodeChange={setEditorCode}
                     onReset={resetEditorCode}
-                    onResetArray={resetListOnly}
+                    onResetArray={resetListsOnly}
                     onSubmit={submitEditorCode}
                     onNext={() => setIsChallengeCompletedModalOpen(false)}
                     showNextButton={showNextAction}

@@ -1,15 +1,16 @@
-
 'use client';
 
 import { useEffect, useRef, useState } from "react";
-import { ArrayElement, ArrayElementAnimationState } from "@/app/simulator/array-list/components/types";
-import { createArrayElement, createArrayElements } from "@/app/simulator/array-list/components/utils";
+import { ArrayElement, ArrayElementAnimationState } from "@/app/simulator/components/array-list/types";
+import { createArrayElement, createArrayElements } from "@/app/simulator/components/array-list/utils";
 import ChallengeInstructions from "@/app/simulator/components/ChallengeInstructions";
 import ChallengeCompletedModal from "@/app/simulator/components/ChallengeCompletedModal";
 import CodeEditorPanel from "@/app/simulator/components/CodeEditorPanel";
 import VisualArrayContainer from "@/app/simulator/components/VisualArrayContainer";
-import VisualArray from "@/app/simulator/array-list/components/VisualArray";
-import { CHALLENGE_INTRO, createChallengeRunner, DEFAULT_RUNNER_PARAMETER_NAMES } from "./challenges";
+import VisualArray from "@/app/simulator/components/array-list/VisualArray";
+import { useParams } from "next/navigation";
+import { CHALLENGE_REGISTRY } from "../challenges/registry";
+import { createChallengeRunner, DEFAULT_RUNNER_PARAMETER_NAMES, ChallengeConfig } from "../challenges/runner";
 
 type ChallengeResultSummary = {
     name: string;
@@ -20,12 +21,34 @@ type ChallengeResultSummary = {
     statusText: string;
 };
 
-export default function SimulationArray() {
-    const challenge = CHALLENGE_INTRO;
+export default function SimulationArrayChallenge() {
+    const params = useParams<{ challengeId: string }>();
+    const challengeId = params?.challengeId;
+    const challenge = challengeId ? CHALLENGE_REGISTRY[challengeId] : undefined;
+
+    if (!challenge) {
+        return <div className="p-8 text-center text-gray-500">Challenge not found</div>;
+    }
+
+    return <SimulationArrayCore challenge={challenge} challengeId={challengeId} />;
+}
+
+function SimulationArrayCore({ challenge, challengeId }: { challenge: ChallengeConfig, challengeId: string }) {
     const runnerParameterNames = challenge.programStructure?.parameterNames
         ?? challenge.runnerParameterNames
         ?? DEFAULT_RUNNER_PARAMETER_NAMES;
-    const initialArraySeed = challenge.testCases[0]?.input ?? [];
+
+    const initialInputs = challenge.testCases[0]?.inputs
+        ?? { array: challenge.testCases[0]?.input ?? [] };
+
+    const getSeeds = () => {
+        const seeds: Record<string, (string | number)[]> = {};
+        for (const key of Object.keys(initialInputs)) {
+            seeds[key] = [...initialInputs[key]];
+        }
+        return seeds;
+    };
+
     const initialEditorCode = challenge.initialEditorCode;
 
     // Placeholder for future DB sync.
@@ -45,7 +68,7 @@ export default function SimulationArray() {
         setIsChallengeCompletedModalOpen(false);
     };
 
-    const [array, setArray] = useState<ArrayElement[]>([]);
+    const [arrays, setArrays] = useState<Record<string, ArrayElement[]>>({});
     const [editorCode, setEditorCode] = useState<string>(
         initialEditorCode
     );
@@ -60,9 +83,11 @@ export default function SimulationArray() {
     const [isCompleted, setIsCompleted] = useState<boolean>(false);
     const [isChallengeCompletedModalOpen, setIsChallengeCompletedModalOpen] = useState<boolean>(false);
     const [showNextAction, setShowNextAction] = useState<boolean>(false);
+
     const workspaceRef = useRef<HTMLDivElement | null>(null);
-    const arrayRef = useRef<ArrayElement[]>([]);
-    const arraySizeRef = useRef<number>(initialArraySeed.length);
+    const arraysRef = useRef<Record<string, ArrayElement[]>>({});
+    const arraysSizeRef = useRef<Record<string, number>>({});
+    const logicalArraysRef = useRef<Record<string, (string | number)[]>>({});
     const isAnimatingRef = useRef<boolean>(false);
 
     const [isAnimating, setIsAnimating] = useState<boolean>(false);
@@ -92,18 +117,21 @@ export default function SimulationArray() {
         setConsoleOutput((prev) => [...prev, nextLine]);
     };
 
-    const writeIndexError = (operation: string, index: number, size: number) => {
-        writeToConsole(`ERROR: ${operation} index out of bounds (index=${index}, size=${size}).`);
+    const writeIndexError = (arrayName: string, operation: string, index: number, size: number) => {
+        writeToConsole(`ERROR: ${arrayName}.${operation} index out of bounds (index=${index}, size=${size}).`);
     };
 
-    const commitArray = (nextArray: ArrayElement[]) => {
-        arrayRef.current = nextArray;
-        arraySizeRef.current = nextArray.length;
-        setArray(nextArray);
+    const commitArrays = (nextArrays: Record<string, ArrayElement[]>) => {
+        arraysRef.current = nextArrays;
+        setArrays(nextArrays);
     };
 
-    const updateLogicalSize = (delta: number) => {
-        arraySizeRef.current = Math.max(0, arraySizeRef.current + delta);
+    const commitArray = (arrayName: string, nextArray: ArrayElement[]) => {
+        commitArrays({ ...arraysRef.current, [arrayName]: nextArray });
+    };
+
+    const updateLogicalSize = (arrayName: string, delta: number) => {
+        arraysSizeRef.current[arrayName] = Math.max(0, (arraysSizeRef.current[arrayName] || 0) + delta);
     };
 
     const setAnimatingState = (nextIsAnimating: boolean) => {
@@ -130,13 +158,25 @@ export default function SimulationArray() {
 
     // Seed Array
     useEffect(() => {
-        const initial = createArrayElements(...initialArraySeed)
-        commitArray(initial);
+        const seeds = getSeeds();
+        const initialArrays: Record<string, ArrayElement[]> = {};
+        for (const key of Object.keys(seeds)) {
+            initialArrays[key] = createArrayElements(...seeds[key]);
+            arraysSizeRef.current[key] = seeds[key].length;
+        }
+        commitArrays(initialArrays);
+        logicalArraysRef.current = { ...seeds };
     }, []);
 
     const resetStructureState = () => {
-        const seededArray = createArrayElements(...initialArraySeed);
-        commitArray(seededArray);
+        const seeds = getSeeds();
+        const initialArrays: Record<string, ArrayElement[]> = {};
+        for (const key of Object.keys(seeds)) {
+            initialArrays[key] = createArrayElements(...seeds[key]);
+            arraysSizeRef.current[key] = seeds[key].length;
+        }
+        commitArrays(initialArrays);
+        logicalArraysRef.current = { ...seeds };
         setInputValue("");
         setIndex(0);
         setAnimatingState(false);
@@ -147,8 +187,8 @@ export default function SimulationArray() {
     };
 
     useEffect(() => {
-        arrayRef.current = array;
-    }, [array]);
+        arraysRef.current = arrays;
+    }, [arrays]);
 
     useEffect(() => {
         isAnimatingRef.current = isAnimating;
@@ -178,109 +218,60 @@ export default function SimulationArray() {
     }, [isResizing, MAX_LEFT_PANE_PERCENT, MIN_LEFT_PANE_PERCENT]);
 
     // Insert an item at a specific index
-    const insertAt = async (index: number, value: string | number) => {
+    const animateInsertAt = async (arrayName: string, index: number, value: string | number) => {
         if (isAnimatingRef.current) return;
-
-        const maxElements = getMaxElements();
-        const currentArray = arrayRef.current;
-        if (currentArray.length >= maxElements) return;
-
-        // prolly need to add check if index is invalid
-        // better checking needed + frontend information feedback
-        if (index < 0 || index > currentArray.length) {
-            writeIndexError("insertAt", index, currentArray.length);
-            return;
-        }
-
         setAnimatingState(true);
 
+        const currentArray = arraysRef.current[arrayName] || [];
         const invisible = createArrayElement(value, ArrayElementAnimationState.Invisible);
-
-        // allocate space
         let newArray = [...currentArray, invisible];
-
-        commitArray([...newArray]);
+        commitArray(arrayName, newArray);
         await sleep(delay.interval);
 
-        // move the invisible item to the desired index
         for (let i = newArray.length - 1; i > index; i--) {
             const temp = [...newArray];
             temp[i] = temp[i - 1];
             temp[i - 1] = invisible;
-            commitArray(temp);
+            commitArray(arrayName, temp);
             await sleep(delay.interval);
             newArray = temp;
-        };
+        }
 
-        // show/insert the new item into the array
         invisible.animationState = ArrayElementAnimationState.NewInserted;
-        commitArray([...newArray]);
-
+        commitArray(arrayName, [...newArray]);
         await sleep(delay.get);
 
         invisible.animationState = ArrayElementAnimationState.Default;
-        commitArray([...newArray]);
-
+        commitArray(arrayName, [...newArray]);
         setAnimatingState(false);
     }
 
-
-    // Insert item at start of the array
-    const insertFront = async (value: string | number) => {
-        await insertAt(0, value);
-    };
-
-
-    // Insert at the end of the array 
-    const insertBack = async (value: string | number) => {
+    const animateInsertBack = async (arrayName: string, value: string | number) => {
         if (isAnimatingRef.current) return;
-
-        const maxElements = getMaxElements();
-        const currentArray = arrayRef.current;
-        if (currentArray.length >= maxElements) return;
-
-        if (currentArray.length == 0) {
-            await insertFront(value);
-            return;
-        }
-
         setAnimatingState(true);
 
         const inserted = createArrayElement(value, ArrayElementAnimationState.NewInserted);
+        const currentArray = arraysRef.current[arrayName] || [];
         const nextArray = [...currentArray, inserted];
-        commitArray(nextArray);
+        commitArray(arrayName, nextArray);
 
-        // Give the insertion highlight a moment to resolve before returning to default.
         await sleep(delay.focus + 80);
 
         inserted.animationState = ArrayElementAnimationState.Default;
-        commitArray([...nextArray]);
-
+        commitArray(arrayName, [...nextArray]);
         setAnimatingState(false);
     }
 
-
-    // remove item at specific index
-    // shift the rest of the items forward / to the left
-    const removeAt = async (index: number): Promise<string | number | undefined> => {
-        // make the front invisible but keep space
-        // show shifting of items
-        // once invisible item is at the end, remove it
-
+    const animateRemoveAt = async (arrayName: string, index: number) => {
         if (isAnimatingRef.current) return;
-        const currentArray = arrayRef.current;
-        if (index < 0 || index > currentArray.length - 1) {
-            writeIndexError("removeAt", index, currentArray.length);
-            return;
-        }
         setAnimatingState(true);
 
-        let newArray = [...currentArray]
+        const currentArray = arraysRef.current[arrayName] || [];
+        let newArray = [...currentArray];
         const invisible = newArray[index];
 
-        // animate removal
         invisible.animationState = ArrayElementAnimationState.RemovedInvisible;
-        commitArray(newArray);
+        commitArray(arrayName, newArray);
         await sleep(delay.focus + 300);
 
         invisible.animationState = ArrayElementAnimationState.Invisible;
@@ -289,148 +280,90 @@ export default function SimulationArray() {
             const temp = [...newArray];
             temp[i - 1] = temp[i];
             temp[i] = invisible;
-            commitArray(temp);
+            commitArray(arrayName, temp);
             await sleep(delay.interval);
             newArray = [...temp];
         }
 
-        // remove the item from the end
-        commitArray(newArray.slice(0, -1));
+        commitArray(arrayName, newArray.slice(0, -1));
         setAnimatingState(false);
-        return invisible.value;
-    }
-    const removeFront = async (): Promise<string | number | undefined> => {
-        return await removeAt(0);
     }
 
-
-    // remove last item
-    const removeBack = (): string | number | undefined => {
+    const animateRemoveBack = async (arrayName: string) => {
         if (isAnimatingRef.current) return;
-        const new_array = [...arrayRef.current];
-        const removed = new_array.pop();
-        commitArray(new_array);
+        const new_array = [...(arraysRef.current[arrayName] || [])];
+        new_array.pop();
+        commitArray(arrayName, new_array);
 
-        if (arrayRef.current.length > 0 && index === arrayRef.current.length) {
+        // This is array-specific logic from original page
+        // it updates the `index` state used by the manual controls on the left.
+        // It's mostly irrelevant for the challenge runner but we keep it safe.
+        if ((arraysRef.current[arrayName] || []).length > 0 && index === (arraysRef.current[arrayName] || []).length) {
             setIndex(current => current - 1);
         }
-
-        return removed?.value;
     }
 
-
-    // set value at specific index
-    const setAt = async (index: number, newValue: number | string) => {
+    const animateSetAt = async (arrayName: string, index: number, newValue: number | string) => {
         if (isAnimatingRef.current) return;
-
-        // TODO - validate idx
-        const currentArray = arrayRef.current;
-        if (index < 0 || index >= currentArray.length) {
-            writeIndexError("setAt", index, currentArray.length);
-            return;
-        }
-
         setAnimatingState(true);
-        const newArray = [...currentArray];
 
+        const newArray = [...(arraysRef.current[arrayName] || [])];
         newArray[index].animationState = ArrayElementAnimationState.HighlightedOrange;
-        commitArray(newArray);
+        commitArray(arrayName, newArray);
         await sleep(delay.focus + 180);
 
         newArray[index].value = newValue;
-        commitArray([...newArray]);
+        commitArray(arrayName, [...newArray]);
         await sleep(delay.focus + 120);
 
         newArray[index].animationState = ArrayElementAnimationState.Default;
-        commitArray([...newArray]);
+        commitArray(arrayName, [...newArray]);
 
         setInputValue("");
         setAnimatingState(false);
     }
 
-    // swap two items in the array
-    const swap = async (leftIndex: number, rightIndex: number) => {
+    const animateSwap = async (arrayName: string, leftIndex: number, rightIndex: number) => {
         if (isAnimatingRef.current) return;
-
-        const currentArray = arrayRef.current;
-        if (leftIndex < 0 || rightIndex < 0 || leftIndex >= currentArray.length || rightIndex >= currentArray.length) {
-            if (leftIndex < 0 || leftIndex >= currentArray.length) {
-                writeIndexError("swap", leftIndex, currentArray.length);
-            }
-            if (rightIndex < 0 || rightIndex >= currentArray.length) {
-                writeIndexError("swap", rightIndex, currentArray.length);
-            }
-            return;
-        }
-
-        if (leftIndex === rightIndex) {
-            return;
-        }
-
         setAnimatingState(true);
 
         try {
-            const newArray = [...currentArray];
+            const newArray = [...(arraysRef.current[arrayName] || [])];
 
-            // Step 1: mark both targets before the movement.
             newArray[leftIndex].animationState = ArrayElementAnimationState.HighlightedOrange;
             newArray[rightIndex].animationState = ArrayElementAnimationState.HighlightedOrange;
-            commitArray([...newArray]);
+            commitArray(arrayName, [...newArray]);
             await sleep(delay.focus + 90);
 
-            // Step 2: swap positions and keep orange highlight while layout animates.
             const temp = newArray[leftIndex];
             newArray[leftIndex] = newArray[rightIndex];
             newArray[rightIndex] = temp;
 
             newArray[leftIndex].animationState = ArrayElementAnimationState.HighlightedOrange;
             newArray[rightIndex].animationState = ArrayElementAnimationState.HighlightedOrange;
-            commitArray([...newArray]);
+            commitArray(arrayName, [...newArray]);
             await sleep(delay.focus + 140);
 
-            // Step 3: settle back to default.
             newArray[leftIndex].animationState = ArrayElementAnimationState.Default;
             newArray[rightIndex].animationState = ArrayElementAnimationState.Default;
-            commitArray([...newArray]);
+            commitArray(arrayName, [...newArray]);
         } finally {
             setAnimatingState(false);
         }
     }
 
-    const animateGet = async (index: number): Promise<void> => {
+    const animateGet = async (arrayName: string, index: number): Promise<void> => {
         if (isAnimatingRef.current) return;
-
-        const currentArray = arrayRef.current;
-        if (index < 0 || index >= currentArray.length) {
-            return;
-        }
-
         setAnimatingState(true);
 
-        const newArray = [...currentArray];
-
+        const newArray = [...(arraysRef.current[arrayName] || [])];
         newArray[index].animationState = ArrayElementAnimationState.HighlightedGreen;
-        commitArray([...newArray]);
-
+        commitArray(arrayName, [...newArray]);
         await sleep(delay.focus + 200);
 
         newArray[index].animationState = ArrayElementAnimationState.Default;
-        commitArray([...newArray]);
-
+        commitArray(arrayName, [...newArray]);
         setAnimatingState(false);
-    }
-
-    // get item at specific idx (synchronous raw value for challenge logic)
-    const get = (index: number): string | number | undefined => {
-        const currentArray = arrayRef.current;
-        if (index < 0 || index >= currentArray.length) {
-            writeIndexError("get", index, currentArray.length);
-            return;
-        }
-
-        const value = currentArray[index]?.value;
-        void enqueueChallengeAction(() => animateGet(index));
-        return value;
     }
 
     type ChallengeArrayApi = {
@@ -450,55 +383,111 @@ export default function SimulationArray() {
         println: (message: unknown) => void;
     };
 
-    const challengeApi: ChallengeArrayApi = {
+    const createChallengeApi = (arrayName: string): ChallengeArrayApi => ({
         insertAt: (position, value) => {
-            const currentSize = arraySizeRef.current;
+            const currentSize = arraysSizeRef.current[arrayName] || 0;
             if (currentSize < getMaxElements() && position >= 0 && position <= currentSize) {
-                updateLogicalSize(1);
+                updateLogicalSize(arrayName, 1);
+                logicalArraysRef.current[arrayName].splice(position, 0, value);
+            } else {
+                if (position < 0 || position > currentSize) {
+                    writeIndexError(arrayName, "insertAt", position, currentSize);
+                }
+                return Promise.resolve();
             }
-
-            return enqueueChallengeAction(() => insertAt(position, value));
+            return enqueueChallengeAction(() => animateInsertAt(arrayName, position, value));
         },
         insertFront: (value) => {
-            if (arraySizeRef.current < getMaxElements()) {
-                updateLogicalSize(1);
+            if ((arraysSizeRef.current[arrayName] || 0) < getMaxElements()) {
+                updateLogicalSize(arrayName, 1);
+                logicalArraysRef.current[arrayName].unshift(value);
+            } else {
+                return Promise.resolve();
             }
-
-            return enqueueChallengeAction(() => insertFront(value));
+            return enqueueChallengeAction(() => animateInsertAt(arrayName, 0, value));
         },
         insertBack: (value) => {
-            if (arraySizeRef.current < getMaxElements()) {
-                updateLogicalSize(1);
+            const currentSize = arraysSizeRef.current[arrayName] || 0;
+            if (currentSize < getMaxElements()) {
+                updateLogicalSize(arrayName, 1);
+                logicalArraysRef.current[arrayName].push(value);
+                if (currentSize === 0) {
+                    return enqueueChallengeAction(() => animateInsertAt(arrayName, 0, value));
+                } else {
+                    return enqueueChallengeAction(() => animateInsertBack(arrayName, value));
+                }
             }
-
-            return enqueueChallengeAction(() => Promise.resolve(insertBack(value)));
+            return Promise.resolve();
         },
         removeAt: (position) => {
-            if (position >= 0 && position < arraySizeRef.current) {
-                updateLogicalSize(-1);
+            const currentSize = arraysSizeRef.current[arrayName] || 0;
+            let val: string | number | undefined = undefined;
+            if (position >= 0 && position < currentSize) {
+                updateLogicalSize(arrayName, -1);
+                val = logicalArraysRef.current[arrayName].splice(position, 1)[0];
+                return enqueueChallengeAction(() => animateRemoveAt(arrayName, position).then(() => val));
+            } else {
+                writeIndexError(arrayName, "removeAt", position, currentSize);
+                return Promise.resolve(undefined);
             }
-
-            return enqueueChallengeAction(() => removeAt(position));
         },
         removeFront: () => {
-            if (arraySizeRef.current > 0) {
-                updateLogicalSize(-1);
+            if ((arraysSizeRef.current[arrayName] || 0) > 0) {
+                updateLogicalSize(arrayName, -1);
+                const val = logicalArraysRef.current[arrayName].shift();
+                return enqueueChallengeAction(() => animateRemoveAt(arrayName, 0).then(() => val));
             }
-
-            return enqueueChallengeAction(() => removeFront());
+            return Promise.resolve(undefined);
         },
         removeBack: () => {
-            if (arraySizeRef.current > 0) {
-                updateLogicalSize(-1);
+            if ((arraysSizeRef.current[arrayName] || 0) > 0) {
+                updateLogicalSize(arrayName, -1);
+                const val = logicalArraysRef.current[arrayName].pop();
+                return enqueueChallengeAction(() => animateRemoveBack(arrayName).then(() => val));
             }
-
-            return enqueueChallengeAction(() => Promise.resolve(removeBack()));
+            return Promise.resolve(undefined);
         },
-        setAt: (position, newValue) => enqueueChallengeAction(() => setAt(position, newValue)),
-        get: (position) => get(position),
-        swap: (leftIndex, rightIndex) => enqueueChallengeAction(() => swap(leftIndex, rightIndex)),
-        size: () => arraySizeRef.current,
-    };
+        setAt: (position, newValue) => {
+            const currentSize = arraysSizeRef.current[arrayName] || 0;
+            if (position >= 0 && position < currentSize) {
+                logicalArraysRef.current[arrayName][position] = newValue;
+                return enqueueChallengeAction(() => animateSetAt(arrayName, position, newValue));
+            } else {
+                writeIndexError(arrayName, "setAt", position, currentSize);
+                return Promise.resolve();
+            }
+        },
+        get: (position) => {
+            const currentSize = arraysSizeRef.current[arrayName] || 0;
+            if (position < 0 || position >= currentSize) {
+                writeIndexError(arrayName, "get", position, currentSize);
+                return undefined;
+            }
+            const value = logicalArraysRef.current[arrayName][position];
+            void enqueueChallengeAction(() => animateGet(arrayName, position));
+            return value;
+        },
+        swap: (leftIndex, rightIndex) => {
+            const currentSize = arraysSizeRef.current[arrayName] || 0;
+            if (leftIndex < 0 || rightIndex < 0 || leftIndex >= currentSize || rightIndex >= currentSize) {
+                if (leftIndex < 0 || leftIndex >= currentSize) {
+                    writeIndexError(arrayName, "swap", leftIndex, currentSize);
+                }
+                if (rightIndex < 0 || rightIndex >= currentSize) {
+                    writeIndexError(arrayName, "swap", rightIndex, currentSize);
+                }
+                return Promise.resolve();
+            }
+            if (leftIndex === rightIndex) return Promise.resolve();
+
+            const temp = logicalArraysRef.current[arrayName][leftIndex];
+            logicalArraysRef.current[arrayName][leftIndex] = logicalArraysRef.current[arrayName][rightIndex];
+            logicalArraysRef.current[arrayName][rightIndex] = temp;
+
+            return enqueueChallengeAction(() => animateSwap(arrayName, leftIndex, rightIndex));
+        },
+        size: () => arraysSizeRef.current[arrayName] || 0,
+    });
 
     const challengeIoApi: ChallengeIoApi = {
         println: (message) => {
@@ -507,7 +496,6 @@ export default function SimulationArray() {
                 return;
             }
 
-            // Keep promise-based prints sequenced with other challenge operations.
             void enqueueChallengeAction(async () => {
                 try {
                     const resolved = await message;
@@ -520,10 +508,8 @@ export default function SimulationArray() {
         },
     };
 
-    // Programmatic getter for editor content.
     const getEditorCode = () => editorCode;
 
-    // Programmatic setter for editor content.
     const setEditorCodeProgrammatically = (newCode: string) => {
         setEditorCode(newCode);
     };
@@ -546,19 +532,15 @@ export default function SimulationArray() {
 
     const formatArray = (items: (string | number)[]) => `[${items.join(", ")}]`;
 
-    const formatReturnValue = (value: unknown) => {
-        if (value === undefined) return "undefined";
-        if (value === null) return "null";
-        if (typeof value === "string" || typeof value === "number" || typeof value === "boolean") {
-            return String(value);
+    const formatOutput = (out: unknown) => {
+        if (out === undefined) return "undefined";
+        if (out === null) return "null";
+        if (Array.isArray(out)) return formatArray(out);
+        if (typeof out === 'object' && out !== null) {
+            return Object.entries(out).map(([k, v]) => `${k}: ${formatArray(v as any)}`).join(" | ");
         }
-
-        try {
-            return JSON.stringify(value);
-        } catch {
-            return String(value);
-        }
-    };
+        return String(out);
+    }
 
     const arraysEqual = (left: (string | number)[], right: (string | number)[]) => {
         if (left.length !== right.length) {
@@ -574,11 +556,25 @@ export default function SimulationArray() {
         return true;
     };
 
+    const outputsEqual = (left: any, right: any) => {
+        if (Array.isArray(left) && Array.isArray(right)) return arraysEqual(left, right);
+        if (typeof left === 'object' && typeof right === 'object' && left !== null && right !== null) {
+            const leftKeys = Object.keys(left);
+            const rightKeys = Object.keys(right);
+            if (leftKeys.length !== rightKeys.length) return false;
+            for (const key of leftKeys) {
+                if (!arraysEqual(left[key], right[key])) return false;
+            }
+            return true;
+        }
+        return left === right;
+    };
+
     const createCaseSummary = (
         caseIndex: number,
-        input: (string | number)[],
-        expected: (string | number)[] | undefined,
-        actual: (string | number)[],
+        inputs: Record<string, (string | number)[]> | (string | number)[],
+        expected: Record<string, (string | number)[]> | (string | number)[] | undefined,
+        actual: Record<string, (string | number)[]> | (string | number)[],
         caseName?: string,
         expectedReturn?: string | number,
         actualReturn?: unknown,
@@ -587,9 +583,9 @@ export default function SimulationArray() {
             const passed = actualReturn === expectedReturn;
             return {
                 name: caseName || `Test Case ${caseIndex + 1}`,
-                input: formatArray(input),
-                expected: formatReturnValue(expectedReturn),
-                actual: formatReturnValue(actualReturn),
+                input: formatOutput(inputs),
+                expected: formatOutput(expectedReturn),
+                actual: formatOutput(actualReturn),
                 passed,
                 statusText: passed
                     ? "PASS: Returned value matches expected."
@@ -598,12 +594,12 @@ export default function SimulationArray() {
         }
 
         const normalizedExpected = expected ?? [];
-        const passed = arraysEqual(actual, normalizedExpected);
+        const passed = outputsEqual(actual, normalizedExpected);
         return {
             name: caseName || `Test Case ${caseIndex + 1}`,
-            input: formatArray(input),
-            expected: formatArray(normalizedExpected),
-            actual: formatArray(actual),
+            input: formatOutput(inputs),
+            expected: formatOutput(normalizedExpected),
+            actual: formatOutput(actual),
             passed,
             statusText: passed
                 ? "PASS: Challenge output matches expected."
@@ -611,61 +607,71 @@ export default function SimulationArray() {
         };
     };
 
-    const createHeadlessChallengeApi = (seed: (string | number)[]) => {
-        const values = [...seed];
+    const createHeadlessChallengeApi = (seedInputs: Record<string, (string | number)[]>) => {
+        const valuesMap: Record<string, (string | number)[]> = {};
+        const apis: Record<string, any> = {};
         const maxElements = challenge.maxCapacity.desktop;
 
-        const api = {
-            insertAt: async (position: number, value: string | number) => {
-                if (position < 0 || position > values.length) return;
-                if (values.length >= maxElements) return;
-                values.splice(position, 0, value);
-            },
-            insertFront: async (value: string | number) => {
-                if (values.length >= maxElements) return;
-                values.unshift(value);
-            },
-            insertBack: async (value: string | number) => {
-                if (values.length >= maxElements) return;
-                values.push(value);
-            },
-            removeAt: async (position: number): Promise<string | number | undefined> => {
-                if (position < 0 || position >= values.length) return undefined;
-                const removed = values.splice(position, 1);
-                return removed[0];
-            },
-            removeFront: async (): Promise<string | number | undefined> => {
-                if (values.length === 0) return undefined;
-                return values.shift();
-            },
-            removeBack: async (): Promise<string | number | undefined> => {
-                if (values.length === 0) return undefined;
-                return values.pop();
-            },
-            setAt: async (position: number, value: string | number) => {
-                if (position < 0 || position >= values.length) return;
-                values[position] = value;
-            },
-            get: (position: number): string | number | undefined => {
-                if (position < 0 || position >= values.length) return undefined;
-                return values[position];
-            },
-            swap: async (leftIndex: number, rightIndex: number) => {
-                if (leftIndex < 0 || rightIndex < 0 || leftIndex >= values.length || rightIndex >= values.length) {
-                    return;
-                }
-                if (leftIndex === rightIndex) return;
+        for (const [name, arr] of Object.entries(seedInputs)) {
+            valuesMap[name] = [...arr];
+            apis[name] = {
+                insertAt: async (position: number, value: string | number) => {
+                    if (position < 0 || position > valuesMap[name].length) return;
+                    if (valuesMap[name].length >= maxElements) return;
+                    valuesMap[name].splice(position, 0, value);
+                },
+                insertFront: async (value: string | number) => {
+                    if (valuesMap[name].length >= maxElements) return;
+                    valuesMap[name].unshift(value);
+                },
+                insertBack: async (value: string | number) => {
+                    if (valuesMap[name].length >= maxElements) return;
+                    valuesMap[name].push(value);
+                },
+                removeAt: async (position: number): Promise<string | number | undefined> => {
+                    if (position < 0 || position >= valuesMap[name].length) return undefined;
+                    const removed = valuesMap[name].splice(position, 1);
+                    return removed[0];
+                },
+                removeFront: async (): Promise<string | number | undefined> => {
+                    if (valuesMap[name].length === 0) return undefined;
+                    return valuesMap[name].shift();
+                },
+                removeBack: async (): Promise<string | number | undefined> => {
+                    if (valuesMap[name].length === 0) return undefined;
+                    return valuesMap[name].pop();
+                },
+                setAt: async (position: number, value: string | number) => {
+                    if (position < 0 || position >= valuesMap[name].length) return;
+                    valuesMap[name][position] = value;
+                },
+                get: (position: number): string | number | undefined => {
+                    if (position < 0 || position >= valuesMap[name].length) return undefined;
+                    return valuesMap[name][position];
+                },
+                swap: async (leftIndex: number, rightIndex: number) => {
+                    if (leftIndex < 0 || rightIndex < 0 || leftIndex >= valuesMap[name].length || rightIndex >= valuesMap[name].length) {
+                        return;
+                    }
+                    if (leftIndex === rightIndex) return;
 
-                const temp = values[leftIndex];
-                values[leftIndex] = values[rightIndex];
-                values[rightIndex] = temp;
-            },
-            size: () => values.length,
-        };
+                    const temp = valuesMap[name][leftIndex];
+                    valuesMap[name][leftIndex] = valuesMap[name][rightIndex];
+                    valuesMap[name][rightIndex] = temp;
+                },
+                size: () => valuesMap[name].length,
+            };
+        }
 
         return {
-            api,
-            getValues: () => [...values],
+            apis,
+            getValues: () => {
+                const res: Record<string, (string | number)[]> = {};
+                for (const [name, arr] of Object.entries(valuesMap)) {
+                    res[name] = [...arr];
+                }
+                return res;
+            }
         };
     };
 
@@ -683,14 +689,20 @@ export default function SimulationArray() {
         for (let i = 0; i < additionalCases.length; i++) {
             const testCase = additionalCases[i];
             const caseIndex = i + 1;
-            const { api, getValues } = createHeadlessChallengeApi(testCase.input);
+            const caseInputs = testCase.inputs ?? { array: testCase.input ?? [] };
+            const { apis, getValues } = createHeadlessChallengeApi(caseInputs);
             const silentIo = {
                 println: (_message: unknown) => {
                 },
             };
 
+            const context: Record<string, unknown> = { io: silentIo };
+            for (const [name, api] of Object.entries(apis)) {
+                context[name] = api;
+            }
+
             try {
-                const result = runner(...buildRunnerArgs({ array: api, io: silentIo }));
+                const result = runner(...buildRunnerArgs(context));
                 let resolvedResult: unknown = result;
                 if (result instanceof Promise) {
                     resolvedResult = await result;
@@ -699,7 +711,7 @@ export default function SimulationArray() {
                 summaries.push(
                     createCaseSummary(
                         caseIndex,
-                        testCase.input,
+                        testCase.inputs ?? testCase.input ?? [],
                         testCase.expected,
                         getValues(),
                         testCase.name || `Test Case ${caseIndex + 1}`,
@@ -710,10 +722,10 @@ export default function SimulationArray() {
             } catch {
                 summaries.push({
                     name: testCase.name || `Test Case ${caseIndex + 1}`,
-                    input: formatArray(testCase.input),
+                    input: formatOutput(testCase.inputs ?? testCase.input ?? []),
                     expected: testCase.expectedReturn !== undefined
-                        ? formatReturnValue(testCase.expectedReturn)
-                        : formatArray(testCase.expected ?? []),
+                        ? formatOutput(testCase.expectedReturn)
+                        : formatOutput(testCase.expected ?? []),
                     actual: "Execution Error",
                     passed: false,
                     statusText: "FAIL: Runtime error while evaluating this test case.",
@@ -733,7 +745,13 @@ export default function SimulationArray() {
             setShowNextAction(false);
             challengeQueueRef.current = Promise.resolve();
             const runner = createChallengeRunner(editorCode, runnerParameterNames);
-            const result = runner(...buildRunnerArgs({ array: challengeApi, io: challengeIoApi }));
+            const context: Record<string, unknown> = { io: challengeIoApi };
+            const arrayNames = Object.keys(initialInputs);
+            for (const name of arrayNames) {
+                context[name] = createChallengeApi(name);
+            }
+
+            const result = runner(...buildRunnerArgs(context));
             let resolvedResult: unknown = result;
             if (result instanceof Promise) {
                 resolvedResult = await result;
@@ -741,7 +759,11 @@ export default function SimulationArray() {
             await challengeQueueRef.current;
             await sleep(1000);
 
-            const finalValues = arrayRef.current.map((element) => element.value);
+            const finalValues: Record<string, (string | number)[]> = {};
+            for (const [name, arr] of Object.entries(logicalArraysRef.current)) {
+                finalValues[name] = [...arr];
+            }
+
             const primaryCase = challenge.testCases[0];
 
             if (!primaryCase) {
@@ -750,7 +772,7 @@ export default function SimulationArray() {
                         name: "Test Case 1",
                         input: "-",
                         expected: "-",
-                        actual: formatArray(finalValues),
+                        actual: formatOutput(finalValues),
                         passed: null,
                         statusText: "No test case configured",
                     },
@@ -760,7 +782,7 @@ export default function SimulationArray() {
 
             const primarySummary = createCaseSummary(
                 0,
-                primaryCase.input,
+                primaryCase.inputs ?? primaryCase.input ?? [],
                 primaryCase.expected,
                 finalValues,
                 primaryCase.name || "Test Case 1",
@@ -802,6 +824,8 @@ export default function SimulationArray() {
         }
     };
 
+    const numArrays = Object.keys(arrays).length;
+
     return (
         <div className="h-full bg-gray-50 overflow-hidden">
             <ChallengeCompletedModal
@@ -826,11 +850,23 @@ export default function SimulationArray() {
                         completed={isCompleted}
                     />
 
-                    <VisualArrayContainer>
-                        <VisualArray array={array} />
-                    </VisualArrayContainer>
+                    <div className="flex-1 overflow-y-auto relative flex flex-col min-h-0">
+                        {Object.entries(arrays).map(([name, arrayElements]) => (
+                            <div key={name} className="flex-1 flex flex-col items-center border-b border-gray-100 last:border-b-0 min-h-[200px]">
+                                {numArrays > 1 && (
+                                    <div className="text-sm font-semibold text-gray-500 pt-2 pb-1 bg-gray-50 w-full text-center border-b border-gray-200 shadow-sm flex-shrink-0">
+                                        {name}
+                                    </div>
+                                )}
+                                <div className="flex-1 w-full relative min-h-0 flex flex-col">
+                                    <VisualArrayContainer>
+                                        <VisualArray array={arrayElements} />
+                                    </VisualArrayContainer>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
                 </div >
-
 
                 <div
                     className="hidden lg:flex items-center justify-center cursor-col-resize bg-gray-200 hover:bg-blue-200 transition-colors"

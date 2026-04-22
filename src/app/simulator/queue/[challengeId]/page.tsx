@@ -1,14 +1,16 @@
 'use client';
 
 import { useEffect, useRef, useState } from "react";
-import { ArrayElement, ArrayElementAnimationState } from "@/app/simulator/array-list/components/types";
-import { createArrayElement, createArrayElements } from "@/app/simulator/array-list/components/utils";
+import { ArrayElement, ArrayElementAnimationState } from "@/app/simulator/components/array-list/types";
+import { createArrayElement, createArrayElements } from "@/app/simulator/components/array-list/utils";
 import ChallengeInstructions from "@/app/simulator/components/ChallengeInstructions";
 import ChallengeCompletedModal from "@/app/simulator/components/ChallengeCompletedModal";
 import CodeEditorPanel from "@/app/simulator/components/CodeEditorPanel";
 import VisualArrayContainer from "@/app/simulator/components/VisualArrayContainer";
-import VisualArray from "@/app/simulator/array-list/components/VisualArray";
-import { CHALLENGE_INTRO, createChallengeRunner, DEFAULT_RUNNER_PARAMETER_NAMES } from "./challenges";
+import VisualArray from "@/app/simulator/components/array-list/VisualArray";
+import { useParams } from "next/navigation";
+import { CHALLENGE_REGISTRY } from "../challenges/registry";
+import { ChallengeConfig, createChallengeRunner, DEFAULT_RUNNER_PARAMETER_NAMES } from "../challenges/runner";
 
 type ChallengeResultSummary = {
     name: string;
@@ -20,11 +22,33 @@ type ChallengeResultSummary = {
 };
 
 export default function SimulationQueueChallenge() {
-    const challenge = CHALLENGE_INTRO;
+    const params = useParams<{ challengeId: string }>();
+    const challengeId = params?.challengeId;
+    const challenge = challengeId ? CHALLENGE_REGISTRY[challengeId] : undefined;
+
+    if (!challenge) {
+        return <div className="p-8 text-center text-gray-500">Challenge not found</div>;
+    }
+
+    return <SimulationQueueCore challenge={challenge} challengeId={challengeId} />;
+}
+
+function SimulationQueueCore({ challenge, challengeId }: { challenge: ChallengeConfig, challengeId: string }) {
     const runnerParameterNames = challenge.programStructure?.parameterNames
         ?? challenge.runnerParameterNames
         ?? DEFAULT_RUNNER_PARAMETER_NAMES;
-    const initialQueueSeed = challenge.testCases[0]?.input ?? [];
+
+    const initialInputs = challenge.testCases[0]?.inputs
+        ?? { queue: challenge.testCases[0]?.input ?? [] };
+
+    const getSeeds = () => {
+        const seeds: Record<string, (string | number)[]> = {};
+        for (const key of Object.keys(initialInputs)) {
+            seeds[key] = [...initialInputs[key]];
+        }
+        return seeds;
+    };
+
     const initialEditorCode = challenge.initialEditorCode;
 
     const syncChallengeResult = async (_passed: boolean) => {
@@ -41,7 +65,7 @@ export default function SimulationQueueChallenge() {
         setIsChallengeCompletedModalOpen(false);
     };
 
-    const [queue, setQueue] = useState<ArrayElement[]>([]);
+    const [queues, setQueues] = useState<Record<string, ArrayElement[]>>({});
     const [editorCode, setEditorCode] = useState<string>(initialEditorCode);
     const [leftPaneWidth, setLeftPaneWidth] = useState<number>(50);
     const [isResizing, setIsResizing] = useState<boolean>(false);
@@ -51,9 +75,10 @@ export default function SimulationQueueChallenge() {
     const [isChallengeCompletedModalOpen, setIsChallengeCompletedModalOpen] = useState<boolean>(false);
     const [showNextAction, setShowNextAction] = useState<boolean>(false);
     const [isAnimating, setIsAnimating] = useState<boolean>(false);
+
     const workspaceRef = useRef<HTMLDivElement | null>(null);
-    const queueRef = useRef<ArrayElement[]>([]);
-    const logicalQueueRef = useRef<(string | number)[]>([...initialQueueSeed]);
+    const queuesRef = useRef<Record<string, ArrayElement[]>>({});
+    const logicalQueuesRef = useRef<Record<string, (string | number)[]>>({});
     const isAnimatingRef = useRef<boolean>(false);
     const challengeQueueRef = useRef(Promise.resolve());
 
@@ -79,9 +104,13 @@ export default function SimulationQueueChallenge() {
         setConsoleOutput((prev) => [...prev, nextLine]);
     };
 
-    const commitQueue = (nextQueue: ArrayElement[]) => {
-        queueRef.current = nextQueue;
-        setQueue(nextQueue);
+    const commitQueues = (nextQueues: Record<string, ArrayElement[]>) => {
+        queuesRef.current = nextQueues;
+        setQueues(nextQueues);
+    };
+
+    const commitQueue = (queueName: string, nextQueue: ArrayElement[]) => {
+        commitQueues({ ...queuesRef.current, [queueName]: nextQueue });
     };
 
     const setAnimatingState = (nextIsAnimating: boolean) => {
@@ -99,14 +128,18 @@ export default function SimulationQueueChallenge() {
     };
 
     useEffect(() => {
-        const initial = createArrayElements(...initialQueueSeed);
-        logicalQueueRef.current = [...initialQueueSeed];
-        commitQueue(initial);
+        const seeds = getSeeds();
+        const initialQueues: Record<string, ArrayElement[]> = {};
+        for (const key of Object.keys(seeds)) {
+            initialQueues[key] = createArrayElements(...seeds[key]);
+        }
+        logicalQueuesRef.current = { ...seeds };
+        commitQueues(initialQueues);
     }, []);
 
     useEffect(() => {
-        queueRef.current = queue;
-    }, [queue]);
+        queuesRef.current = queues;
+    }, [queues]);
 
     useEffect(() => {
         isAnimatingRef.current = isAnimating;
@@ -136,8 +169,13 @@ export default function SimulationQueueChallenge() {
     }, [isResizing]);
 
     const resetStructureState = () => {
-        logicalQueueRef.current = [...initialQueueSeed];
-        commitQueue(createArrayElements(...initialQueueSeed));
+        const seeds = getSeeds();
+        const initialQueues: Record<string, ArrayElement[]> = {};
+        for (const key of Object.keys(seeds)) {
+            initialQueues[key] = createArrayElements(...seeds[key]);
+        }
+        logicalQueuesRef.current = { ...seeds };
+        commitQueues(initialQueues);
         setAnimatingState(false);
         setIsCompleted(false);
         setIsChallengeCompletedModalOpen(false);
@@ -150,34 +188,34 @@ export default function SimulationQueueChallenge() {
         challengeQueueRef.current = next.then(() => undefined, () => undefined);
     };
 
-    const enqueue = (value: string | number) => {
-        if (logicalQueueRef.current.length >= getMaxElements()) return;
+    const enqueue = (queueName: string, value: string | number) => {
+        if (logicalQueuesRef.current[queueName].length >= getMaxElements()) return;
 
-        logicalQueueRef.current = [...logicalQueueRef.current, value];
+        logicalQueuesRef.current[queueName] = [...logicalQueuesRef.current[queueName], value];
 
         enqueueChallengeAction(async () => {
             setAnimatingState(true);
-            const currentQueue = queueRef.current;
+            const currentQueue = queuesRef.current[queueName] || [];
             const inserted = createArrayElement(value, ArrayElementAnimationState.NewInserted);
             const nextQueue = [...currentQueue, inserted];
-            commitQueue(nextQueue);
+            commitQueue(queueName, nextQueue);
             await sleep(delay.focus + 80);
             inserted.animationState = ArrayElementAnimationState.Default;
-            commitQueue([...nextQueue]);
+            commitQueue(queueName, [...nextQueue]);
             setAnimatingState(false);
         });
     };
 
-    const dequeue = (): string | number | undefined => {
-        const currentLogicalQueue = logicalQueueRef.current;
+    const dequeue = (queueName: string): string | number | undefined => {
+        const currentLogicalQueue = logicalQueuesRef.current[queueName] || [];
         if (currentLogicalQueue.length === 0) return;
 
         const returnValue = currentLogicalQueue[0];
-        logicalQueueRef.current = currentLogicalQueue.slice(1);
+        logicalQueuesRef.current[queueName] = currentLogicalQueue.slice(1);
 
         enqueueChallengeAction(async () => {
             setAnimatingState(true);
-            const currentQueue = queueRef.current;
+            const currentQueue = queuesRef.current[queueName] || [];
             if (currentQueue.length === 0) {
                 setAnimatingState(false);
                 return;
@@ -186,24 +224,24 @@ export default function SimulationQueueChallenge() {
             const nextQueue = [...currentQueue];
             const removed = nextQueue[0];
             removed.animationState = ArrayElementAnimationState.RemovedInvisible;
-            commitQueue(nextQueue);
+            commitQueue(queueName, nextQueue);
             await sleep(delay.slide);
-            commitQueue(nextQueue.slice(1));
+            commitQueue(queueName, nextQueue.slice(1));
             setAnimatingState(false);
         });
 
         return returnValue;
     };
 
-    const peek = (): string | number | undefined => {
-        const currentLogicalQueue = logicalQueueRef.current;
+    const peek = (queueName: string): string | number | undefined => {
+        const currentLogicalQueue = logicalQueuesRef.current[queueName] || [];
         if (currentLogicalQueue.length === 0) return;
 
         const returnValue = currentLogicalQueue[0];
 
         enqueueChallengeAction(async () => {
             setAnimatingState(true);
-            const currentQueue = queueRef.current;
+            const currentQueue = queuesRef.current[queueName] || [];
             if (currentQueue.length === 0) {
                 setAnimatingState(false);
                 return;
@@ -211,17 +249,17 @@ export default function SimulationQueueChallenge() {
 
             const nextQueue = [...currentQueue];
             nextQueue[0].animationState = ArrayElementAnimationState.HighlightedGreen;
-            commitQueue(nextQueue);
+            commitQueue(queueName, nextQueue);
             await sleep(delay.peek + 120);
             nextQueue[0].animationState = ArrayElementAnimationState.Default;
-            commitQueue([...nextQueue]);
+            commitQueue(queueName, [...nextQueue]);
             setAnimatingState(false);
         });
 
         return returnValue;
     };
 
-    const size = () => logicalQueueRef.current.length;
+    const size = (queueName: string) => logicalQueuesRef.current[queueName]?.length || 0;
 
     type ChallengeQueueApi = {
         enqueue: (value: string | number) => void;
@@ -234,12 +272,12 @@ export default function SimulationQueueChallenge() {
         println: (message: unknown) => void;
     };
 
-    const queueApi: ChallengeQueueApi = {
-        enqueue,
-        dequeue,
-        peek,
-        size,
-    };
+    const createChallengeApi = (queueName: string): ChallengeQueueApi => ({
+        enqueue: (value) => enqueue(queueName, value),
+        dequeue: () => dequeue(queueName),
+        peek: () => peek(queueName),
+        size: () => size(queueName),
+    });
 
     const challengeIoApi: ChallengeIoApi = {
         println: (message) => {
@@ -283,19 +321,15 @@ export default function SimulationQueueChallenge() {
 
     const formatArray = (items: (string | number)[]) => `[${items.join(", ")}]`;
 
-    const formatReturnValue = (value: unknown) => {
-        if (value === undefined) return "undefined";
-        if (value === null) return "null";
-        if (typeof value === "string" || typeof value === "number" || typeof value === "boolean") {
-            return String(value);
+    const formatOutput = (out: unknown) => {
+        if (out === undefined) return "undefined";
+        if (out === null) return "null";
+        if (Array.isArray(out)) return formatArray(out);
+        if (typeof out === 'object' && out !== null) {
+            return Object.entries(out).map(([k, v]) => `${k}: ${formatArray(v as any)}`).join(" | ");
         }
-
-        try {
-            return JSON.stringify(value);
-        } catch {
-            return String(value);
-        }
-    };
+        return String(out);
+    }
 
     const arraysEqual = (left: (string | number)[], right: (string | number)[]) => {
         if (left.length !== right.length) {
@@ -311,11 +345,25 @@ export default function SimulationQueueChallenge() {
         return true;
     };
 
+    const outputsEqual = (left: any, right: any) => {
+        if (Array.isArray(left) && Array.isArray(right)) return arraysEqual(left, right);
+        if (typeof left === 'object' && typeof right === 'object' && left !== null && right !== null) {
+            const leftKeys = Object.keys(left);
+            const rightKeys = Object.keys(right);
+            if (leftKeys.length !== rightKeys.length) return false;
+            for (const key of leftKeys) {
+                if (!arraysEqual(left[key], right[key])) return false;
+            }
+            return true;
+        }
+        return left === right;
+    };
+
     const createCaseSummary = (
         caseIndex: number,
-        input: (string | number)[],
-        expected: (string | number)[] | undefined,
-        actual: (string | number)[],
+        inputs: Record<string, (string | number)[]> | (string | number)[],
+        expected: Record<string, (string | number)[]> | (string | number)[] | undefined,
+        actual: Record<string, (string | number)[]> | (string | number)[],
         caseName?: string,
         expectedReturn?: string | number,
         actualReturn?: unknown,
@@ -324,9 +372,9 @@ export default function SimulationQueueChallenge() {
             const passed = actualReturn === expectedReturn;
             return {
                 name: caseName || `Test Case ${caseIndex + 1}`,
-                input: formatArray(input),
-                expected: formatReturnValue(expectedReturn),
-                actual: formatReturnValue(actualReturn),
+                input: formatOutput(inputs),
+                expected: formatOutput(expectedReturn),
+                actual: formatOutput(actualReturn),
                 passed,
                 statusText: passed
                     ? "PASS: Returned value matches expected."
@@ -335,12 +383,12 @@ export default function SimulationQueueChallenge() {
         }
 
         const normalizedExpected = expected ?? [];
-        const passed = arraysEqual(actual, normalizedExpected);
+        const passed = outputsEqual(actual, normalizedExpected);
         return {
             name: caseName || `Test Case ${caseIndex + 1}`,
-            input: formatArray(input),
-            expected: formatArray(normalizedExpected),
-            actual: formatArray(actual),
+            input: formatOutput(inputs),
+            expected: formatOutput(normalizedExpected),
+            actual: formatOutput(actual),
             passed,
             statusText: passed
                 ? "PASS: Challenge output matches expected."
@@ -348,29 +396,39 @@ export default function SimulationQueueChallenge() {
         };
     };
 
-    const createHeadlessChallengeApi = (seed: (string | number)[]) => {
-        const values = [...seed];
+    const createHeadlessChallengeApi = (seedInputs: Record<string, (string | number)[]>) => {
         const maxElements = challenge.maxCapacity.desktop;
+        const apis: Record<string, any> = {};
+        const valuesMap: Record<string, (string | number)[]> = {};
 
-        const api = {
-            enqueue: async (value: string | number) => {
-                if (values.length >= maxElements) return;
-                values.push(value);
-            },
-            dequeue: async (): Promise<string | number | undefined> => {
-                if (values.length === 0) return undefined;
-                return values.shift();
-            },
-            peek: async (): Promise<string | number | undefined> => {
-                if (values.length === 0) return undefined;
-                return values[0];
-            },
-            size: () => values.length,
-        };
+        for (const [name, arr] of Object.entries(seedInputs)) {
+            valuesMap[name] = [...arr];
+            apis[name] = {
+                enqueue: async (value: string | number) => {
+                    if (valuesMap[name].length >= maxElements) return;
+                    valuesMap[name].push(value);
+                },
+                dequeue: async (): Promise<string | number | undefined> => {
+                    if (valuesMap[name].length === 0) return undefined;
+                    return valuesMap[name].shift();
+                },
+                peek: async (): Promise<string | number | undefined> => {
+                    if (valuesMap[name].length === 0) return undefined;
+                    return valuesMap[name][0];
+                },
+                size: () => valuesMap[name].length,
+            };
+        }
 
         return {
-            api,
-            getValues: () => [...values],
+            apis,
+            getValues: () => {
+                const res: Record<string, (string | number)[]> = {};
+                for (const [name, arr] of Object.entries(valuesMap)) {
+                    res[name] = [...arr];
+                }
+                return res;
+            },
         };
     };
 
@@ -388,14 +446,20 @@ export default function SimulationQueueChallenge() {
         for (let i = 0; i < additionalCases.length; i++) {
             const testCase = additionalCases[i];
             const caseIndex = i + 1;
-            const { api, getValues } = createHeadlessChallengeApi(testCase.input);
+            const caseInputs = testCase.inputs ?? { queue: testCase.input ?? [] };
+            const { apis, getValues } = createHeadlessChallengeApi(caseInputs);
             const silentIo = {
                 println: (_message: unknown) => {
                 },
             };
 
+            const context: Record<string, unknown> = { io: silentIo };
+            for (const [name, api] of Object.entries(apis)) {
+                context[name] = api;
+            }
+
             try {
-                const result = runner(...buildRunnerArgs({ queue: api, io: silentIo }));
+                const result = runner(...buildRunnerArgs(context));
                 let resolvedResult: unknown = result;
                 if (result instanceof Promise) {
                     resolvedResult = await result;
@@ -404,7 +468,7 @@ export default function SimulationQueueChallenge() {
                 summaries.push(
                     createCaseSummary(
                         caseIndex,
-                        testCase.input,
+                        testCase.inputs ?? testCase.input ?? [],
                         testCase.expected,
                         getValues(),
                         testCase.name || `Test Case ${caseIndex + 1}`,
@@ -415,10 +479,10 @@ export default function SimulationQueueChallenge() {
             } catch {
                 summaries.push({
                     name: testCase.name || `Test Case ${caseIndex + 1}`,
-                    input: formatArray(testCase.input),
+                    input: formatOutput(testCase.inputs ?? testCase.input ?? []),
                     expected: testCase.expectedReturn !== undefined
-                        ? formatReturnValue(testCase.expectedReturn)
-                        : formatArray(testCase.expected ?? []),
+                        ? formatOutput(testCase.expectedReturn)
+                        : formatOutput(testCase.expected ?? []),
                     actual: "Execution Error",
                     passed: false,
                     statusText: "FAIL: Runtime error while evaluating this test case.",
@@ -439,7 +503,13 @@ export default function SimulationQueueChallenge() {
             challengeQueueRef.current = Promise.resolve();
 
             const runner = createChallengeRunner(editorCode, runnerParameterNames);
-            const result = runner(...buildRunnerArgs({ queue: queueApi, io: challengeIoApi }));
+            const context: Record<string, unknown> = { io: challengeIoApi };
+            const queueNames = Object.keys(initialInputs);
+            for (const name of queueNames) {
+                context[name] = createChallengeApi(name);
+            }
+
+            const result = runner(...buildRunnerArgs(context));
             let resolvedResult: unknown = result;
             if (result instanceof Promise) {
                 resolvedResult = await result;
@@ -448,7 +518,11 @@ export default function SimulationQueueChallenge() {
             await challengeQueueRef.current;
             await sleep(1000);
 
-            const finalValues = queueRef.current.map((element) => element.value);
+            const finalValues: Record<string, (string | number)[]> = {};
+            for (const [name, arr] of Object.entries(logicalQueuesRef.current)) {
+                finalValues[name] = [...arr];
+            }
+
             const primaryCase = challenge.testCases[0];
 
             if (!primaryCase) {
@@ -457,7 +531,7 @@ export default function SimulationQueueChallenge() {
                         name: "Test Case 1",
                         input: "-",
                         expected: "-",
-                        actual: formatArray(finalValues),
+                        actual: formatOutput(finalValues),
                         passed: null,
                         statusText: "No test case configured",
                     },
@@ -467,7 +541,7 @@ export default function SimulationQueueChallenge() {
 
             const primarySummary = createCaseSummary(
                 0,
-                primaryCase.input,
+                primaryCase.inputs ?? primaryCase.input ?? [],
                 primaryCase.expected,
                 finalValues,
                 primaryCase.name || "Test Case 1",
@@ -508,6 +582,8 @@ export default function SimulationQueueChallenge() {
         }
     };
 
+    const numQueues = Object.keys(queues).length;
+
     return (
         <div className="h-full bg-gray-50 overflow-hidden">
             <ChallengeCompletedModal
@@ -530,25 +606,38 @@ export default function SimulationQueueChallenge() {
                         completed={isCompleted}
                     />
 
-                    <VisualArrayContainer>
-                        <div className="px-4 md:px-9 py-4">
-                            <div className="flex w-full max-w-full min-w-0 items-stretch justify-center gap-2 md:gap-4 overflow-hidden">
-                                <div className="h-full shrink-0 flex flex-col items-center justify-start gap-1">
-                                    <p className="text-xs md:text-sm font-semibold text-green-600">FRONT</p>
-                                    <p className="text-lg md:text-2xl text-green-600">←</p>
-                                </div>
+                    <div className="flex-1 overflow-y-auto relative flex flex-col min-h-0">
+                        {Object.entries(queues).map(([name, queueElements]) => (
+                            <div key={name} className="flex-1 flex flex-col items-center border-b border-gray-100 last:border-b-0 min-h-[200px]">
+                                {numQueues > 1 && (
+                                    <div className="text-sm font-semibold text-gray-500 pt-2 pb-1 bg-gray-50 w-full text-center border-b border-gray-200 shadow-sm flex-shrink-0">
+                                        {name}
+                                    </div>
+                                )}
+                                <div className="flex-1 w-full relative min-h-0 flex flex-col">
+                                    <VisualArrayContainer>
+                                        <div className="px-4 md:px-9 py-4 h-full">
+                                            <div className="flex w-full h-full max-w-full min-w-0 items-stretch justify-center gap-2 md:gap-4 overflow-hidden">
+                                                <div className="h-full shrink-0 flex flex-col items-center justify-start gap-1">
+                                                    <p className="text-xs md:text-sm font-semibold text-green-600">FRONT</p>
+                                                    <p className="text-lg md:text-2xl text-green-600">←</p>
+                                                </div>
 
-                                <div className="min-w-0 flex-1 max-w-full">
-                                    <VisualArray array={queue} />
-                                </div>
+                                                <div className="min-w-0 flex-1 max-w-full h-full relative">
+                                                    <VisualArray array={queueElements} />
+                                                </div>
 
-                                <div className="self-stretch shrink-0 flex flex-col items-center justify-end gap-1">
-                                    <p className="text-xs md:text-sm font-semibold text-blue-600">REAR</p>
-                                    <p className="text-lg md:text-2xl text-blue-600">←</p>
+                                                <div className="self-stretch shrink-0 flex flex-col items-center justify-end gap-1">
+                                                    <p className="text-xs md:text-sm font-semibold text-blue-600">REAR</p>
+                                                    <p className="text-lg md:text-2xl text-blue-600">←</p>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </VisualArrayContainer>
                                 </div>
                             </div>
-                        </div>
-                    </VisualArrayContainer>
+                        ))}
+                    </div>
                 </div>
 
                 <div

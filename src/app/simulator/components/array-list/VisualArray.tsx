@@ -1,4 +1,4 @@
-import VisualArrayBox from "@/app/simulator/array-list/components/VisualArrayBox";
+import VisualArrayBox from "@/app/simulator/components/array-list/VisualArrayBox";
 import { motion, AnimatePresence, LayoutGroup } from "framer-motion";
 
 import { ArrayElement } from "./types";

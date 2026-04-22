@@ -1,6 +1,6 @@
 
 import { motion, MotionNodeAnimationOptions } from "framer-motion";
-import { ArrayElementAnimationState } from "@/app/simulator/array-list/components/types";
+import { ArrayElementAnimationState } from "@/app/simulator/components/array-list/types";
 
 type VisualArrayBoxProps = {
   value: string | number,

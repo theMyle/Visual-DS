@@ -1,7 +1,7 @@
 "use client";
 import { motion, AnimatePresence } from "framer-motion";
-import { StackElement } from "@/app/simulator/stack/components/types";
-import VisualStackBox from "@/app/simulator/stack/components/VisualStackBox";
+import { StackElement } from "@/app/simulator/components/stack/types";
+import VisualStackBox from "@/app/simulator/components/stack/VisualStackBox";
 
 interface VisualStackProps {
   stack: StackElement[];
@@ -10,13 +10,6 @@ interface VisualStackProps {
 export default function VisualStack({ stack }: VisualStackProps) {
   return (
     <div className="w-full h-full flex flex-col items-center justify-center p-2 md:p-4 overflow-hidden">
-      {/* Title */}
-      <div className="flex-shrink-0 mb-2 md:mb-4">
-        <h1 className="text-base md:text-xl font-semibold text-gray-600 text-center">
-          Stack Data Structure
-        </h1>
-      </div>
-
       <div className="flex-1 flex flex-col items-center justify-end w-full max-w-md h-full overflow-hidden relative">
         <div className="flex-1 flex flex-col justify-end items-center overflow-y-auto h-full py-2 md:py-4">
           <div className="flex flex-col gap-1 md:gap-1.5 items-center w-full">

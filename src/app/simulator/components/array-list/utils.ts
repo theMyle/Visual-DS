@@ -1,4 +1,4 @@
-import { ArrayElement, ArrayElementAnimationState } from "@/app/simulator/array-list/components/types";
+import { ArrayElement, ArrayElementAnimationState } from "@/app/simulator/components/array-list/types";
 import { v4 as randomUUID } from "uuid";
 
 // create a single array element

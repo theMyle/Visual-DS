@@ -1,4 +1,4 @@
-import { StackElement, StackElementAnimationState } from "@/app/simulator/stack/components/types";
+import { StackElement, StackElementAnimationState } from "@/app/simulator/components/stack/types";
 import { v4 as randomUUID } from "uuid";
 
 // create a single stack element

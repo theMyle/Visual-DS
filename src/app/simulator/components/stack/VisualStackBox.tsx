@@ -1,6 +1,6 @@
 "use client";
 import { motion } from "framer-motion";
-import { StackElement, StackElementAnimationState } from "@/app/simulator/stack/components/types";
+import { StackElement, StackElementAnimationState } from "@/app/simulator/components/stack/types";
 
 interface VisualStackBoxProps {
   element: StackElement;
