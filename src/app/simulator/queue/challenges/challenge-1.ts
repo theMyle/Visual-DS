@@ -31,7 +31,7 @@ function Solution(queue, io) {
     },
     {
       name: "Test Case 3",
-      input: [5],
+      input: [5, 5],
       expected: [5],
     },
     {

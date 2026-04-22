@@ -20,8 +20,10 @@ function Solution(list) {
   testCases: [
     {
       name: "Test Case 1",
-      input: [1, 2, 3, 4],
-      expected: [1, 3, 2, 3, 4, 5]
+      input: [1, 2, 3, 4, 5],
+      expected: {
+        list: [1, 2, 3, 4, 5]
+      }
     },
     {
       name: "Test Case 2",

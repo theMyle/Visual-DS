@@ -326,38 +326,74 @@ function SimulationQueueCore({ challenge, challengeId }: { challenge: ChallengeC
         if (out === null) return "null";
         if (Array.isArray(out)) return formatArray(out);
         if (typeof out === 'object' && out !== null) {
+            const entries = Object.entries(out);
+            if (entries.length === 1) {
+                return formatArray(entries[0][1] as (string | number)[]);
+            }
             return Object.entries(out).map(([k, v]) => `${k}: ${formatArray(v as any)}`).join(" | ");
         }
         return String(out);
     }
 
-    const arraysEqual = (left: (string | number)[], right: (string | number)[]) => {
-        if (left.length !== right.length) {
-            return false;
+    const normalizeComparableValue = (value: unknown): unknown => {
+        if (
+            value !== null &&
+            typeof value === 'object' &&
+            !Array.isArray(value)
+        ) {
+            const entries = Object.entries(value as Record<string, unknown>);
+            if (entries.length === 1) {
+                return normalizeComparableValue(entries[0][1]);
+            }
         }
 
-        for (let i = 0; i < left.length; i++) {
-            if (left[i] !== right[i]) {
+        return value;
+    };
+
+    const valuesEqual = (left: unknown, right: unknown): boolean => {
+        const normalizedLeft = normalizeComparableValue(left);
+        const normalizedRight = normalizeComparableValue(right);
+
+        if (Array.isArray(normalizedLeft) && Array.isArray(normalizedRight)) {
+            if (normalizedLeft.length !== normalizedRight.length) {
                 return false;
             }
-        }
 
-        return true;
-    };
-
-    const outputsEqual = (left: any, right: any) => {
-        if (Array.isArray(left) && Array.isArray(right)) return arraysEqual(left, right);
-        if (typeof left === 'object' && typeof right === 'object' && left !== null && right !== null) {
-            const leftKeys = Object.keys(left);
-            const rightKeys = Object.keys(right);
-            if (leftKeys.length !== rightKeys.length) return false;
-            for (const key of leftKeys) {
-                if (!arraysEqual(left[key], right[key])) return false;
+            for (let i = 0; i < normalizedLeft.length; i++) {
+                if (!valuesEqual(normalizedLeft[i], normalizedRight[i])) {
+                    return false;
+                }
             }
+
             return true;
         }
-        return left === right;
+
+        if (
+            typeof normalizedLeft === 'object' &&
+            typeof normalizedRight === 'object' &&
+            normalizedLeft !== null &&
+            normalizedRight !== null
+        ) {
+            const leftKeys = Object.keys(normalizedLeft as Record<string, unknown>);
+            const rightKeys = Object.keys(normalizedRight as Record<string, unknown>);
+            if (leftKeys.length !== rightKeys.length) return false;
+
+            for (const key of leftKeys) {
+                if (!valuesEqual(
+                    (normalizedLeft as Record<string, unknown>)[key],
+                    (normalizedRight as Record<string, unknown>)[key],
+                )) {
+                    return false;
+                }
+            }
+
+            return true;
+        }
+
+        return String(normalizedLeft) === String(normalizedRight);
     };
+
+    const outputsEqual = (left: any, right: any) => valuesEqual(left, right);
 
     const createCaseSummary = (
         caseIndex: number,
@@ -404,15 +440,15 @@ function SimulationQueueCore({ challenge, challengeId }: { challenge: ChallengeC
         for (const [name, arr] of Object.entries(seedInputs)) {
             valuesMap[name] = [...arr];
             apis[name] = {
-                enqueue: async (value: string | number) => {
+                enqueue: (value: string | number) => {
                     if (valuesMap[name].length >= maxElements) return;
                     valuesMap[name].push(value);
                 },
-                dequeue: async (): Promise<string | number | undefined> => {
+                dequeue: (): string | number | undefined => {
                     if (valuesMap[name].length === 0) return undefined;
                     return valuesMap[name].shift();
                 },
-                peek: async (): Promise<string | number | undefined> => {
+                peek: (): string | number | undefined => {
                     if (valuesMap[name].length === 0) return undefined;
                     return valuesMap[name][0];
                 },
