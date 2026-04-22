@@ -53,6 +53,8 @@ export default function SimulationLinkedListChallenge() {
     const tailRef = useRef<string | null>(null);
     const nodeActionQueueRef = useRef(Promise.resolve());
     const consoleWriteQueueRef = useRef(Promise.resolve());
+    const nextPointerShadowRef = useRef<Map<string, string | null>>(new Map());
+    const valueShadowRef = useRef<Map<string, string | number>>(new Map());
     const sleep = (ms: number) => new Promise<void>((resolve) => setTimeout(resolve, ms));
 
     const cloneNodes = (list: LinkedListNode[]) => list.map((node) => ({ ...node }));
@@ -136,7 +138,10 @@ export default function SimulationLinkedListChallenge() {
         const self: LinkedListNodeHandle = {
             id: nodeId,
             getValue: () => {
-                const currentValue = nodesRef.current.find((node) => node.id === nodeId)?.value;
+                const shadowValue = valueShadowRef.current.get(nodeId);
+                const currentValue = shadowValue !== undefined
+                    ? shadowValue
+                    : nodesRef.current.find((node) => node.id === nodeId)?.value;
 
                 enqueueNodeAction(async () => {
                     updateNodeAnimationState(nodeId, NodeAnimationState.HighlightedGreen);
@@ -147,6 +152,8 @@ export default function SimulationLinkedListChallenge() {
                 return currentValue;
             },
             setValue: (value) => {
+                valueShadowRef.current.set(nodeId, value);
+
                 return enqueueNodeAction(async () => {
                     const nextNodes = cloneNodes(nodesRef.current);
                     const target = nextNodes.find((node) => node.id === nodeId);
@@ -157,13 +164,23 @@ export default function SimulationLinkedListChallenge() {
 
                     target.value = value;
                     commitNodes([...nextNodes]);
+
+                    const shadowValue = valueShadowRef.current.get(nodeId);
+                    if (shadowValue === value) {
+                        valueShadowRef.current.delete(nodeId);
+                    }
+
                     await sleep(120);
 
                     updateNodeAnimationState(nodeId, NodeAnimationState.Default);
                 });
             },
             getNext: () => {
-                const nextHandle = createNodeHandle(nodesRef.current.find((node) => node.id === nodeId)?.next ?? null);
+                const shadowNext = nextPointerShadowRef.current.get(nodeId);
+                const resolvedNextId = shadowNext !== undefined
+                    ? shadowNext
+                    : (nodesRef.current.find((node) => node.id === nodeId)?.next ?? null);
+                const nextHandle = createNodeHandle(resolvedNextId);
 
                 enqueueNodeAction(async () => {
                     updateNodeAnimationState(nodeId, NodeAnimationState.Traversing);
@@ -174,6 +191,9 @@ export default function SimulationLinkedListChallenge() {
                 return nextHandle;
             },
             setNext: (next) => {
+                const nextId = next ? next.id : null;
+                nextPointerShadowRef.current.set(nodeId, nextId);
+
                 void enqueueNodeAction(async () => {
                     const nextNodes = cloneNodes(nodesRef.current);
                     const target = nextNodes.find((node) => node.id === nodeId);
@@ -183,8 +203,14 @@ export default function SimulationLinkedListChallenge() {
                     commitNodes([...nextNodes]);
                     await sleep(140);
 
-                    target.next = next ? next.id : null;
+                    target.next = nextId;
                     commitNodes([...nextNodes]);
+
+                    const shadowNext = nextPointerShadowRef.current.get(nodeId);
+                    if (shadowNext === nextId) {
+                        nextPointerShadowRef.current.delete(nodeId);
+                    }
+
                     await sleep(100);
 
                     target.animationState = NodeAnimationState.Default;
@@ -570,6 +596,8 @@ export default function SimulationLinkedListChallenge() {
             setShowNextAction(false);
             nodeActionQueueRef.current = Promise.resolve();
             consoleWriteQueueRef.current = Promise.resolve();
+            nextPointerShadowRef.current.clear();
+            valueShadowRef.current.clear();
 
             const runner = createChallengeRunner(editorCode, runnerParameterNames);
             const result = runner(...buildRunnerArgs({ list: linkedListApi, io: { println: writeToConsole } }));
@@ -646,6 +674,8 @@ export default function SimulationLinkedListChallenge() {
         setShowNextAction(false);
         setResultSummaries(null);
         setConsoleOutput([]);
+        nextPointerShadowRef.current.clear();
+        valueShadowRef.current.clear();
     };
 
     const resetListOnly = () => {
@@ -655,6 +685,8 @@ export default function SimulationLinkedListChallenge() {
         setShowNextAction(false);
         setConsoleOutput([]);
         setResultSummaries(null);
+        nextPointerShadowRef.current.clear();
+        valueShadowRef.current.clear();
     };
 
     return (
