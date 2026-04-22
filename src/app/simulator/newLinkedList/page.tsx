@@ -255,6 +255,23 @@ export default function SimulationLinkedListChallenge() {
                 setHead(nextHeadId);
 
                 if (nextHeadId) {
+                    // Recompute tail based on the new head
+                    let nextTailId: string | null = null;
+                    let currentId: string | null = nextHeadId;
+                    const visited = new Set<string>();
+
+                    while (currentId && !visited.has(currentId)) {
+                        visited.add(currentId);
+                        const current = nextNodes.find((node) => node.id === currentId);
+                        if (!current) break;
+
+                        nextTailId = current.id;
+                        currentId = current.next;
+                    }
+
+                    tailRef.current = nextTailId;
+                    setTail(nextTailId);
+
                     const target = nextNodes.find((node) => node.id === nextHeadId);
                     if (target) {
                         target.animationState = NodeAnimationState.Default;
@@ -532,6 +549,24 @@ export default function SimulationLinkedListChallenge() {
         };
     };
 
+    const materializeVisualList = () => {
+        const out: (string | number)[] = [];
+        const visited = new Set<string>();
+        let currentId = headRef.current;
+        const list = nodesRef.current;
+
+        while (currentId && !visited.has(currentId)) {
+            visited.add(currentId);
+            const current = list.find((node) => node.id === currentId);
+            if (!current) break;
+
+            out.push(current.value);
+            currentId = current.next;
+        }
+
+        return out;
+    };
+
     const buildRunnerArgs = (runtimeContext: Record<string, unknown>) => {
         return runnerParameterNames.map((parameterName) => runtimeContext[parameterName]);
     };
@@ -610,7 +645,7 @@ export default function SimulationLinkedListChallenge() {
             await consoleWriteQueueRef.current;
             await new Promise((resolve) => setTimeout(resolve, 1200));
 
-            const finalValues = nodesRef.current.map((node) => node.value);
+            const finalValues = materializeVisualList();
             const primaryCase = challenge.testCases[0];
 
             if (!primaryCase) {
@@ -676,6 +711,7 @@ export default function SimulationLinkedListChallenge() {
         setConsoleOutput([]);
         nextPointerShadowRef.current.clear();
         valueShadowRef.current.clear();
+        resetListOnly();
     };
 
     const resetListOnly = () => {

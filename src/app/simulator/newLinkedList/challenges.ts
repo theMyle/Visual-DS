@@ -102,7 +102,7 @@ function Solution(list) {
     {
       name: "Test Case 1",
       input: [1, 2, 3, 4],
-      expectedReturn: 10,
+      expected: [1,3,2,3,4,5]
     },
     {
       name: "Test Case 2",
