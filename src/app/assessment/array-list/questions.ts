@@ -2,13 +2,7 @@ import { Assessment } from "../types";
 
 export const arrayListAssessment: Assessment = {
   id: "array-list-1",
-  title: "Array List Basics",
-  description: "Assessment on indexing, memory calculation, and performance.",
-  category: {
-    id: "array-list",
-    name: "Array List",
-    description: "Array and dynamic array concepts",
-  },
+  category: "array",
   questions: [
     {
       id: "q1",

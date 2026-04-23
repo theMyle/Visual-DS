@@ -1,5 +1,3 @@
-"use client";
-
 import { useAuth } from "@clerk/nextjs";
 import { useQuery } from "@tanstack/react-query";
 import AssessmentMenuItem from "../components/AssessmentMenuItem";

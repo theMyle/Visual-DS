@@ -73,7 +73,7 @@ export default function Assessment({ assessmentData }: AssessmentProps) {
     const syncScoreMutation = useMutation({
         mutationFn: async (payload: { score: number; total_items: number }) => {
             return FetchWithAuth(
-                `/api/quizzes/${assessmentData.category.id}/${assessmentData.id}`,
+                `/api/quizzes/${assessmentData.category}/${assessmentData.id}`,
                 getToken,
                 {
                     method: "POST",

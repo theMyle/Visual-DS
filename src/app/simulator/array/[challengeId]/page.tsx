@@ -8,7 +8,9 @@ import ChallengeCompletedModal from "@/app/simulator/components/ChallengeComplet
 import CodeEditorPanel from "@/app/simulator/components/CodeEditorPanel";
 import VisualArrayContainer from "@/app/simulator/components/VisualArrayContainer";
 import VisualArray from "@/app/simulator/components/array-list/VisualArray";
+import { useAuth } from "@clerk/nextjs";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
+import { syncSimulatorProgress } from "../../../lib/simulatorProgress";
 import { CHALLENGE_REGISTRY } from "../challenges/registry";
 import { createChallengeRunner, DEFAULT_RUNNER_PARAMETER_NAMES, ChallengeConfig } from "../challenges/runner";
 
@@ -35,6 +37,7 @@ export default function SimulationArrayChallenge() {
 
 function SimulationArrayCore({ challenge, challengeId }: { challenge: ChallengeConfig, challengeId: string }) {
     const router = useRouter();
+    const { isLoaded, isSignedIn, userId, getToken } = useAuth();
     const searchParams = useSearchParams();
     const nextPath = searchParams.get("next");
     const orderedChallengeIds = Object.keys(CHALLENGE_REGISTRY).sort((a, b) => {
@@ -64,11 +67,24 @@ function SimulationArrayCore({ challenge, challengeId }: { challenge: ChallengeC
 
     const initialEditorCode = challenge.initialEditorCode;
 
-    // Placeholder for future DB sync.
-    const syncChallengeResult = async (_passed: boolean) => {
+    const syncChallengeResult = async (passed: boolean) => {
+        try {
+            await syncSimulatorProgress({
+                category: "array",
+                path: `/simulator/array/${challengeId}`,
+                isCompleted: passed,
+                isLoaded,
+                isSignedIn,
+                userId,
+                getToken,
+            });
+        } catch (error) {
+            console.error("Failed to sync simulator progress", error);
+        }
     };
 
     const handleChallengeCompleted = () => {
+        void syncChallengeResult(true);
     };
 
     const handleChallengeMenu = () => {
@@ -323,7 +339,7 @@ function SimulationArrayCore({ challenge, challengeId }: { challenge: ChallengeC
         const newArray = [...(arraysRef.current[arrayName] || [])];
         newArray[index].animationState = ArrayElementAnimationState.HighlightedOrange;
         commitArray(arrayName, newArray);
-        await sleep(delay.focus + 180);
+        await sleep(delay.focus + 120);
 
         newArray[index].value = newValue;
         commitArray(arrayName, [...newArray]);
@@ -372,7 +388,7 @@ function SimulationArrayCore({ challenge, challengeId }: { challenge: ChallengeC
         const newArray = [...(arraysRef.current[arrayName] || [])];
         newArray[index].animationState = ArrayElementAnimationState.HighlightedGreen;
         commitArray(arrayName, [...newArray]);
-        await sleep(delay.get + 200);
+        await sleep(delay.get + 150);
 
         newArray[index].animationState = ArrayElementAnimationState.Default;
         commitArray(arrayName, [...newArray]);
@@ -804,7 +820,6 @@ function SimulationArrayCore({ challenge, challengeId }: { challenge: ChallengeC
             );
 
             setResultSummaries([primarySummary]);
-            void syncChallengeResult(primarySummary.passed === true);
 
             // Run remaining test cases silently without visual animation.
             void runBackgroundTestCases(editorCode).then((backgroundSummaries) => {

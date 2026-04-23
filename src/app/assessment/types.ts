@@ -1,7 +1,7 @@
 // - Choice: Individual answer option with correctness flag
 // - Feedback: Contains correct and incorrect response messages
 // - Question: Has 4 choices and 2 feedback messages
-// - Assessment: Complete assessment with category, questions, and MongoDB fields
+// - Assessment: Complete assessment with category, questions, 
 
 export interface Choice {
     id: string;
@@ -9,29 +9,20 @@ export interface Choice {
     is_correct: boolean;
 }
 
-export interface Feedback {
-    correct: string;
-    incorrect: string;
-}
-
 export interface Question {
     id: string;
     text: string;
     image_url?: string;
-    type: 'multiple_choice' | 'true_false' | 'short_answer';
+    type: 'multiple_choice' | 'true_false';
     choices: Choice[];
-    feedback: Feedback;
+    feedback: {
+        correct: string;
+        incorrect: string;
+    };
 }
 
 export interface Assessment {
-    _id?: string;
-    id: string;
-    title: string;
-    description: string;
-    category: {
-        id: string;
-        name: string;
-        description: string;
-    };
+    id: string;           // e.g., 'array-list-1'
+    category: string;     // e.g., 'array-list'
     questions: Question[];
 }
