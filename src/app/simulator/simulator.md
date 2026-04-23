@@ -25,13 +25,13 @@ interface SimulatorProgressResponse {
 
 #### 1. Get All Simulator Progress
 - **Method:** `GET`
-- **Route:** `/simulator-progress`
+- **Route:** `/api/simulator-progress`
 - **Description:** Fetches the entire history of the user's simulator progress, sorted by category and path.
 - **Response (`200 OK`):** `SimulatorProgressResponse[]`
 
 #### 2. Get Simulator Progress by Category
 - **Method:** `GET`
-- **Route:** `/simulator-progress/{category}`
+- **Route:** `/api/simulator-progress/{category}`
 - **Description:** Fetches progress strictly for a specific category hub (e.g., only "arrays").
 - **Path Parameters:**
   - `category` (string): The simulator category.
@@ -39,7 +39,7 @@ interface SimulatorProgressResponse {
 
 #### 3. Get Specific Simulator Progress
 - **Method:** `GET`
-- **Route:** `/simulator-progress/{category}/{path}`
+- **Route:** `/api/simulator-progress/{category}/{path}`
 - **Description:** Fetches the state of one exact challenge (useful for hydrating the state when a user first opens a specific simulator page).
 - **Path Parameters:**
   - `category` (string): The simulator category.
@@ -49,7 +49,7 @@ interface SimulatorProgressResponse {
 
 #### 4. Upsert (Save/Update) Simulator Progress
 - **Method:** `POST`
-- **Route:** `/simulator-progress/{category}`
+- **Route:** `/api/simulator-progress/{category}`
 - **Description:** Saves a user's progress. If they have already completed or attempted it, it cleanly updates the existing record and bumps the `updated_at` timestamp.
 - **Path Parameters:**
   - `category` (string): The simulator category.

@@ -8,7 +8,9 @@ import ChallengeCompletedModal from "@/app/simulator/components/ChallengeComplet
 import CodeEditorPanel from "@/app/simulator/components/CodeEditorPanel";
 import VisualArrayContainer from "@/app/simulator/components/VisualArrayContainer";
 import VisualLinkedList from "@/app/simulator/components/linked-list/VisualLinkedList";
+import { useAuth } from "@clerk/nextjs";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
+import { syncSimulatorProgress } from "../../../lib/simulatorProgress";
 import { CHALLENGE_REGISTRY } from "../challenges/registry";
 import { ChallengeConfig, createChallengeRunner, DEFAULT_RUNNER_PARAMETER_NAMES } from "../challenges/runner";
 
@@ -49,6 +51,7 @@ export default function SimulationLinkedListChallenge() {
 
 function SimulationLinkedListCore({ challenge, challengeId }: { challenge: ChallengeConfig, challengeId: string }) {
     const router = useRouter();
+    const { isLoaded, isSignedIn, userId, getToken } = useAuth();
     const searchParams = useSearchParams();
     const nextPath = searchParams.get("next");
     const orderedChallengeIds = Object.keys(CHALLENGE_REGISTRY).sort((a, b) => {
@@ -69,6 +72,26 @@ function SimulationLinkedListCore({ challenge, challengeId }: { challenge: Chall
         ?? { list: challenge.testCases[0]?.input ?? [] };
 
     const initialEditorCode = challenge.initialEditorCode;
+
+    const syncChallengeResult = async (passed: boolean) => {
+        try {
+            await syncSimulatorProgress({
+                category: "linked-list",
+                path: `/simulator/linked-list/${challengeId}`,
+                isCompleted: passed,
+                isLoaded,
+                isSignedIn,
+                userId,
+                getToken,
+            });
+        } catch (error) {
+            console.error("Failed to sync simulator progress", error);
+        }
+    };
+
+    const handleChallengeCompleted = () => {
+        void syncChallengeResult(true);
+    };
 
     const [lists, setLists] = useState<Record<string, ListData>>({});
     const [editorCode, setEditorCode] = useState<string>(initialEditorCode);
@@ -798,6 +821,7 @@ function SimulationLinkedListCore({ challenge, challengeId }: { challenge: Chall
                     if (nextResults.every((summary) => summary.passed === true)) {
                         setIsCompleted(true);
                         setShowNextAction(true);
+                        handleChallengeCompleted();
                         setIsChallengeCompletedModalOpen(true);
                     }
                     return;
@@ -808,6 +832,7 @@ function SimulationLinkedListCore({ challenge, challengeId }: { challenge: Chall
                 if (nextResults.every((summary) => summary.passed === true)) {
                     setIsCompleted(true);
                     setShowNextAction(true);
+                    handleChallengeCompleted();
                     setIsChallengeCompletedModalOpen(true);
                 }
             });

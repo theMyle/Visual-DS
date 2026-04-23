@@ -7,8 +7,10 @@ import ChallengeInstructions from "@/app/simulator/components/ChallengeInstructi
 import ChallengeCompletedModal from "@/app/simulator/components/ChallengeCompletedModal";
 import CodeEditorPanel from "@/app/simulator/components/CodeEditorPanel";
 import VisualStack from "@/app/simulator/components/stack/VisualStack";
+import { useAuth } from "@clerk/nextjs";
 import { CHALLENGE_REGISTRY } from "../challenges/registry";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
+import { syncSimulatorProgress } from "../../../lib/simulatorProgress";
 import { ChallengeConfig, DEFAULT_RUNNER_PARAMETER_NAMES } from "../../array/challenges/runner";
 import { createChallengeRunner } from "../challenges/runner";
 
@@ -35,6 +37,7 @@ export default function SimulationStack() {
 
 function SimulationStackCore({ challenge, challengeId }: { challenge: ChallengeConfig, challengeId: string }) {
     const router = useRouter();
+    const { isLoaded, isSignedIn, userId, getToken } = useAuth();
     const searchParams = useSearchParams();
     const nextPath = searchParams.get("next");
     const orderedChallengeIds = Object.keys(CHALLENGE_REGISTRY).sort((a, b) => {
@@ -67,10 +70,24 @@ function SimulationStackCore({ challenge, challengeId }: { challenge: ChallengeC
 
     const initialEditorCode = challenge.initialEditorCode;
 
-    const syncChallengeResult = async (_passed: boolean) => {
+    const syncChallengeResult = async (passed: boolean) => {
+        try {
+            await syncSimulatorProgress({
+                category: "stack",
+                path: `/simulator/stack/${challengeId}`,
+                isCompleted: passed,
+                isLoaded,
+                isSignedIn,
+                userId,
+                getToken,
+            });
+        } catch (error) {
+            console.error("Failed to sync simulator progress", error);
+        }
     };
 
     const handleChallengeCompleted = () => {
+        void syncChallengeResult(true);
     };
 
     const handleChallengeMenu = () => {
@@ -581,7 +598,6 @@ function SimulationStackCore({ challenge, challengeId }: { challenge: ChallengeC
             );
 
             setResultSummaries([primarySummary]);
-            void syncChallengeResult(primarySummary.passed === true);
 
             // Run remaining test cases silently without visual animation.
             void runBackgroundTestCases(editorCode).then((backgroundSummaries) => {

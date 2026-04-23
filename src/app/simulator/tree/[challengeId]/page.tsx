@@ -7,7 +7,9 @@ import ChallengeInstructions from "@/app/simulator/components/ChallengeInstructi
 import ChallengeCompletedModal from "@/app/simulator/components/ChallengeCompletedModal";
 import CodeEditorPanel from "@/app/simulator/components/CodeEditorPanel";
 import VisualTree from "@/app/simulator/components/tree/VisualTree";
+import { useAuth } from "@clerk/nextjs";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
+import { syncSimulatorProgress } from "../../../lib/simulatorProgress";
 import { CHALLENGE_REGISTRY } from "../challenges/registry";
 import { ChallengeConfig, createChallengeRunner, DEFAULT_RUNNER_PARAMETER_NAMES } from "../challenges/runner";
 
@@ -49,6 +51,7 @@ export default function SimulationTreeChallenge() {
 
 function SimulationTreeCore({ challenge, challengeId }: { challenge: ChallengeConfig, challengeId: string }) {
     const router = useRouter();
+    const { isLoaded, isSignedIn, userId, getToken } = useAuth();
     const searchParams = useSearchParams();
     const nextPath = searchParams.get("next");
     const orderedChallengeIds = Object.keys(CHALLENGE_REGISTRY).sort((a, b) => {
@@ -69,6 +72,26 @@ function SimulationTreeCore({ challenge, challengeId }: { challenge: ChallengeCo
         ?? { tree: challenge.testCases[0]?.input ?? [] };
 
     const initialEditorCode = challenge.initialEditorCode;
+
+    const syncChallengeResult = async (passed: boolean) => {
+        try {
+            await syncSimulatorProgress({
+                category: "tree",
+                path: `/simulator/tree/${challengeId}`,
+                isCompleted: passed,
+                isLoaded,
+                isSignedIn,
+                userId,
+                getToken,
+            });
+        } catch (error) {
+            console.error("Failed to sync simulator progress", error);
+        }
+    };
+
+    const handleChallengeCompleted = () => {
+        void syncChallengeResult(true);
+    };
 
     const [trees, setTrees] = useState<Record<string, TreeData>>({});
     const [editorCode, setEditorCode] = useState<string>(initialEditorCode);
@@ -859,6 +882,7 @@ function SimulationTreeCore({ challenge, challengeId }: { challenge: ChallengeCo
                     if (nextResults.every((summary) => summary.passed === true)) {
                         setIsCompleted(true);
                         setShowNextAction(true);
+                        handleChallengeCompleted();
                         setIsChallengeCompletedModalOpen(true);
                     }
                     return;
@@ -869,6 +893,7 @@ function SimulationTreeCore({ challenge, challengeId }: { challenge: ChallengeCo
                 if (nextResults.every((summary) => summary.passed === true)) {
                     setIsCompleted(true);
                     setShowNextAction(true);
+                    handleChallengeCompleted();
                     setIsChallengeCompletedModalOpen(true);
                 }
             });
