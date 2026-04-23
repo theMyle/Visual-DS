@@ -1,6 +1,26 @@
-import Assessment from "../components/Assessment";
-import { stackAssessment } from "./questions";
+"use client";
 
-export default function LinkedListAssessmentPage() {
-    return <Assessment assessmentData={stackAssessment} />;
+import { useQuery } from "@tanstack/react-query";
+import Assessment from "../components/Assessment";
+import AssessmentLoading from "../components/AssessmentLoading";
+import { fetchAssessment } from "../components/fetchAssessment";
+
+const CATEGORY = "stack";
+const ASSESSMENT_ID = "stack-1";
+
+export default function StackAssessmentPage() {
+    const { data, isPending, isError } = useQuery({
+        queryKey: ["assessment", CATEGORY, ASSESSMENT_ID],
+        queryFn: () => fetchAssessment(CATEGORY, ASSESSMENT_ID),
+    });
+
+    if (isPending) {
+        return <AssessmentLoading label="Preparing stack assessment" />;
+    }
+
+    if (isError || !data) {
+        return <div className="p-4 text-sm text-red-600">Failed to load assessment.</div>;
+    }
+
+    return <Assessment assessmentData={data} />;
 }

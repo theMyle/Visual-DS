@@ -163,7 +163,7 @@ export default function ChallengeInstructions({
 
     return (
         <div className={className ?? "border-b border-gray-200 bg-slate-50/90"}>
-            <div className="px-3 md:px-6 py-3 md:py-5 h-32 md:h-40 flex flex-col">
+            <div className="px-3 md:px-6 py-3 md:py-5 h-40 md:h-48 flex flex-col">
                 <div className="flex justify-between gap-2 md:gap-3 pb-2 border-b border-slate-200/80">
                     <div ref={titleHostRef} className="my-0 self-center flex-1 min-w-0">
                         <canvas

@@ -1,12 +1,9 @@
+"use client"
 import { useAuth } from "@clerk/nextjs";
 import { useQuery } from "@tanstack/react-query";
 import AssessmentMenuItem from "../components/AssessmentMenuItem";
 import { ASSESSMENT_LIST } from "../lib/assessments";
 import { FetchWithAuth } from "../lib/fetchWithAuth";
-import { arrayListAssessment } from "./array-list/questions";
-import { linkedListAssessment } from "./linked-list/questions";
-import { queueBasicsAssessment } from "./queue/questions";
-import { stackAssessment } from "./stack/questions";
 
 type ScoreMap = Record<
     string,
@@ -29,10 +26,10 @@ type QuizResultSummaryResponse = {
 };
 
 const QUESTION_TOTAL_BY_ASSESSMENT_ID: Record<string, number> = {
-    [arrayListAssessment.id]: arrayListAssessment.questions.length,
-    [linkedListAssessment.id]: linkedListAssessment.questions.length,
-    [stackAssessment.id]: stackAssessment.questions.length,
-    [queueBasicsAssessment.id]: queueBasicsAssessment.questions.length,
+    "array-list-1": 10,
+    "linked-list-1": 10,
+    "stack-1": 10,
+    "queue-1": 10,
 };
 
 export default function LessonPage() {
