@@ -250,7 +250,7 @@ function SimulationStackCore({ challenge, challengeId }: { challenge: ChallengeC
         const newStack = [...currentStack];
         newStack[0].animationState = StackElementAnimationState.Popping;
         commitStack(stackName, newStack);
-        await sleep(delay.focus + 300);
+        await sleep(delay.focus + 150);
 
         commitStack(stackName, (stacksRef.current[stackName] || []).slice(1));
         setAnimatingState(false);
@@ -264,7 +264,7 @@ function SimulationStackCore({ challenge, challengeId }: { challenge: ChallengeC
         const newStack = [...currentStack];
         newStack[0].animationState = StackElementAnimationState.HighlightedGreen;
         commitStack(stackName, newStack);
-        await sleep(delay.focus + 200);
+        await sleep(delay.focus + 150);
 
         newStack[0].animationState = StackElementAnimationState.Default;
         commitStack(stackName, [...newStack]);

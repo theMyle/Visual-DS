@@ -20,36 +20,47 @@ const buildSuccessSoundDataUri = () => {
     if (cachedSuccessSoundDataUri) return cachedSuccessSoundDataUri;
 
     const sampleRate = 44100;
-    const durationSec = 0.46;
+    const durationSec = 0.62;
     const totalSamples = Math.floor(sampleRate * durationSec);
     const pcm = new Int16Array(totalSamples);
 
-    const notes = [587.33, 783.99, 987.77, 1174.66];
-    const noteStarts = [0, 0.09, 0.18, 0.27];
+    // Warm major reward stack with lower emphasis to avoid overly bright highs.
+    const notes = [392.0, 493.88, 587.33];
+    const noteStarts = [0.0, 0.085, 0.17];
 
     for (let i = 0; i < totalSamples; i++) {
         const t = i / sampleRate;
 
         let noteIndex = 0;
-        if (t >= noteStarts[3]) noteIndex = 3;
-        else if (t >= noteStarts[2]) noteIndex = 2;
+        if (t >= noteStarts[2]) noteIndex = 2;
         else if (t >= noteStarts[1]) noteIndex = 1;
 
         const f = notes[noteIndex];
         const localT = t - noteStarts[noteIndex];
 
-        const attack = Math.min(1, localT / 0.01);
-        const decay = Math.exp(-localT * 9.5);
+        const attack = Math.min(1, localT / 0.024);
+        const decay = Math.exp(-localT * 6.2);
         const body = attack * decay;
-        const globalTail = Math.exp(-t * 2.3);
+        const globalTail = Math.exp(-t * 1.45);
 
         const fundamental = Math.sin(2 * Math.PI * f * t);
-        const harmonic = 0.35 * Math.sin(2 * Math.PI * f * 2 * t + 0.2);
-        const shimmer = 0.12 * Math.sin(2 * Math.PI * f * 4 * t);
+        const softHarmonic = 0.2 * Math.sin(2 * Math.PI * f * 2 * t + 0.08);
+        const warmth = 0.13 * Math.sin(2 * Math.PI * (f * 0.5) * t + 0.2);
 
-        let sample = (fundamental + harmonic + shimmer) * body * globalTail;
-        sample += 0.04 * Math.sin(2 * Math.PI * 2100 * t) * Math.exp(-t * 14);
-        sample = Math.max(-1, Math.min(1, sample * 0.82));
+        let sample = (fundamental + softHarmonic + warmth) * body * globalTail;
+
+        // Gentle low-mid bloom to make it feel like a reward instead of a beep.
+        const bloom = 0.08 * Math.sin(2 * Math.PI * 196 * t) * Math.exp(-t * 3.8);
+        sample += bloom;
+
+        // Extra fade near the tail so the end is smooth.
+        const tailFadeStart = durationSec - 0.12;
+        if (t > tailFadeStart) {
+            const tailProgress = (t - tailFadeStart) / 0.12;
+            sample *= Math.max(0, 1 - tailProgress * tailProgress);
+        }
+
+        sample = Math.max(-1, Math.min(1, sample * 0.64));
 
         pcm[i] = Math.round(sample * 32767);
     }
@@ -103,7 +114,7 @@ const playSuccessSound = () => {
         if (!successHowl) {
             successHowl = new Howl({
                 src: [buildSuccessSoundDataUri()],
-                volume: 0.78,
+                volume: 0.38,
                 preload: true,
             });
         }
@@ -118,8 +129,30 @@ const playSuccessSound = () => {
     }
 };
 
+const ensureSuccessSoundReady = () => {
+    if (typeof window === "undefined") return;
+
+    try {
+        if (!successHowl) {
+            successHowl = new Howl({
+                src: [buildSuccessSoundDataUri()],
+                volume: 0.38,
+                preload: true,
+            });
+        }
+
+        // Prime audio decoding earlier so playback can start immediately.
+        successHowl.load();
+    } catch {
+        // Ignore audio failures.
+    }
+};
+
 const playSuccessCelebration = async () => {
     if (typeof window === "undefined") return;
+
+    // Trigger sound first so it starts in sync with modal appearance.
+    playSuccessSound();
 
     const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     if (!prefersReducedMotion) {
@@ -158,7 +191,6 @@ const playSuccessCelebration = async () => {
         });
     }
 
-    playSuccessSound();
 };
 
 export default function ChallengeCompletedModal({
@@ -168,6 +200,10 @@ export default function ChallengeCompletedModal({
     onNext,
     testCaseLabels,
 }: ChallengeCompletedModalProps) {
+    useEffect(() => {
+        ensureSuccessSoundReady();
+    }, []);
+
     useEffect(() => {
         if (!isOpen) return;
         void playSuccessCelebration();
