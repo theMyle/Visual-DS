@@ -14,6 +14,19 @@ type AssessmentProps = {
     assessmentData: AssessmentType;
 };
 
+type QuestionOutcome = {
+    question_id: string;
+    is_correct: boolean;
+};
+
+type SubmitAssessmentRequest = {
+    quiz_id: string;
+    quiz_category: string;
+    score: number;
+    total_items: number;
+    outcomes: QuestionOutcome[];
+};
+
 
 export default function Assessment({ assessmentData }: AssessmentProps) {
     const router = useRouter();
@@ -29,13 +42,14 @@ export default function Assessment({ assessmentData }: AssessmentProps) {
     const [currentDot, setCurrentDot] = useState(0);
     const [answeredCount, setAnsweredCount] = useState(0);
     const [correctDots, setCorrectDots] = useState<boolean[]>([]);
+    const [questionOutcomes, setQuestionOutcomes] = useState<QuestionOutcome[]>([]);
 
     const [currentQuestion, setCurrentQuestion] = useState<AssessmentType["questions"][number] | null>(null);
     const [shuffledChoices, setShuffledChoices] = useState<Choice[]>([]);
 
     const [correctFeedback, setCorrectFeedback] = useState("");
     const [wrongFeedback, setWrongFeedback] = useState("");
-    const hasSyncedScoreRef = useRef(false);
+    const hasSubmittedAssessmentRef = useRef(false);
 
     useEffect(() => {
         const shuffledQuestions = [...assessmentData.questions].sort(() => Math.random() - 0.5);
@@ -47,6 +61,7 @@ export default function Assessment({ assessmentData }: AssessmentProps) {
         setAssessment(initializedAssessment);
         setCurrentQuestion(shuffledQuestions[0] ?? null);
         setCorrectDots(Array(shuffledQuestions.length).fill(false));
+        setQuestionOutcomes([]);
         setShowSummary(false);
 
         setIsMounted(true);
@@ -70,10 +85,10 @@ export default function Assessment({ assessmentData }: AssessmentProps) {
 
     const correctCount = correctDots.filter(Boolean).length;
 
-    const syncScoreMutation = useMutation({
-        mutationFn: async (payload: { score: number; total_items: number }) => {
+    const submitAssessmentMutation = useMutation({
+        mutationFn: async (payload: SubmitAssessmentRequest) => {
             return FetchWithAuth(
-                `/api/quizzes/${assessmentData.category}/${assessmentData.id}`,
+                "/api/assessments/submit",
                 getToken,
                 {
                     method: "POST",
@@ -82,10 +97,10 @@ export default function Assessment({ assessmentData }: AssessmentProps) {
             );
         },
         onSuccess: () => {
-            console.log("Quiz score synced successfully.");
+            console.log("Assessment submitted successfully.");
         },
         onError: (error) => {
-            console.error("Failed to sync quiz score:", error);
+            console.error("Failed to submit assessment:", error);
         },
     });
 
@@ -118,10 +133,11 @@ export default function Assessment({ assessmentData }: AssessmentProps) {
         if (!assessment) return;
 
         setShowSummary(false);
-        hasSyncedScoreRef.current = false;
+        hasSubmittedAssessmentRef.current = false;
         setCurrentDot(0);
         setAnsweredCount(0);
         setCorrectDots(Array(totalQuestions).fill(false));
+        setQuestionOutcomes([]);
         setCurrentQuestion(assessment.questions[0]);
         setSelectedButton(null);
         setFeedbackMode(false);
@@ -137,6 +153,15 @@ export default function Assessment({ assessmentData }: AssessmentProps) {
 
         const correctAnswer = currentQuestion.choices.find((choice) => choice.is_correct)!;
         const isCorrect = correctAnswer.id === selectedButton;
+
+        setQuestionOutcomes((previous) => {
+            const next = previous.filter((outcome) => outcome.question_id !== currentQuestion.id);
+            next.push({
+                question_id: currentQuestion.id,
+                is_correct: isCorrect,
+            });
+            return next;
+        });
 
         setAnswerIsCorrect(isCorrect);
         setFeedbackMode(() => {
@@ -178,29 +203,43 @@ export default function Assessment({ assessmentData }: AssessmentProps) {
     useEffect(() => {
         if (!showSummary || !isMounted || !assessment) {
             if (!showSummary) {
-                hasSyncedScoreRef.current = false;
+                hasSubmittedAssessmentRef.current = false;
             }
             return;
         }
 
         if (!isLoaded || !isSignedIn) {
-            console.log("ℹ️ [Chain Interrupt] User not logged in. Skipping cloud sync.");
+            console.log("ℹ️ [Chain Interrupt] User not logged in. Skipping assessment submit.");
             return;
         }
 
-        if (hasSyncedScoreRef.current) {
+        if (hasSubmittedAssessmentRef.current) {
             return;
         }
 
-        console.log("[Sync Chain 2/2: Cloud] Syncing score to backend...");
-        hasSyncedScoreRef.current = true;
+        console.log("[Submit] Sending assessment result to backend...");
+        hasSubmittedAssessmentRef.current = true;
 
-        syncScoreMutation.mutate({
+        submitAssessmentMutation.mutate({
+            quiz_id: assessmentData.id,
+            quiz_category: assessmentData.category,
             score: correctCount,
             total_items: totalQuestions,
+            outcomes: questionOutcomes,
         });
 
-    }, [showSummary, isMounted, assessment, isLoaded, isSignedIn, correctCount, totalQuestions]);
+    }, [
+        showSummary,
+        isMounted,
+        assessment,
+        isLoaded,
+        isSignedIn,
+        assessmentData.id,
+        assessmentData.category,
+        correctCount,
+        totalQuestions,
+        questionOutcomes,
+    ]);
 
     const handleLoginToSaveProgress = async () => {
         await redirectToSignIn({ redirectUrl: window.location.href });
@@ -215,7 +254,7 @@ export default function Assessment({ assessmentData }: AssessmentProps) {
             <AssessmentSummary
                 correctCount={correctCount}
                 totalQuestions={totalQuestions}
-                isSyncing={syncScoreMutation.isPending}
+                isSyncing={submitAssessmentMutation.isPending}
                 showLoginButton={isLoaded && !isSignedIn}
                 onLoginToSaveProgress={handleLoginToSaveProgress}
                 onRetry={handleRetry}

@@ -1,67 +1,66 @@
-"use client"
-import { useAuth } from "@clerk/nextjs";
-import { useQuery } from "@tanstack/react-query";
+import { auth } from "@clerk/nextjs/server";
 import AssessmentMenuItem from "../components/AssessmentMenuItem";
-import { ASSESSMENT_LIST } from "../lib/assessments";
-import { FetchWithAuth } from "../lib/fetchWithAuth";
+import {
+    buildScoreHistoryByQuizId,
+    type BackendQuizResult,
+    fetchAssessmentResultsForUser,
+    fetchAssessments,
+    type QuizResultPoint,
+} from "../lib/assessments/api";
 
-type ScoreMap = Record<
-    string,
-    {
-        lastCorrectCount?: number;
-        highestCorrectCount?: number;
-        totalQuestions?: number;
+type AssessmentListItem = {
+    id: string;
+    title: string;
+    path: string;
+    scoreHistory?: QuizResultPoint[];
+};
+
+function toTitleFromCategory(category: string): string {
+    return category
+        .split("-")
+        .filter(Boolean)
+        .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+        .join(" ");
+}
+
+async function fetchAssessmentMenuData(): Promise<AssessmentListItem[]> {
+    try {
+        const assessments = await fetchAssessments();
+        const { userId, getToken } = await auth();
+
+        let results: BackendQuizResult[] = [];
+        if (userId) {
+            try {
+                results = await fetchAssessmentResultsForUser(getToken);
+            } catch {
+                results = [];
+            }
+        }
+
+        const scoreHistoryByQuizId = buildScoreHistoryByQuizId(results);
+
+        return assessments.map((assessment, index): AssessmentListItem => ({
+            id: assessment.id || `unknown-${index}`,
+            title:
+                toTitleFromCategory((assessment.category || "").trim()) ||
+                toTitleFromCategory((assessment.id || "").trim()) ||
+                "Assessment",
+            path: (assessment.category || "").trim()
+                ? `/assessment/${assessment.category.trim()}`
+                : "/assessment",
+            scoreHistory: scoreHistoryByQuizId[assessment.id] ?? [],
+        }));
+    } catch {
+        return [];
     }
->;
+}
 
-type QuizResultSnapshot = {
-    score: number;
-};
+export default async function LessonPage() {
+    const assessments = await fetchAssessmentMenuData();
 
-type QuizResultSummaryResponse = {
-    quiz_category: string;
-    quiz_id: string;
-    highest: QuizResultSnapshot;
-    most_recent: QuizResultSnapshot;
-};
-
-const QUESTION_TOTAL_BY_ASSESSMENT_ID: Record<string, number> = {
-    "array-list-1": 10,
-    "linked-list-1": 10,
-    "stack-1": 10,
-    "queue-1": 10,
-};
-
-export default function LessonPage() {
-    const { isLoaded, isSignedIn, getToken } = useAuth();
-
-    const { data: scoreMap = {} } = useQuery({
-        queryKey: ["quiz-summary"],
-        enabled: isLoaded && isSignedIn,
-        queryFn: async () => {
-            const summaries = await FetchWithAuth<QuizResultSummaryResponse[]>(
-                "/api/quizzes",
-                getToken,
-            );
-
-            const updates: ScoreMap = {};
-
-            summaries.forEach((summary) => {
-                const totalQuestions = QUESTION_TOTAL_BY_ASSESSMENT_ID[summary.quiz_id];
-                if (!totalQuestions) {
-                    return;
-                }
-
-                updates[summary.quiz_id] = {
-                    lastCorrectCount: summary.most_recent?.score,
-                    highestCorrectCount: summary.highest?.score,
-                    totalQuestions,
-                };
-            });
-
-            return updates;
-        },
-    });
+    const sanitizedAssessments = assessments.filter(
+        (assessment) => Boolean(assessment.id) && Boolean(assessment.path),
+    );
 
     return (
         <div className="flex w-full justify-center">
@@ -70,14 +69,12 @@ export default function LessonPage() {
             >
                 <p className="font-bold text-gray-700">Assessment</p>
 
-                {ASSESSMENT_LIST.map((assessment) => (
+                {sanitizedAssessments.map((assessment) => (
                     <AssessmentMenuItem
                         key={assessment.id}
                         title={assessment.title}
                         path={assessment.path}
-                        lastCorrectCount={scoreMap[assessment.id]?.lastCorrectCount}
-                        highestCorrectCount={scoreMap[assessment.id]?.highestCorrectCount}
-                        totalQuestions={scoreMap[assessment.id]?.totalQuestions}
+                        scoreHistory={assessment.scoreHistory}
                     />
                 ))}
 

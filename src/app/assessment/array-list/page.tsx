@@ -3,7 +3,7 @@
 import { useQuery } from "@tanstack/react-query";
 import Assessment from "../components/Assessment";
 import AssessmentLoading from "../components/AssessmentLoading";
-import { fetchAssessment } from "../components/fetchAssessment";
+import { fetchAssessmentById } from "../../lib/assessments/api";
 
 const CATEGORY = "array-list";
 const ASSESSMENT_ID = "array-list-1";
@@ -11,7 +11,7 @@ const ASSESSMENT_ID = "array-list-1";
 export default function ArrayListAssessmentPage() {
     const { data, isPending, isError } = useQuery({
         queryKey: ["assessment", CATEGORY, ASSESSMENT_ID],
-        queryFn: () => fetchAssessment(CATEGORY, ASSESSMENT_ID),
+        queryFn: () => fetchAssessmentById(CATEGORY, ASSESSMENT_ID),
     });
 
     if (isPending) {
