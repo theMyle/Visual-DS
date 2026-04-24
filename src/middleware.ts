@@ -5,16 +5,43 @@ import { hasAdminAccess } from "@/app/lib/auth/admin";
 export default clerkMiddleware(async (auth, req) => {
   const pathname = req.nextUrl.pathname;
   const isAdminRoute = pathname === "/admin" || pathname.startsWith("/admin/");
+  const isAdminUnauthorizedPage = pathname === "/admin/unauthorized";
+  const requestHeaders = new Headers(req.headers);
+  requestHeaders.set("x-pathname", pathname);
 
   if (!isAdminRoute) {
-    return;
+    return NextResponse.next({
+      request: {
+        headers: requestHeaders,
+      },
+    });
   }
 
   const { userId, orgRole, sessionClaims } = await auth();
 
-  if (!userId || !hasAdminAccess({ orgRole, sessionClaims })) {
-    return NextResponse.redirect(new URL("/", req.url));
+  if (!userId) {
+    const loginUrl = new URL("/login", req.url);
+    loginUrl.searchParams.set("redirect_url", req.nextUrl.pathname + req.nextUrl.search);
+    return NextResponse.redirect(loginUrl);
   }
+
+  if (isAdminUnauthorizedPage) {
+    return NextResponse.next({
+      request: {
+        headers: requestHeaders,
+      },
+    });
+  }
+
+  if (!hasAdminAccess({ orgRole, sessionClaims })) {
+    return NextResponse.redirect(new URL("/admin/unauthorized", req.url));
+  }
+
+  return NextResponse.next({
+    request: {
+      headers: requestHeaders,
+    },
+  });
 });
 
 export const config = {

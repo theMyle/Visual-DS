@@ -5,6 +5,7 @@ import NavBar from "@/app/components/NavigationBar";
 import { ClerkProvider } from "@clerk/nextjs";
 import Providers from "./providers";
 import { auth } from "@clerk/nextjs/server";
+import { headers } from "next/headers";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -69,6 +70,9 @@ export default async function RootLayout({
 }>) {
   const { userId } = await auth();
   const isSignedIn = !!userId;
+  const headerList = await headers();
+  const pathname = headerList.get("x-pathname") ?? "";
+  const isAdminRoute = pathname === "/admin" || pathname.startsWith("/admin/");
 
   return (
     <html lang="en" className={"h-full"}>
@@ -77,7 +81,7 @@ export default async function RootLayout({
       >
         <ClerkProvider>
           <Providers>
-            <NavBar initialIsSignedIn={isSignedIn} />
+            {!isAdminRoute && <NavBar initialIsSignedIn={isSignedIn} />}
             <main className="flex-1 overflow-auto relative">
               {children}
             </main>
