@@ -17,15 +17,16 @@ export default async function AdminPage() {
     }
 
     return (
-        <div className="flex h-full w-full overflow-hidden bg-slate-50">
+    <div className="flex h-screen w-full bg-slate-50">
             {/* Left Sidebar */}
             <AdminSidebar />
 
-            {/* Right Content Area */}
-            <main className="flex-1 flex flex-col overflow-hidden">
-                <div className="flex-1 flex flex-col p-8 w-full max-w-7xl mx-auto overflow-hidden">
-                    <header className="mb-8 flex-shrink-0">
-                        <h1 className="text-3xl font-bold text-slate-900">Admin Dashboard</h1>
+            {/* Right Content Area - scrolls */}
+            <main className="flex-1 overflow-y-auto">
+                <div className="p-8 w-full max-w-7xl mx-auto">
+                    <header className="mb-8">
+                        <h1 className="text-3xl font-bold text-slate-900">Dashboard</h1>
+                        <p className="text-slate-500 mt-1">Monitor and manage registered platform users.</p>
                     </header>
 
                     {error ? (
@@ -34,9 +35,7 @@ export default async function AdminPage() {
                             <p className="font-medium">{error}</p>
                         </div>
                     ) : (
-                        <div className="flex-1 overflow-hidden">
-                            <UserManagement users={users} />
-                        </div>
+                        <UserManagement users={users} />
                     )}
                 </div>
             </main>

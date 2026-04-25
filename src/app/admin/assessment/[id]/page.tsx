@@ -4,15 +4,6 @@ import AdminSidebar from "../../components/AdminSidebar";
 import QuestionManagement, { QuestionDTO } from "./components/QuestionManagement";
 import Link from "next/link";
 import { revalidatePath } from "next/cache";
-
-interface QuestionManagementProps {
-    assessmentId: string;
-    initialQuestions: QuestionDTO[];
-    onAddQuestion: (question: Partial<QuestionDTO>) => Promise<void>;
-    onUpdateQuestion: (id: string, question: Partial<QuestionDTO>) => Promise<void>;
-    onDeleteQuestion: (id: string) => Promise<void>;
-}
-
 import { addQuestion, updateQuestion, deleteQuestion } from "./actions";
 
 interface AssessmentDetailDTO {
@@ -21,10 +12,19 @@ interface AssessmentDetailDTO {
     questions: QuestionDTO[];
 }
 
-export default async function AdminAssessmentDetailPage({ params }: { params: { id: string } }) {
+/**
+ * Next.js 15 fix: params is now a Promise. 
+ * We must define it as Promise<{ id: string }> to satisfy the build compiler.
+ */
+export default async function AdminAssessmentDetailPage({
+    params
+}: {
+    params: Promise<{ id: string }>
+}) {
+    // Await the params before using them
     const { id } = await params;
     const { getToken } = await auth();
-    
+
     let assessment: AssessmentDetailDTO | null = null;
     let error: string | null = null;
 
@@ -37,14 +37,15 @@ export default async function AdminAssessmentDetailPage({ params }: { params: { 
 
     async function updateCategoryName(newName: string) {
         "use server";
+        // Re-awaiting params inside the server action scope
         const { id: assessmentId } = await params;
-        const { getToken } = await auth();
-        
-        await fetchAdminApi(`assessments/${assessmentId}`, getToken, {
+        const { getToken: getActionToken } = await auth();
+
+        await fetchAdminApi(`assessments/${assessmentId}`, getActionToken, {
             method: "PUT",
             body: JSON.stringify({ category: newName })
         });
-        
+
         revalidatePath(`/admin/assessment/${assessmentId}`);
         revalidatePath(`/admin/assessment`);
     }
@@ -63,11 +64,15 @@ export default async function AdminAssessmentDetailPage({ params }: { params: { 
                     <header className="mb-8 flex-shrink-0 flex items-center justify-between">
                         <div>
                             <div className="flex items-center gap-2 mb-2">
-                                <Link href="/admin/assessment" className="text-xs font-bold text-indigo-600 hover:underline">Assessments</Link>
+                                <Link href="/admin/assessment" className="text-xs font-bold text-indigo-600 hover:underline">
+                                    Assessments
+                                </Link>
                                 <span className="text-slate-300">/</span>
                                 <span className="text-xs font-bold text-slate-400">{id}</span>
                             </div>
-                            <h1 className="text-3xl font-bold text-slate-900">{assessment?.category || "Loading..."}</h1>
+                            <h1 className="text-3xl font-bold text-slate-900">
+                                {assessment?.category || "Loading..."}
+                            </h1>
                         </div>
                     </header>
 
@@ -78,7 +83,7 @@ export default async function AdminAssessmentDetailPage({ params }: { params: { 
                     ) : (
                         assessment && (
                             <div className="flex-1 overflow-hidden">
-                                <QuestionManagement 
+                                <QuestionManagement
                                     assessmentId={id}
                                     initialQuestions={assessment.questions}
                                     onAddQuestion={onAdd}
