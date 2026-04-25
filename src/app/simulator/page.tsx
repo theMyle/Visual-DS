@@ -18,7 +18,6 @@ type SimulatorProgressResponse = {
 };
 
 import { fetchSimulatorCurriculum } from "../lib/simulators";
-import SimulatorError from "./components/SimulatorError";
 
 export default async function SimulatorPage() {
   const { userId, getToken } = await auth();
@@ -32,15 +31,6 @@ export default async function SimulatorPage() {
   } catch (error) {
     console.error("Failed to fetch simulator curriculum:", error);
     curriculumError = true;
-  }
-
-  if (curriculumError || curriculum.length === 0) {
-    return (
-      <SimulatorError 
-        title="Curriculum Unavailable"
-        message="We were unable to load the simulator curriculum. Please ensure the backend is running and try again."
-      />
-    );
   }
 
   if (userId) {

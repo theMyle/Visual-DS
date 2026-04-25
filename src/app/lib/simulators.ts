@@ -1,6 +1,4 @@
-import { ChallengeConfig } from "../simulator/stack/challenges/runner";
-
-const BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080/api";
+import { getApiUrl } from "./env";
 
 export interface SimulatorChallengeDTO {
     id: string;
@@ -22,7 +20,7 @@ export interface SimulatorChallengeDTO {
 }
 
 export async function fetchSimulatorChallenge(simulatorSlug: string, challengeSlug: string): Promise<SimulatorChallengeDTO> {
-    const res = await fetch(`${BASE_URL}/simulators/${simulatorSlug}/challenges/${challengeSlug}`, {
+    const res = await fetch(getApiUrl(`/api/simulators/${simulatorSlug}/challenges/${challengeSlug}`), {
         cache: "no-store",
     });
 
@@ -50,7 +48,7 @@ export interface SimulatorCurriculumDTO {
 }
 
 export async function fetchSimulatorCurriculum(): Promise<SimulatorCurriculumDTO[]> {
-    const res = await fetch(`${BASE_URL}/simulators/curriculum`, {
+    const res = await fetch(getApiUrl("/api/simulators/curriculum"), {
         cache: "no-store",
     });
 
