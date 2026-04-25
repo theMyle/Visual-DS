@@ -17,63 +17,31 @@ type SimulatorProgressResponse = {
   updated_at: string | null;
 };
 
-const SIMULATOR_SECTIONS: { title: string; levels: Level[] }[] = [
-  {
-    title: "Array",
-    levels: [
-      { id: 1, path: "/simulator/array/challenge-1", next: "/simulator/array/challenge-2", isCompleted: false },
-      { id: 2, path: "/simulator/array/challenge-2", next: "/simulator/array/challenge-3", isCompleted: false },
-      { id: 3, path: "/simulator/array/challenge-3", next: "/simulator/array/challenge-4", isCompleted: false },
-      { id: 4, path: "/simulator/array/challenge-4", next: "/simulator/array/challenge-5", isCompleted: false },
-      { id: 5, path: "/simulator/array/challenge-5", next: "/simulator", isCompleted: false },
-    ],
-  },
-  {
-    title: "Linked List",
-    levels: [
-      { id: 1, path: "/simulator/linked-list/challenge-1", next: "/simulator/linked-list/challenge-2", isCompleted: false },
-      { id: 2, path: "/simulator/linked-list/challenge-2", next: "/simulator/linked-list/challenge-3", isCompleted: false },
-      { id: 3, path: "/simulator/linked-list/challenge-3", next: "/simulator/linked-list/challenge-4", isCompleted: false },
-      { id: 4, path: "/simulator/linked-list/challenge-4", next: "/simulator/linked-list/challenge-5", isCompleted: false },
-      { id: 5, path: "/simulator/linked-list/challenge-5", next: "/simulator", isCompleted: false },
-    ],
-  },
-  {
-    title: "Stack",
-    levels: [
-      { id: 1, path: "/simulator/stack/challenge-1", next: "/simulator/stack/challenge-2", isCompleted: false },
-      { id: 2, path: "/simulator/stack/challenge-2", next: "/simulator/stack/challenge-3", isCompleted: false },
-      { id: 3, path: "/simulator/stack/challenge-3", next: "/simulator/stack/challenge-4", isCompleted: false },
-      { id: 4, path: "/simulator/stack/challenge-4", next: "/simulator/stack/challenge-5", isCompleted: false },
-      { id: 5, path: "/simulator/stack/challenge-5", next: "/simulator", isCompleted: false },
-    ],
-  },
-  {
-    title: "Queue",
-    levels: [
-      { id: 1, path: "/simulator/queue/challenge-1", next: "/simulator/queue/challenge-2", isCompleted: false },
-      { id: 2, path: "/simulator/queue/challenge-2", next: "/simulator/queue/challenge-3", isCompleted: false },
-      { id: 3, path: "/simulator/queue/challenge-3", next: "/simulator/queue/challenge-4", isCompleted: false },
-      { id: 4, path: "/simulator/queue/challenge-4", next: "/simulator/queue/challenge-5", isCompleted: false },
-      { id: 5, path: "/simulator/queue/challenge-5", next: "/simulator", isCompleted: false },
-    ],
-  },
-  {
-    title: "Tree",
-    levels: [
-      { id: 1, path: "/simulator/tree/challenge-1", next: "/simulator/tree/challenge-2", isCompleted: false },
-      { id: 2, path: "/simulator/tree/challenge-2", next: "/simulator/tree/challenge-3", isCompleted: false },
-      { id: 3, path: "/simulator/tree/challenge-3", next: "/simulator/tree/challenge-4", isCompleted: false },
-      { id: 4, path: "/simulator/tree/challenge-4", next: "/simulator/tree/challenge-5", isCompleted: false },
-      { id: 5, path: "/simulator/tree/challenge-5", next: "/simulator", isCompleted: false },
-    ],
-  },
-];
+import { fetchSimulatorCurriculum } from "../lib/simulators";
+import SimulatorError from "./components/SimulatorError";
 
 export default async function SimulatorPage() {
   const { userId, getToken } = await auth();
 
   let progress: SimulatorProgressResponse[] = [];
+  let curriculum: any[] = [];
+  let curriculumError = false;
+
+  try {
+    curriculum = await fetchSimulatorCurriculum();
+  } catch (error) {
+    console.error("Failed to fetch simulator curriculum:", error);
+    curriculumError = true;
+  }
+
+  if (curriculumError || curriculum.length === 0) {
+    return (
+      <SimulatorError 
+        title="Curriculum Unavailable"
+        message="We were unable to load the simulator curriculum. Please ensure the backend is running and try again."
+      />
+    );
+  }
 
   if (userId) {
     try {
@@ -92,11 +60,13 @@ export default async function SimulatorPage() {
       .map((item) => item.path),
   );
 
-  const sectionsWithProgress = SIMULATOR_SECTIONS.map((section) => ({
-    ...section,
-    levels: section.levels.map((level) => ({
-      ...level,
-      isCompleted: completedPaths.has(level.path),
+  const sectionsWithProgress = curriculum.map((section) => ({
+    title: section.name,
+    levels: section.challenges.map((challenge: any, index: number) => ({
+      id: index + 1,
+      path: challenge.path,
+      next: index < section.challenges.length - 1 ? section.challenges[index + 1].path : "/simulator",
+      isCompleted: completedPaths.has(challenge.path),
     })),
   }));
 
@@ -107,13 +77,19 @@ export default async function SimulatorPage() {
       >
 
         <p className="font-bold text-gray-700">Simulator</p>
-        {sectionsWithProgress.map((section) => (
-          <SimulatorMenuItem
-            key={section.title}
-            title={section.title}
-            levels={section.levels}
-          />
-        ))}
+        {sectionsWithProgress.length > 0 ? (
+          sectionsWithProgress.map((section) => (
+            <SimulatorMenuItem
+              key={section.title}
+              title={section.title}
+              levels={section.levels}
+            />
+          ))
+        ) : (
+          <div className="text-center py-12 bg-white rounded-2xl border border-dashed border-slate-200">
+            <p className="text-sm text-slate-500 font-medium">No simulators available yet.</p>
+          </div>
+        )}
 
       </div>
     </div>

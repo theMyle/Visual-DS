@@ -11,8 +11,9 @@ import VisualArray from "@/app/simulator/components/array-list/VisualArray";
 import { useAuth } from "@clerk/nextjs";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { syncSimulatorProgress } from "../../../lib/simulatorProgress";
-import { CHALLENGE_REGISTRY } from "../challenges/registry";
+import { fetchSimulatorChallenge, SimulatorChallengeDTO } from "@/app/lib/simulators";
 import { createChallengeRunner, DEFAULT_RUNNER_PARAMETER_NAMES, ChallengeConfig } from "../challenges/runner";
+import SimulatorError from "../../components/SimulatorError";
 
 type ChallengeResultSummary = {
     name: string;
@@ -26,28 +27,63 @@ type ChallengeResultSummary = {
 export default function SimulationArrayChallenge() {
     const params = useParams<{ challengeId: string }>();
     const challengeId = params?.challengeId;
-    const challenge = challengeId ? CHALLENGE_REGISTRY[challengeId] : undefined;
+    const [challenge, setChallenge] = useState<SimulatorChallengeDTO | null>(null);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
 
-    if (!challenge) {
-        return <div className="p-8 text-center text-gray-500">Challenge not found</div>;
+    useEffect(() => {
+        if (!challengeId) return;
+        
+        setLoading(true);
+        fetchSimulatorChallenge("array", challengeId)
+            .then(setChallenge)
+            .catch(err => setError(err.message))
+            .finally(() => setLoading(false));
+    }, [challengeId]);
+
+    if (loading) {
+        return (
+            <div className="h-full flex items-center justify-center bg-gray-50">
+                <div className="flex flex-col items-center gap-3">
+                    <div className="w-8 h-8 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin"></div>
+                    <p className="text-sm font-medium text-slate-500">Loading challenge...</p>
+                </div>
+            </div>
+        );
     }
 
-    return <SimulationArrayCore challenge={challenge} challengeId={challengeId} />;
+    if (error || !challenge) {
+        return (
+            <SimulatorError 
+                title={error ? "Failed to Load Challenge" : "Challenge Not Found"}
+                message={error || "The requested challenge could not be found."}
+                onRetry={() => window.location.reload()}
+            />
+        );
+    }
+
+    // Map DTO to ChallengeConfig format expected by core component
+    const config: ChallengeConfig = {
+        id: challenge.id,
+        title: challenge.title,
+        description: challenge.description,
+        initialEditorCode: challenge.initial_code,
+        programStructure: challenge.program_structure,
+        testCases: challenge.test_cases,
+        maxCapacity: challenge.capacity,
+    };
+
+    return <SimulationArrayCore challenge={config} challengeId={challengeId} nextChallengeSlug={challenge.next_challenge_slug} />;
 }
 
-function SimulationArrayCore({ challenge, challengeId }: { challenge: ChallengeConfig, challengeId: string }) {
+function SimulationArrayCore({ challenge, challengeId, nextChallengeSlug }: { challenge: ChallengeConfig, challengeId: string, nextChallengeSlug?: string }) {
     const router = useRouter();
     const { isLoaded, isSignedIn, userId, getToken } = useAuth();
     const searchParams = useSearchParams();
     const nextPath = searchParams.get("next");
-    const orderedChallengeIds = Object.keys(CHALLENGE_REGISTRY).sort((a, b) => {
-        const aNum = Number(a.split("-").at(-1));
-        const bNum = Number(b.split("-").at(-1));
-        return aNum - bNum;
-    });
-    const currentChallengeIndex = orderedChallengeIds.indexOf(challengeId);
-    const inferredNextPath = currentChallengeIndex >= 0 && currentChallengeIndex < orderedChallengeIds.length - 1
-        ? `/simulator/array/${orderedChallengeIds[currentChallengeIndex + 1]}`
+    
+    const inferredNextPath = nextChallengeSlug 
+        ? `/simulator/array/${nextChallengeSlug}`
         : "/simulator";
 
     const runnerParameterNames = challenge.programStructure?.parameterNames
