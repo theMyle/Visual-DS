@@ -2,37 +2,30 @@
 
 import { useState } from "react";
 
-interface User {
-  id: string;
-  firstName: string;
-  lastName: string;
+export interface AdminUserDTO {
+  user_id: string;
+  clerk_id: string;
+  first_name: string;
+  last_name: string;
   email: string;
-  username: string;
-  avatar?: string;
+  created_at: string;
+  updated_at: string;
+  block_id?: string | null;
+  middle_name?: string | null;
+  course_id?: string | null;
 }
 
-const MOCK_USERS: User[] = [
-  { id: "user_1", firstName: "John", lastName: "Doe", email: "john@example.com", username: "johndoe", avatar: "JD" },
-  { id: "user_2", firstName: "Jane", lastName: "Smith", email: "jane@example.com", username: "janesmith", avatar: "JS" },
-  { id: "user_3", firstName: "Alice", lastName: "Brown", email: "alice@example.com", username: "aliceb", avatar: "AB" },
-  { id: "user_4", firstName: "Bob", lastName: "Wilson", email: "bob@example.com", username: "bobw", avatar: "BW" },
-  { id: "user_5", firstName: "Charlie", lastName: "Davis", email: "charlie@example.com", username: "charlied", avatar: "CD" },
-  { id: "user_6", firstName: "David", lastName: "Miller", email: "david@example.com", username: "davidm", avatar: "DM" },
-  { id: "user_7", firstName: "Eva", lastName: "Garcia", email: "eva@example.com", username: "evag", avatar: "EG" },
-  { id: "user_8", firstName: "Frank", lastName: "Harris", email: "frank@example.com", username: "frankh", avatar: "FH" },
-  { id: "user_9", firstName: "Grace", lastName: "Lee", email: "grace@example.com", username: "gracel", avatar: "GL" },
-  { id: "user_10", firstName: "Henry", lastName: "Clark", email: "henry@example.com", username: "henryc", avatar: "HC" },
-  { id: "user_11", firstName: "Ivy", lastName: "Lewis", email: "ivy@example.com", username: "ivyl", avatar: "IL" },
-  { id: "user_12", firstName: "Jack", lastName: "Walker", email: "jack@example.com", username: "jackw", avatar: "JW" },
-];
+interface UserManagementProps {
+  users: AdminUserDTO[];
+}
 
-export default function UserManagement() {
+export default function UserManagement({ users = [] }: UserManagementProps) {
   const [search, setSearch] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const pageSize = 5;
 
-  const filteredUsers = MOCK_USERS.filter(user => 
-    `${user.firstName} ${user.lastName} ${user.email} ${user.username}`
+  const filteredUsers = (users || []).filter(user => 
+    `${user.first_name} ${user.last_name} ${user.email} ${user.clerk_id}`
       .toLowerCase()
       .includes(search.toLowerCase())
   );
@@ -40,7 +33,6 @@ export default function UserManagement() {
   const totalPages = Math.ceil(filteredUsers.length / pageSize);
   const paginatedUsers = filteredUsers.slice((currentPage - 1) * pageSize, currentPage * pageSize);
 
-  // Reset to page 1 on search
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setSearch(e.target.value);
     setCurrentPage(1);
@@ -77,43 +69,35 @@ export default function UserManagement() {
               <th scope="col" className="px-6 py-4 text-left text-xs font-bold text-slate-500 uppercase tracking-wider bg-slate-50">Firstname</th>
               <th scope="col" className="px-6 py-4 text-left text-xs font-bold text-slate-500 uppercase tracking-wider bg-slate-50">Lastname</th>
               <th scope="col" className="px-6 py-4 text-left text-xs font-bold text-slate-500 uppercase tracking-wider bg-slate-50">Email</th>
-              <th scope="col" className="relative px-6 py-4 bg-slate-50">
-                <span className="sr-only">Actions</span>
-              </th>
             </tr>
           </thead>
           <tbody className="bg-white divide-y divide-slate-100">
             {paginatedUsers.length > 0 ? (
               paginatedUsers.map((user) => (
-                <tr key={user.id} className="hover:bg-slate-50/50 transition-colors duration-150">
+                <tr key={user.user_id} className="hover:bg-slate-50/50 transition-colors duration-150 cursor-default">
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="flex items-center">
                       <div className="flex-shrink-0 h-10 w-10 bg-indigo-100 rounded-full flex items-center justify-center text-indigo-700 font-bold text-sm border-2 border-white shadow-sm">
-                        {user.avatar}
+                        {user.first_name?.[0]}{user.last_name?.[0]}
                       </div>
                       <div className="ml-4">
-                        <div className="text-sm font-semibold text-slate-900">@{user.username}</div>
+                        <div className="text-sm font-semibold text-slate-900">{user.clerk_id.slice(-8)}</div>
                       </div>
                     </div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <span className="px-2 py-1 text-xs font-mono font-medium text-slate-500 bg-slate-100 rounded-md">
-                      {user.id}
+                      {user.user_id.slice(0, 8)}...
                     </span>
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-600 font-medium">{user.firstName}</td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-600 font-medium">{user.lastName}</td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-600 font-medium">{user.first_name}</td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-600 font-medium">{user.last_name}</td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-600">{user.email}</td>
-                  <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                    <button className="text-indigo-600 hover:text-indigo-900 bg-indigo-50 hover:bg-indigo-100 px-3 py-1 rounded-lg transition-colors">
-                      View
-                    </button>
-                  </td>
                 </tr>
               ))
             ) : (
               <tr>
-                <td colSpan={6} className="px-6 py-12 text-center">
+                <td colSpan={5} className="px-6 py-12 text-center">
                   <div className="flex flex-col items-center">
                     <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round" className="text-slate-200 mb-4"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
                     <p className="text-slate-500 font-medium">No users found matching "{search}"</p>
@@ -128,7 +112,7 @@ export default function UserManagement() {
       {/* Pagination Controls */}
       <div className="p-4 bg-slate-50 border-t border-slate-100 flex items-center justify-between flex-shrink-0">
         <p className="text-xs text-slate-400 font-medium">
-          Showing {((currentPage - 1) * pageSize) + 1} to {Math.min(currentPage * pageSize, filteredUsers.length)} of {filteredUsers.length} total users
+          Showing {filteredUsers.length === 0 ? 0 : ((currentPage - 1) * pageSize) + 1} to {Math.min(currentPage * pageSize, filteredUsers.length)} of {filteredUsers.length} total users
         </p>
         
         <div className="flex items-center gap-2">
@@ -168,3 +152,4 @@ export default function UserManagement() {
     </section>
   );
 }
+
