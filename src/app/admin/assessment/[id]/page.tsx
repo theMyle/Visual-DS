@@ -13,6 +13,8 @@ interface QuestionManagementProps {
     onDeleteQuestion: (id: string) => Promise<void>;
 }
 
+import { addQuestion, updateQuestion, deleteQuestion } from "./actions";
+
 interface AssessmentDetailDTO {
     id: string;
     category: string;
@@ -27,50 +29,10 @@ export default async function AdminAssessmentDetailPage({ params }: { params: { 
     let error: string | null = null;
 
     try {
-        // Fetch specific assessment with questions
-        // In the backend, we use GET /assessments/{id}
         assessment = await fetchAdminApi<AssessmentDetailDTO>(`assessments/${id}`, getToken);
     } catch (e) {
         error = e instanceof Error ? e.message : "Failed to fetch assessment details";
         console.error("Admin Assessment Detail Fetch Error:", e);
-    }
-
-    async function addQuestion(question: Partial<QuestionDTO>) {
-        "use server";
-        const { id: assessmentId } = await params;
-        const { getToken } = await auth();
-        
-        await fetchAdminApi(`assessments/${assessmentId}/questions`, getToken, {
-            method: "POST",
-            body: JSON.stringify(question)
-        });
-        
-        revalidatePath(`/admin/assessment/${assessmentId}`);
-    }
-
-    async function updateQuestion(questionId: string, question: Partial<QuestionDTO>) {
-        "use server";
-        const { id: assessmentId } = await params;
-        const { getToken } = await auth();
-        
-        await fetchAdminApi(`questions/${questionId}`, getToken, {
-            method: "PUT",
-            body: JSON.stringify(question)
-        });
-        
-        revalidatePath(`/admin/assessment/${assessmentId}`);
-    }
-
-    async function deleteQuestion(questionId: string) {
-        "use server";
-        const { id: assessmentId } = await params;
-        const { getToken } = await auth();
-        
-        await fetchAdminApi(`questions/${questionId}`, getToken, {
-            method: "DELETE"
-        });
-        
-        revalidatePath(`/admin/assessment/${assessmentId}`);
     }
 
     async function updateCategoryName(newName: string) {
@@ -86,6 +48,11 @@ export default async function AdminAssessmentDetailPage({ params }: { params: { 
         revalidatePath(`/admin/assessment/${assessmentId}`);
         revalidatePath(`/admin/assessment`);
     }
+
+    // Wrap actions with assessmentId
+    const onAdd = addQuestion.bind(null, id);
+    const onUpdate = updateQuestion.bind(null, id);
+    const onDelete = deleteQuestion.bind(null, id);
 
     return (
         <div className="flex h-full w-full overflow-hidden bg-slate-50">
@@ -114,9 +81,9 @@ export default async function AdminAssessmentDetailPage({ params }: { params: { 
                                 <QuestionManagement 
                                     assessmentId={id}
                                     initialQuestions={assessment.questions}
-                                    onAddQuestion={addQuestion}
-                                    onUpdateQuestion={updateQuestion}
-                                    onDeleteQuestion={deleteQuestion}
+                                    onAddQuestion={onAdd}
+                                    onUpdateQuestion={onUpdate}
+                                    onDeleteQuestion={onDelete}
                                 />
                             </div>
                         )

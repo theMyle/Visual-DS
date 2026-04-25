@@ -3,6 +3,7 @@ import { fetchAdminApi } from "@/app/lib/admin/api";
 import AdminSidebar from "../../../components/AdminSidebar";
 import AssessmentAnalytics from "../components/AssessmentAnalytics";
 import Link from "next/link";
+import { updateQuestion, deleteQuestion } from "../actions";
 
 interface AssessmentDetail {
     id: string;
@@ -26,6 +27,9 @@ export default async function AssessmentAnalyticsPage({
     } catch (e) {
         error = e instanceof Error ? e.message : "Failed to fetch assessment data";
     }
+
+    const onUpdate = updateQuestion.bind(null, id);
+    const onDelete = deleteQuestion.bind(null, id);
 
     return (
         <div className="flex h-full w-full overflow-hidden bg-slate-50">
@@ -54,8 +58,11 @@ export default async function AssessmentAnalyticsPage({
                     ) : assessment ? (
                         <div className="flex-1 overflow-hidden">
                             <AssessmentAnalytics 
+                                assessmentId={id}
                                 category={assessment.category}
                                 questions={assessment.questions}
+                                onUpdateQuestion={onUpdate}
+                                onDeleteQuestion={onDelete}
                             />
                         </div>
                     ) : (

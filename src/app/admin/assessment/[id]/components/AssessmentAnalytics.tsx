@@ -1,17 +1,32 @@
 "use client";
 
 import { useState, useMemo } from "react";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
+import { toast } from "sonner";
 import { QuestionDTO } from "./QuestionManagement";
+import QuestionFormModal from "./QuestionFormModal";
 
 interface AssessmentAnalyticsProps {
+  assessmentId: string;
   category: string;
   questions: QuestionDTO[];
+  onUpdateQuestion: (id: string, question: Partial<QuestionDTO>) => Promise<void>;
+  onDeleteQuestion: (id: string) => Promise<void>;
 }
 
-export default function AssessmentAnalytics({ category, questions }: AssessmentAnalyticsProps) {
+export default function AssessmentAnalytics({ 
+  assessmentId, 
+  category, 
+  questions,
+  onUpdateQuestion,
+  onDeleteQuestion
+}: AssessmentAnalyticsProps) {
   const [filter, setFilter] = useState<"all" | "hard" | "easy" | "balanced">("all");
   const [showBreakdown, setShowBreakdown] = useState(false);
+  
+  // Edit Form State
+  const [isFormOpen, setIsFormOpen] = useState(false);
+  const [editId, setEditId] = useState<string | null>(null);
 
   const stats = useMemo(() => {
     let totalCorrect = 0;
@@ -56,6 +71,35 @@ export default function AssessmentAnalytics({ category, questions }: AssessmentA
     return q.difficulty.toLowerCase() === filter;
   });
 
+  const handleEdit = (q: QuestionDTO) => {
+    setEditId(q.id);
+    setIsFormOpen(true);
+  };
+
+  const handleDelete = async (id: string) => {
+    if (!confirm("Are you sure you want to delete this question? Its analytics data will be permanently removed.")) return;
+    try {
+      await onDeleteQuestion(id);
+      toast.success("Question removed from assessment");
+    } catch (error) {
+      toast.error("Failed to delete question");
+    }
+  };
+
+  const handleSubmit = async (id: string | null, payload: Partial<QuestionDTO>) => {
+    if (!id) return;
+    try {
+      await onUpdateQuestion(id, payload);
+      toast.info("Question updated successfully");
+      setIsFormOpen(false);
+      setEditId(null);
+    } catch (error) {
+      throw error;
+    }
+  };
+
+  const selectedQuestion = editId ? questions.find(q => q.id === editId) : null;
+
   return (
     <div className="flex flex-col gap-6 h-full overflow-hidden">
       {/* Top Bar with Filters and Actions */}
@@ -86,91 +130,104 @@ export default function AssessmentAnalytics({ category, questions }: AssessmentA
       </div>
 
       {/* Analytics Guide Modal Overlay */}
-      {showBreakdown && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
-          <motion.div 
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            onClick={() => setShowBreakdown(false)}
-            className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm"
-          />
-          <motion.div 
-            initial={{ opacity: 0, scale: 0.95, y: 20 }}
-            animate={{ opacity: 1, scale: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 0.95, y: 20 }}
-            className="relative bg-white w-full max-w-2xl rounded-[2.5rem] shadow-2xl overflow-hidden border border-slate-200 max-h-[90vh] flex flex-col"
-          >
-            <div className="p-8 overflow-y-auto">
-              <div className="mb-8">
-                <h2 className="text-2xl font-black text-slate-900">Analytics Guide</h2>
-                <p className="text-slate-500 text-sm mt-1">Understanding our Item Analysis methodology.</p>
-              </div>
+      <AnimatePresence>
+        {showBreakdown && (
+          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+            <motion.div 
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setShowBreakdown(false)}
+              className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm"
+            />
+            <motion.div 
+              initial={{ opacity: 0, scale: 0.95, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 20 }}
+              className="relative bg-white w-full max-w-2xl rounded-[2.5rem] shadow-2xl overflow-hidden border border-slate-200 max-h-[90vh] flex flex-col"
+            >
+              <div className="p-8 overflow-y-auto">
+                <div className="mb-8">
+                  <h2 className="text-2xl font-black text-slate-900">Analytics Guide</h2>
+                  <p className="text-slate-500 text-sm mt-1">Understanding our Item Analysis methodology.</p>
+                </div>
 
-              <div className="space-y-10">
-                {/* Section 1: Metrics */}
-                <section>
-                  <h3 className="text-sm font-bold text-slate-900 uppercase tracking-widest mb-4">Success Metrics</h3>
-                  <p className="text-sm text-slate-600 leading-relaxed mb-4">
-                    Individual question performance is calculated by measuring the ratio of correct selections against the total interaction count.
-                  </p>
-                  <div className="bg-slate-50 border border-slate-200 rounded-2xl p-4 text-center">
-                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block mb-1">Formula</span>
-                    <code className="text-sm font-bold text-slate-900">
-                      (Correct / Total Responses) × 100
-                    </code>
-                  </div>
-                </section>
+                <div className="space-y-10">
+                  {/* Section 1: Metrics */}
+                  <section>
+                    <h3 className="text-sm font-bold text-slate-900 uppercase tracking-widest mb-4">Success Metrics</h3>
+                    <p className="text-sm text-slate-600 leading-relaxed mb-4">
+                      Individual question performance is calculated by measuring the ratio of correct selections against the total interaction count.
+                    </p>
+                    <div className="bg-slate-50 border border-slate-200 rounded-2xl p-4 text-center">
+                      <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block mb-1">Formula</span>
+                      <code className="text-sm font-bold text-slate-900">
+                        (Correct / Total Responses) × 100
+                      </code>
+                    </div>
+                  </section>
 
-                {/* Section 2: Difficulty */}
-                <section>
-                  <h3 className="text-sm font-bold text-slate-900 uppercase tracking-widest mb-4">Difficulty Thresholds</h3>
-                  <div className="space-y-4">
-                    <div className="flex items-start gap-4 p-4 rounded-2xl border border-slate-100 bg-slate-50/50">
-                      <div className="w-2 h-2 rounded-full bg-emerald-500 mt-1.5 flex-shrink-0" />
-                      <div>
-                        <p className="text-sm font-bold text-slate-900">Easy Category</p>
-                        <p className="text-xs text-slate-500 mt-0.5">Success rate exceeds 80%. High student proficiency or potential for more challenging distractors.</p>
+                  {/* Section 2: Difficulty */}
+                  <section>
+                    <h3 className="text-sm font-bold text-slate-900 uppercase tracking-widest mb-4">Difficulty Thresholds</h3>
+                    <div className="space-y-4">
+                      <div className="flex items-start gap-4 p-4 rounded-2xl border border-slate-100 bg-slate-50/50">
+                        <div className="w-2 h-2 rounded-full bg-emerald-500 mt-1.5 flex-shrink-0" />
+                        <div>
+                          <p className="text-sm font-bold text-slate-900">Easy Category</p>
+                          <p className="text-xs text-slate-500 mt-0.5">Success rate exceeds 80%. High student proficiency or potential for more challenging distractors.</p>
+                        </div>
+                      </div>
+                      <div className="flex items-start gap-4 p-4 rounded-2xl border border-slate-100 bg-slate-50/50">
+                        <div className="w-2 h-2 rounded-full bg-indigo-500 mt-1.5 flex-shrink-0" />
+                        <div>
+                          <p className="text-sm font-bold text-slate-900">Balanced Category</p>
+                          <p className="text-xs text-slate-500 mt-0.5">Success rate between 40% and 80%. Represents optimal learning challenge.</p>
+                        </div>
+                      </div>
+                      <div className="flex items-start gap-4 p-4 rounded-2xl border border-slate-100 bg-slate-50/50">
+                        <div className="w-2 h-2 rounded-full bg-rose-500 mt-1.5 flex-shrink-0" />
+                        <div>
+                          <p className="text-sm font-bold text-slate-900">Hard Category</p>
+                          <p className="text-xs text-slate-500 mt-0.5">Success rate falls below 40%. May indicate complex concepts or potential item ambiguity.</p>
+                        </div>
                       </div>
                     </div>
-                    <div className="flex items-start gap-4 p-4 rounded-2xl border border-slate-100 bg-slate-50/50">
-                      <div className="w-2 h-2 rounded-full bg-indigo-500 mt-1.5 flex-shrink-0" />
-                      <div>
-                        <p className="text-sm font-bold text-slate-900">Balanced Category</p>
-                        <p className="text-xs text-slate-500 mt-0.5">Success rate between 40% and 80%. Represents optimal learning challenge.</p>
-                      </div>
-                    </div>
-                    <div className="flex items-start gap-4 p-4 rounded-2xl border border-slate-100 bg-slate-50/50">
-                      <div className="w-2 h-2 rounded-full bg-rose-500 mt-1.5 flex-shrink-0" />
-                      <div>
-                        <p className="text-sm font-bold text-slate-900">Hard Category</p>
-                        <p className="text-xs text-slate-500 mt-0.5">Success rate falls below 40%. May indicate complex concepts or potential item ambiguity.</p>
-                      </div>
-                    </div>
-                  </div>
-                </section>
+                  </section>
 
-                {/* Section 3: Reliability */}
-                <section className="pt-6 border-t border-slate-100">
-                  <div className="flex items-center gap-3 text-slate-400 italic">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
-                    <p className="text-xs font-medium">To ensure statistical significance, a minimum of 5 responses is required before difficulty categorization is applied.</p>
-                  </div>
-                </section>
-              </div>
+                  {/* Section 3: Reliability */}
+                  <section className="pt-6 border-t border-slate-100">
+                    <div className="flex items-center gap-3 text-slate-400 italic">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+                      <p className="text-xs font-medium">To ensure statistical significance, a minimum of 5 responses is required before difficulty categorization is applied.</p>
+                    </div>
+                  </section>
+                </div>
 
-              <div className="mt-10 flex justify-end pb-2">
-                <button 
-                  onClick={() => setShowBreakdown(false)}
-                  className="px-8 py-3 bg-slate-900 text-white rounded-2xl font-bold text-sm hover:bg-slate-800 transition-all"
-                >
-                  Close Guide
-                </button>
+                <div className="mt-10 flex justify-end pb-2">
+                  <button 
+                    onClick={() => setShowBreakdown(false)}
+                    className="px-8 py-3 bg-slate-900 text-white rounded-2xl font-bold text-sm hover:bg-slate-800 transition-all"
+                  >
+                    Close Guide
+                  </button>
+                </div>
               </div>
-            </div>
-          </motion.div>
-        </div>
-      )}
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* Edit Form Modal */}
+      <QuestionFormModal 
+        isOpen={isFormOpen}
+        onClose={() => {
+          setIsFormOpen(false);
+          setEditId(null);
+        }}
+        onSubmit={handleSubmit}
+        initialData={selectedQuestion}
+      />
 
       {/* Detailed Table */}
       <div className="bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden flex flex-col flex-1">
@@ -181,7 +238,8 @@ export default function AssessmentAnalytics({ category, questions }: AssessmentA
                 <th className="px-8 py-4 text-left text-xs font-bold text-slate-600 uppercase tracking-wider">Question Content</th>
                 <th className="px-6 py-4 text-center text-xs font-bold text-slate-600 uppercase tracking-wider">Difficulty</th>
                 <th className="px-6 py-4 text-center text-xs font-bold text-slate-600 uppercase tracking-wider">Success Rate</th>
-                <th className="px-8 py-4 text-left text-xs font-bold text-slate-600 uppercase tracking-wider">Analytics</th>
+                <th className="px-6 py-4 text-left text-xs font-bold text-slate-600 uppercase tracking-wider">Analytics</th>
+                <th className="px-8 py-4 text-right text-xs font-bold text-slate-600 uppercase tracking-wider">Actions</th>
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-slate-100">
@@ -215,7 +273,7 @@ export default function AssessmentAnalytics({ category, questions }: AssessmentA
                       </div>
                     </div>
                   </td>
-                  <td className="px-8 py-5 text-left">
+                  <td className="px-6 py-5 text-left">
                     <div className="flex flex-col items-start gap-1.5">
                       <div className="inline-flex items-center gap-2 px-3 py-1 bg-emerald-50 text-emerald-700 rounded-lg text-xs font-bold border border-emerald-100 w-32">
                         <span className="flex-1">Correct:</span>
@@ -225,6 +283,24 @@ export default function AssessmentAnalytics({ category, questions }: AssessmentA
                         <span className="flex-1">Mistakes:</span>
                         <span className="text-sm">{q.stats?.mistakes || 0}</span>
                       </div>
+                    </div>
+                  </td>
+                  <td className="px-8 py-5 text-right">
+                    <div className="flex items-center justify-end gap-2">
+                      <button 
+                        onClick={() => handleEdit(q)}
+                        className="p-2 text-slate-300 hover:text-indigo-600 hover:bg-indigo-50 rounded-xl transition-all"
+                        title="Edit Question"
+                      >
+                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/><path d="m15 5 4 4"/></svg>
+                      </button>
+                      <button 
+                        onClick={() => handleDelete(q.id)}
+                        className="p-2 text-slate-300 hover:text-rose-600 hover:bg-rose-50 rounded-xl transition-all"
+                        title="Delete Question"
+                      >
+                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg>
+                      </button>
                     </div>
                   </td>
                 </tr>
