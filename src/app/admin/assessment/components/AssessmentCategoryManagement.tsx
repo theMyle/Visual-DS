@@ -1,8 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import Link from "next/link";
+import { toast } from "sonner";
 
 export interface AssessmentCategoryDTO {
   id: string;
@@ -16,8 +17,8 @@ interface AssessmentCategoryManagementProps {
   onUpdateCategory: (id: string, category: string) => Promise<void>;
 }
 
-export default function AssessmentCategoryManagement({ 
-  initialCategories, 
+export default function AssessmentCategoryManagement({
+  initialCategories,
   onAddCategory,
   onDeleteCategory,
   onUpdateCategory
@@ -27,12 +28,17 @@ export default function AssessmentCategoryManagement({
   const [isAdding, setIsAdding] = useState(false);
   const [newCategory, setNewCategory] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
-  
+
+  // Sync with server data
+  useEffect(() => {
+    setCategories(initialCategories);
+  }, [initialCategories]);
+
   // Edit state
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editCategory, setEditCategory] = useState("");
 
-  const filteredCategories = categories.filter(cat => 
+  const filteredCategories = categories.filter(cat =>
     cat.category.toLowerCase().includes(search.toLowerCase())
   );
 
@@ -45,9 +51,10 @@ export default function AssessmentCategoryManagement({
       await onAddCategory(newCategory);
       setIsAdding(false);
       setNewCategory("");
+      toast.success("Category added successfully");
     } catch (error) {
       console.error("Failed to add category:", error);
-      alert("Failed to add category.");
+      toast.error("Failed to add category.");
     } finally {
       setIsSubmitting(false);
     }
@@ -55,27 +62,29 @@ export default function AssessmentCategoryManagement({
 
   const handleDelete = async (id: string) => {
     if (!confirm("Are you sure you want to delete this category? All associated questions will be deleted.")) return;
-    
+
     try {
       await onDeleteCategory(id);
       setCategories(categories.filter(c => c.id !== id));
+      toast.success("Category deleted successfully");
     } catch (error) {
       console.error("Failed to delete:", error);
-      alert("Failed to delete category.");
+      toast.error("Failed to delete category.");
     }
   };
 
   const handleUpdate = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!editingId || !editCategory) return;
+    if (!editingId || !editCategory.trim()) return;
 
     try {
       await onUpdateCategory(editingId, editCategory);
       setCategories(categories.map(c => c.id === editingId ? { ...c, category: editCategory } : c));
       setEditingId(null);
+      toast.info("Category updated successfully");
     } catch (error) {
       console.error("Failed to update:", error);
-      alert("Failed to update category.");
+      toast.error("Failed to update category.");
     }
   };
 
@@ -84,7 +93,7 @@ export default function AssessmentCategoryManagement({
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div className="relative max-w-md w-full">
           <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-slate-400"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-slate-400"><circle cx="11" cy="11" r="8" /><path d="m21 21-4.3-4.3" /></svg>
           </div>
           <input
             type="text"
@@ -94,12 +103,12 @@ export default function AssessmentCategoryManagement({
             onChange={(e) => setSearch(e.target.value)}
           />
         </div>
-        
+
         <button
           onClick={() => setIsAdding(true)}
           className="flex items-center justify-center gap-2 px-4 py-2.5 bg-indigo-600 text-white rounded-xl font-bold text-sm hover:bg-indigo-700 transition-all shadow-lg shadow-indigo-100 flex-shrink-0"
         >
-          <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14"/><path d="M12 5v14"/></svg>
+          <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14" /><path d="M12 5v14" /></svg>
           Add Category
         </button>
       </div>
@@ -151,8 +160,7 @@ export default function AssessmentCategoryManagement({
             <thead className="bg-slate-50 sticky top-0 z-10">
               <tr>
                 <th scope="col" className="px-6 py-4 text-left text-xs font-bold text-slate-500 uppercase tracking-wider bg-slate-50">Assessment Category</th>
-                <th scope="col" className="px-6 py-4 text-right text-xs font-bold text-slate-500 uppercase tracking-wider bg-slate-50">Questions</th>
-                <th scope="col" className="px-6 py-4 text-right text-xs font-bold text-slate-500 uppercase tracking-wider bg-slate-50 w-32">Actions</th>
+                <th scope="col" className="px-6 py-4 text-right text-xs font-bold text-slate-500 uppercase tracking-wider bg-slate-50">Actions</th>
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-slate-100">
@@ -162,7 +170,7 @@ export default function AssessmentCategoryManagement({
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-bold text-slate-700">
                       {editingId === cat.id ? (
                         <form onSubmit={handleUpdate} className="flex items-center gap-2">
-                          <input 
+                          <input
                             autoFocus
                             className="px-2 py-1 border border-indigo-200 rounded-md focus:ring-2 focus:ring-indigo-500 outline-none w-64"
                             value={editCategory}
@@ -176,32 +184,40 @@ export default function AssessmentCategoryManagement({
                       )}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-right text-sm">
-                      <Link 
-                        href={`/admin/assessment/${cat.id}`}
-                        className="inline-flex items-center gap-2 px-3 py-1.5 bg-slate-100 text-slate-600 hover:bg-indigo-600 hover:text-white rounded-lg font-bold text-xs transition-all"
-                      >
-                        Manage Questions
-                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
-                      </Link>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-right text-sm">
-                      <div className="flex items-center justify-end gap-1">
-                        <button 
+                      <div className="flex items-center justify-end gap-3">
+                        <Link
+                          href={`/admin/assessment/${cat.id}/analytics`}
+                          title="Performance Analytics"
+                          className="w-10 h-10 flex items-center justify-center bg-white border border-slate-200 text-blue-600 hover:bg-blue-600 hover:text-white hover:border-blue-600 rounded-xl transition-all shadow-sm group/btn"
+                        >
+                          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+                        </Link>
+                        
+                        <Link
+                          href={`/admin/assessment/${cat.id}`}
+                          title="Manage Questions"
+                          className="w-10 h-10 flex items-center justify-center bg-white border border-slate-200 text-indigo-600 hover:bg-indigo-600 hover:text-white hover:border-indigo-600 rounded-xl transition-all shadow-sm group/btn"
+                        >
+                          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.1a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></svg>
+                        </Link>
+
+                        <button
                           onClick={() => {
                             setEditingId(cat.id);
                             setEditCategory(cat.category);
                           }}
-                          title="Edit Category Name"
-                          className="text-slate-400 hover:text-indigo-600 transition-colors p-1.5 hover:bg-indigo-50 rounded-lg"
+                          title="Rename Category"
+                          className="w-10 h-10 flex items-center justify-center bg-white border border-slate-200 text-slate-400 hover:bg-slate-100 hover:text-slate-600 rounded-xl transition-all shadow-sm"
                         >
-                          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/><path d="m15 5 4 4"/></svg>
+                          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z" /><path d="m15 5 4 4" /></svg>
                         </button>
-                        <button 
+
+                        <button
                           onClick={() => handleDelete(cat.id)}
-                          title="Delete Category"
-                          className="text-slate-400 hover:text-red-600 transition-colors p-1.5 hover:bg-red-50 rounded-lg"
+                          title="Delete Assessment"
+                          className="w-10 h-10 flex items-center justify-center bg-white border border-slate-200 text-slate-300 hover:bg-rose-50 hover:text-rose-600 hover:border-rose-100 rounded-xl transition-all shadow-sm"
                         >
-                          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg>
+                          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M3 6h18" /><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6" /><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2" /><line x1="10" y1="11" x2="10" y2="17" /><line x1="14" y1="11" x2="14" y2="17" /></svg>
                         </button>
                       </div>
                     </td>

@@ -6,6 +6,7 @@ import { ClerkProvider } from "@clerk/nextjs";
 import Providers from "./providers";
 import { auth } from "@clerk/nextjs/server";
 import { headers } from "next/headers";
+import { Toaster } from "sonner";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -81,6 +82,7 @@ export default async function RootLayout({
       >
         <ClerkProvider>
           <Providers>
+            <Toaster richColors position="top-right" />
             {!isAdminRoute && <NavBar initialIsSignedIn={isSignedIn} />}
             <main className="flex-1 overflow-auto relative">
               {children}

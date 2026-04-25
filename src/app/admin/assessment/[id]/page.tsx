@@ -5,6 +5,14 @@ import QuestionManagement, { QuestionDTO } from "./components/QuestionManagement
 import Link from "next/link";
 import { revalidatePath } from "next/cache";
 
+interface QuestionManagementProps {
+    assessmentId: string;
+    initialQuestions: QuestionDTO[];
+    onAddQuestion: (question: Partial<QuestionDTO>) => Promise<void>;
+    onUpdateQuestion: (id: string, question: Partial<QuestionDTO>) => Promise<void>;
+    onDeleteQuestion: (id: string) => Promise<void>;
+}
+
 interface AssessmentDetailDTO {
     id: string;
     category: string;
@@ -32,26 +40,22 @@ export default async function AdminAssessmentDetailPage({ params }: { params: { 
         const { id: assessmentId } = await params;
         const { getToken } = await auth();
         
-        // Fetch current assessment to preserve category
-        const current = await fetchAdminApi<AssessmentDetailDTO>(`assessments/${assessmentId}`, getToken);
-        
-        // We use the same POST /assessments to add/update? 
-        // No, current backend CreateAssessment clears and recreates? 
-        // Wait, the backend CreateAssessment handler creates a NEW assessment record.
-        // If it already exists, it might fail or duplicate?
-        // Actually, the backend should probably have an AddQuestion endpoint.
-        // For now, I'll use the existing CreateAssessment which handles bulk.
-        // I'll send the existing questions + the new one.
-        
-        const newQuestions = [...current.questions, question];
-        
-        await fetchAdminApi("assessments", getToken, {
+        await fetchAdminApi(`assessments/${assessmentId}/questions`, getToken, {
             method: "POST",
-            body: JSON.stringify({
-                id: assessmentId,
-                category: current.category,
-                questions: newQuestions
-            })
+            body: JSON.stringify(question)
+        });
+        
+        revalidatePath(`/admin/assessment/${assessmentId}`);
+    }
+
+    async function updateQuestion(questionId: string, question: Partial<QuestionDTO>) {
+        "use server";
+        const { id: assessmentId } = await params;
+        const { getToken } = await auth();
+        
+        await fetchAdminApi(`questions/${questionId}`, getToken, {
+            method: "PUT",
+            body: JSON.stringify(question)
         });
         
         revalidatePath(`/admin/assessment/${assessmentId}`);
@@ -67,6 +71,20 @@ export default async function AdminAssessmentDetailPage({ params }: { params: { 
         });
         
         revalidatePath(`/admin/assessment/${assessmentId}`);
+    }
+
+    async function updateCategoryName(newName: string) {
+        "use server";
+        const { id: assessmentId } = await params;
+        const { getToken } = await auth();
+        
+        await fetchAdminApi(`assessments/${assessmentId}`, getToken, {
+            method: "PUT",
+            body: JSON.stringify({ category: newName })
+        });
+        
+        revalidatePath(`/admin/assessment/${assessmentId}`);
+        revalidatePath(`/admin/assessment`);
     }
 
     return (
@@ -97,6 +115,7 @@ export default async function AdminAssessmentDetailPage({ params }: { params: { 
                                     assessmentId={id}
                                     initialQuestions={assessment.questions}
                                     onAddQuestion={addQuestion}
+                                    onUpdateQuestion={updateQuestion}
                                     onDeleteQuestion={deleteQuestion}
                                 />
                             </div>

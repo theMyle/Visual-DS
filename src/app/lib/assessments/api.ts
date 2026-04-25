@@ -85,10 +85,9 @@ export async function fetchAssessmentResultsForUser(
 }
 
 export async function fetchAssessmentById(
-    category: string,
     assessmentId: string,
 ): Promise<Assessment> {
-    const response = await fetch(getApiUrl(`/assessments/${category}/${assessmentId}`), {
+    const response = await fetch(getApiUrl(`/assessments/${assessmentId}`), {
         method: "GET",
         headers: JSON_HEADERS,
         cache: "no-store",

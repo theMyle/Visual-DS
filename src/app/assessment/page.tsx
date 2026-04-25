@@ -15,14 +15,6 @@ type AssessmentListItem = {
     scoreHistory?: QuizResultPoint[];
 };
 
-function toTitleFromCategory(category: string): string {
-    return category
-        .split("-")
-        .filter(Boolean)
-        .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
-        .join(" ");
-}
-
 async function fetchAssessmentMenuData(): Promise<AssessmentListItem[]> {
     try {
         const assessments = await fetchAssessments();
@@ -41,13 +33,8 @@ async function fetchAssessmentMenuData(): Promise<AssessmentListItem[]> {
 
         return assessments.map((assessment, index): AssessmentListItem => ({
             id: assessment.id || `unknown-${index}`,
-            title:
-                toTitleFromCategory((assessment.category || "").trim()) ||
-                toTitleFromCategory((assessment.id || "").trim()) ||
-                "Assessment",
-            path: (assessment.category || "").trim()
-                ? `/assessment/${assessment.category.trim()}`
-                : "/assessment",
+            title: assessment.category || "Assessment",
+            path: assessment.id ? `/assessment/${assessment.id}` : "/assessment",
             scoreHistory: scoreHistoryByQuizId[assessment.id] ?? [],
         }));
     } catch {
