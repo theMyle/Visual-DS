@@ -1,10 +1,11 @@
 'use client';
 
 import { useState, Fragment } from 'react';
-import Link from 'next/link';
 import { toast } from 'sonner';
 import SimulatorEditModal from './SimulatorEditModal';
 import ChallengeCreateModal from './ChallengeCreateModal';
+import ChallengeEditModal from './ChallengeEditModal';
+import { updateChallenge, deleteChallenge } from '../actions';
 
 export interface SimulatorChallengeItem {
     id: string;
@@ -35,6 +36,8 @@ export default function SimulatorManagement({ simulators, onUpdate, onCreateChal
     const [deletingId, setDeletingId] = useState<string | null>(null);
     const [editingSim, setEditingSim] = useState<SimulatorCategoryDTO | null>(null);
     const [creatingChallengeSim, setCreatingChallengeSim] = useState<SimulatorCategoryDTO | null>(null);
+    const [editingChallenge, setEditingChallenge] = useState<{ id: string, simName: string } | null>(null);
+    const [deletingChallengeId, setDeletingChallengeId] = useState<string | null>(null);
 
     const toggle = (id: string) => setExpandedId(prev => prev === id ? null : id);
 
@@ -66,8 +69,31 @@ export default function SimulatorManagement({ simulators, onUpdate, onCreateChal
         }
     };
 
+    const handleUpdateChallenge = async (id: string, data: any) => {
+        try {
+            await updateChallenge(id, data);
+            setEditingChallenge(null);
+            toast.success("Challenge updated successfully");
+        } catch (error) {
+            console.error("Failed to update challenge:", error);
+            toast.error("Failed to update challenge");
+            throw error;
+        }
+    };
+
+    const handleDeleteChallenge = async (id: string) => {
+        try {
+            await deleteChallenge(id);
+            setDeletingChallengeId(null);
+            toast.success("Challenge deleted successfully");
+        } catch (error) {
+            console.error("Failed to delete challenge:", error);
+            toast.error("Failed to delete challenge");
+        }
+    };
+
     return (
-        <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm flex flex-col flex-1 min-h-0">
+        <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm flex flex-col h-full min-h-0">
             {/* Header */}
             <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between flex-shrink-0">
                 <div>
@@ -77,7 +103,7 @@ export default function SimulatorManagement({ simulators, onUpdate, onCreateChal
             </div>
 
             {/* Table */}
-            <div className="overflow-y-auto flex-1 min-h-0">
+            <div className="overflow-y-auto flex-1 min-h-0 overscroll-contain">
                 <table className="w-full text-sm">
                     <thead className="sticky top-0 z-10">
                         <tr className="border-b border-slate-100 bg-slate-50">
@@ -227,12 +253,40 @@ export default function SimulatorManagement({ simulators, onUpdate, onCreateChal
                                                                     <td className="px-4 py-2.5 text-slate-500 font-mono">{c.slug}</td>
                                                                     <td className="px-4 py-2.5 text-right">
                                                                         <div className="flex items-center justify-end gap-2">
-                                                                            <button className="text-slate-500 hover:text-slate-800 transition-colors">
-                                                                                <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" /><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" /></svg>
-                                                                            </button>
-                                                                            <button className="text-slate-400 hover:text-red-600 transition-colors">
-                                                                                <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6" /><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6" /><path d="M10 11v6" /><path d="M14 11v6" /><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2" /></svg>
-                                                                            </button>
+                                                                            {deletingChallengeId === c.id ? (
+                                                                                <div className="flex items-center gap-2 animate-in fade-in slide-in-from-right-2">
+                                                                                    <span className="text-[10px] font-bold text-red-600 uppercase">Delete?</span>
+                                                                                    <button 
+                                                                                        onClick={() => handleDeleteChallenge(c.id)}
+                                                                                        className="px-2 py-1 bg-red-600 text-white rounded text-[10px] font-bold hover:bg-red-700 transition-colors shadow-sm"
+                                                                                    >
+                                                                                        Yes
+                                                                                    </button>
+                                                                                    <button 
+                                                                                        onClick={() => setDeletingChallengeId(null)}
+                                                                                        className="px-2 py-1 bg-slate-200 text-slate-600 rounded text-[10px] font-bold hover:bg-slate-300 transition-colors"
+                                                                                    >
+                                                                                        No
+                                                                                    </button>
+                                                                                </div>
+                                                                            ) : (
+                                                                                <>
+                                                                                    <button 
+                                                                                        onClick={() => setEditingChallenge({ id: c.id, simName: sim.name })}
+                                                                                        className="text-slate-500 hover:text-indigo-600 transition-colors p-1 hover:bg-indigo-50 rounded"
+                                                                                        title="Edit Challenge"
+                                                                                    >
+                                                                                        <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" /><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" /></svg>
+                                                                                    </button>
+                                                                                    <button 
+                                                                                        onClick={() => setDeletingChallengeId(c.id)}
+                                                                                        className="text-slate-400 hover:text-red-600 transition-colors p-1 hover:bg-red-50 rounded"
+                                                                                        title="Delete Challenge"
+                                                                                    >
+                                                                                        <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6" /><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6" /><path d="M10 11v6" /><path d="M14 11v6" /><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2" /></svg>
+                                                                                    </button>
+                                                                                </>
+                                                                            )}
                                                                         </div>
                                                                     </td>
                                                                 </tr>
@@ -262,6 +316,15 @@ export default function SimulatorManagement({ simulators, onUpdate, onCreateChal
                     simulatorName={creatingChallengeSim.name}
                     onClose={() => setCreatingChallengeSim(null)}
                     onSave={handleCreateChallenge}
+                />
+            )}
+
+            {editingChallenge && (
+                <ChallengeEditModal
+                    challengeId={editingChallenge.id}
+                    simulatorName={editingChallenge.simName}
+                    onClose={() => setEditingChallenge(null)}
+                    onSave={handleUpdateChallenge}
                 />
             )}
         </div>

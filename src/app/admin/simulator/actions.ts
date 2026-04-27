@@ -38,3 +38,29 @@ export async function createChallenge(data: any) {
 
     revalidatePath("/admin/simulator");
 }
+
+export async function updateChallenge(id: string, data: any) {
+    const { getToken } = await auth();
+
+    await fetchAdminApi(`challenges/${id}`, getToken, {
+        method: "PUT",
+        body: JSON.stringify(data)
+    });
+
+    revalidatePath("/admin/simulator");
+}
+
+export async function deleteChallenge(id: string) {
+    const { getToken } = await auth();
+
+    await fetchAdminApi(`challenges/${id}`, getToken, {
+        method: "DELETE"
+    });
+
+    revalidatePath("/admin/simulator");
+}
+
+export async function fetchChallenge(id: string) {
+    const { getToken } = await auth();
+    return await fetchAdminApi<any>(`challenges/${id}`, getToken);
+}

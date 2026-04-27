@@ -25,8 +25,8 @@ export default async function AdminSimulatorPage() {
             <AdminSidebar />
 
             {/* Right Content Area */}
-            <main className="flex-1 flex flex-col overflow-hidden">
-                <div className="flex-1 flex flex-col p-8 w-full max-w-7xl mx-auto overflow-hidden">
+            <main className="flex-1 flex flex-col overflow-hidden min-h-0">
+                <div className="flex-1 flex flex-col p-8 w-full max-w-7xl mx-auto overflow-hidden min-h-0">
                     <header className="mb-8 flex-shrink-0">
                         <h1 className="text-3xl font-bold text-slate-900">Simulators</h1>
                         <p className="text-slate-500 mt-2">View simulator categories and their challenges.</p>
@@ -38,7 +38,7 @@ export default async function AdminSimulatorPage() {
                             <p className="font-medium">{error}</p>
                         </div>
                     ) : (
-                        <div className="flex-1 overflow-hidden">
+                        <div className="flex-1 overflow-hidden min-h-0 flex flex-col">
                             <SimulatorManagement
                                 simulators={simulators}
                                 onUpdate={updateSimulatorCategory}
