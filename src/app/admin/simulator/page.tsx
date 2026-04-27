@@ -2,6 +2,9 @@ import { auth } from "@clerk/nextjs/server";
 import { fetchAdminApi } from "@/app/lib/admin/api";
 import AdminSidebar from "../components/AdminSidebar";
 import SimulatorManagement, { SimulatorCategoryDTO } from "./components/SimulatorManagement";
+import { updateSimulatorCategory, createChallenge } from "./actions";
+
+export const dynamic = "force-dynamic";
 
 export default async function AdminSimulatorPage() {
     const { getToken } = await auth();
@@ -31,12 +34,16 @@ export default async function AdminSimulatorPage() {
 
                     {error ? (
                         <div className="bg-red-50 border border-red-200 text-red-700 px-6 py-4 rounded-2xl flex items-center gap-3">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10" /><line x1="12" y1="8" x2="12" y2="12" /><line x1="12" y1="16" x2="12.01" y2="16" /></svg>
                             <p className="font-medium">{error}</p>
                         </div>
                     ) : (
                         <div className="flex-1 overflow-hidden">
-                            <SimulatorManagement simulators={simulators} />
+                            <SimulatorManagement
+                                simulators={simulators}
+                                onUpdate={updateSimulatorCategory}
+                                onCreateChallenge={createChallenge}
+                            />
                         </div>
                     )}
                 </div>

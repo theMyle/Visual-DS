@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, Fragment } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import Link from "next/link";
 import { toast } from "sonner";
@@ -183,7 +183,7 @@ export default function AssessmentCategoryManagement({
               </tr>
             ) : (
               filteredCategories.map((cat) => (
-                <>
+                <Fragment key={cat.id}>
                   <tr key={cat.id} className="hover:bg-slate-50/50 transition-colors">
                     <td className="px-6 py-4 font-medium text-slate-900">
                       {editingId === cat.id ? (
@@ -265,7 +265,7 @@ export default function AssessmentCategoryManagement({
                       </td>
                     </tr>
                   )}
-                </>
+                </Fragment>
               ))
             )}
           </tbody>
