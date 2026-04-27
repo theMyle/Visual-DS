@@ -4,6 +4,7 @@ import SimulatorMenuItem from "./components/SimulatorMenuItem";
 
 type Level = {
   id: number;
+  title: string;
   path: string;
   next: string;
   isCompleted: boolean;
@@ -54,6 +55,7 @@ export default async function SimulatorPage() {
     title: section.name,
     levels: section.challenges.map((challenge: any, index: number) => ({
       id: index + 1,
+      title: challenge.title,
       path: challenge.path,
       next: index < section.challenges.length - 1 ? section.challenges[index + 1].path : "/simulator",
       isCompleted: completedPaths.has(challenge.path),
