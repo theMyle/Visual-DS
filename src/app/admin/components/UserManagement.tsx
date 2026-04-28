@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 
 export interface AdminUserDTO {
   user_id: string;
@@ -24,6 +25,7 @@ function initials(first: string, last: string) {
 }
 
 export default function UserManagement({ users = [] }: UserManagementProps) {
+  const router = useRouter();
   const [search, setSearch] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const pageSize = 10;
@@ -79,7 +81,11 @@ export default function UserManagement({ users = [] }: UserManagementProps) {
             <tbody className="divide-y divide-slate-100">
               {paginatedUsers.length > 0 ? (
                 paginatedUsers.map((user) => (
-                  <tr key={user.user_id} className="hover:bg-slate-50/50 transition-colors">
+                  <tr 
+                    key={user.user_id} 
+                    onClick={() => router.push(`/admin/users/${user.user_id}`)}
+                    className="hover:bg-slate-50/50 transition-colors cursor-pointer"
+                  >
                     <td className="px-6 py-3.5">
                       <div className="flex items-center gap-3">
                         <div className="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center text-slate-600 font-semibold text-xs flex-shrink-0">
