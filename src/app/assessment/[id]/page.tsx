@@ -5,15 +5,17 @@ import { useParams } from "next/navigation";
 import Assessment from "../components/Assessment";
 import AssessmentLoading from "../components/AssessmentLoading";
 import { fetchAssessmentById } from "../../lib/assessments/api";
+import { useAuth } from "@clerk/nextjs";
 
 export default function DynamicAssessmentPage() {
     const params = useParams();
     const id = params.id as string;
+    const { getToken, isLoaded } = useAuth();
 
     const { data, isPending, isError } = useQuery({
         queryKey: ["assessment", id],
-        queryFn: () => fetchAssessmentById(id),
-        enabled: !!id,
+        queryFn: () => fetchAssessmentById(id, getToken),
+        enabled: !!id && isLoaded,
     });
 
     if (isPending) {

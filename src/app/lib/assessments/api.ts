@@ -86,10 +86,20 @@ export async function fetchAssessmentResultsForUser(
 
 export async function fetchAssessmentById(
     assessmentId: string,
+    getToken?: GetTokenFn,
 ): Promise<Assessment> {
+    const headers = new Headers(JSON_HEADERS);
+    
+    if (getToken) {
+        const token = await getToken();
+        if (token) {
+            headers.set("Authorization", `Bearer ${token}`);
+        }
+    }
+
     const response = await fetch(getApiUrl(`/assessments/${assessmentId}`), {
         method: "GET",
-        headers: JSON_HEADERS,
+        headers,
         cache: "no-store",
     });
 
