@@ -91,62 +91,66 @@ const VisualTreeInner = ({ nodes, rootId, onNodeClick }: VisualTreeProps) => {
         const positions = new Map<string, NodePosition>();
         calculatePositions(rootId, 0, -300, 300, positions);
 
-        // Convert tree nodes to React Flow nodes
-        const flowNodes: Node[] = nodes.map((node) => {
-            const pos = positions.get(node.id) || { x: 0, y: 0 };
-            const isLeaf = !node.left && !node.right;
+        // Convert tree nodes to React Flow nodes, filtering out orphans
+        const flowNodes: Node[] = nodes
+            .filter((node) => positions.has(node.id))
+            .map((node) => {
+                const pos = positions.get(node.id)!;
+                const isLeaf = !node.left && !node.right;
 
-            return {
-                id: node.id,
-                type: 'treeNode',
-                position: pos,
-                data: {
-                    value: node.value,
-                    animationState: node.animationState,
-                    isRoot: node.id === rootId,
-                    isLeaf: isLeaf,
-                    onClick: () => onNodeClick?.(node.id),
-                },
-                sourcePosition: Position.Bottom,
-                targetPosition: Position.Top,
-                draggable: false,
-            };
-        });
+                return {
+                    id: node.id,
+                    type: 'treeNode',
+                    position: pos,
+                    data: {
+                        value: node.value,
+                        animationState: node.animationState,
+                        isRoot: node.id === rootId,
+                        isLeaf: isLeaf,
+                        onClick: () => onNodeClick?.(node.id),
+                    },
+                    sourcePosition: Position.Bottom,
+                    targetPosition: Position.Top,
+                    draggable: false,
+                };
+            });
 
-        // Create edges from parent to children
+        // Create edges from parent to children, only for reachable nodes
         const flowEdges: Edge[] = [];
-        nodes.forEach((node) => {
-            if (node.left) {
-                flowEdges.push({
-                    id: `${node.id}-left`,
-                    source: node.id,
-                    sourceHandle: 'left',
-                    target: node.left,
-                    type: 'default',
-                    animated: false,
-                    style: { stroke: '#94A6FF', strokeWidth: 2 },
-                    markerEnd: {
-                        type: MarkerType.ArrowClosed,
-                        color: '#94A6FF',
-                    },
-                });
-            }
-            if (node.right) {
-                flowEdges.push({
-                    id: `${node.id}-right`,
-                    source: node.id,
-                    sourceHandle: 'right',
-                    target: node.right,
-                    type: 'default',
-                    animated: false,
-                    style: { stroke: '#94A6FF', strokeWidth: 2 },
-                    markerEnd: {
-                        type: MarkerType.ArrowClosed,
-                        color: '#94A6FF',
-                    },
-                });
-            }
-        });
+        nodes
+            .filter((node) => positions.has(node.id))
+            .forEach((node) => {
+                if (node.left && positions.has(node.left)) {
+                    flowEdges.push({
+                        id: `${node.id}-left`,
+                        source: node.id,
+                        sourceHandle: 'left',
+                        target: node.left,
+                        type: 'default',
+                        animated: false,
+                        style: { stroke: '#94A6FF', strokeWidth: 2 },
+                        markerEnd: {
+                            type: MarkerType.ArrowClosed,
+                            color: '#94A6FF',
+                        },
+                    });
+                }
+                if (node.right && positions.has(node.right)) {
+                    flowEdges.push({
+                        id: `${node.id}-right`,
+                        source: node.id,
+                        sourceHandle: 'right',
+                        target: node.right,
+                        type: 'default',
+                        animated: false,
+                        style: { stroke: '#94A6FF', strokeWidth: 2 },
+                        markerEnd: {
+                            type: MarkerType.ArrowClosed,
+                            color: '#94A6FF',
+                        },
+                    });
+                }
+            });
 
         setReactFlowNodes(flowNodes);
         setEdges(flowEdges);
