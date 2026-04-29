@@ -7,17 +7,36 @@ import { javascript } from '@codemirror/lang-javascript';
 
 interface ChallengeCreateModalProps {
     simulatorId: string;
+    simulatorSlug: string;
     simulatorName: string;
     onClose: () => void;
     onSave: (data: any) => Promise<void>;
 }
 
-export default function ChallengeCreateModal({ simulatorId, simulatorName, onClose, onSave }: ChallengeCreateModalProps) {
+const CAPACITIES: Record<string, { mobile: number, desktop: number }> = {
+    'tree': { mobile: 7, desktop: 15 },
+    'linked-list': { mobile: 12, desktop: 24 },
+    'array': { mobile: 20, desktop: 40 },
+    'stack': { mobile: 10, desktop: 12 },
+    'queue': { mobile: 20, desktop: 40 },
+};
+
+const PARAM_NAMES: Record<string, string> = {
+    'tree': 'tree',
+    'linked-list': 'list',
+    'array': 'array',
+    'stack': 'stack',
+    'queue': 'queue',
+};
+
+export default function ChallengeCreateModal({ simulatorId, simulatorSlug, simulatorName, onClose, onSave }: ChallengeCreateModalProps) {
+    const dsParam = PARAM_NAMES[simulatorSlug] || "datastructure";
+    
     const [title, setTitle] = useState("");
     const [slug, setSlug] = useState("");
     const [description, setDescription] = useState("");
     const [orderIndex, setOrderIndex] = useState(1);
-    const [initialCode, setInitialCode] = useState("function Solution(list, io) {\n  // Your code here\n}");
+    const [initialCode, setInitialCode] = useState(`function Solution(${dsParam}, io) {\n  // Your code here\n}`);
     
     const formatJsonString = (val: string) => {
         try {
@@ -31,27 +50,28 @@ export default function ChallengeCreateModal({ simulatorId, simulatorName, onClo
         }
     };
 
-    // Combined JSON config
-    const [challengeConfig, setChallengeConfig] = useState(formatJsonString(JSON.stringify({
-        program_structure: { parameterNames: ["list", "io"] },
-        test_cases: [
-            {
-                name: "Test Case 1",
-                inputs: { "list": [1, 2, 3] },
-                expectedState: { "list": [1, 2, 3] },
-                expectedReturn: 6
-            }
-        ],
-        capacity: { desktop: 24, mobile: 12 }
-    })));
-
-    const [isSubmitting, setIsSubmitting] = useState(false);
-    const [activeTab, setActiveTab] = useState<'general' | 'code' | 'config'>('general');
-
     const formatJson = (val: string, setter: (v: string) => void) => {
         if (!val.trim()) return;
         setter(formatJsonString(val));
     };
+
+    // Combined JSON config
+    const [challengeConfig, setChallengeConfig] = useState(formatJsonString(JSON.stringify({
+        program_structure: {
+            parameterNames: [dsParam, "io"]
+        },
+        test_cases: [
+            {
+                name: "Test Case 1",
+                input: [],
+                expected: []
+            }
+        ],
+        capacity: CAPACITIES[simulatorSlug] || { desktop: 24, mobile: 12 }
+    })));
+
+    const [isSubmitting, setIsSubmitting] = useState(false);
+    const [activeTab, setActiveTab] = useState<'general' | 'code' | 'config'>('general');
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -214,7 +234,7 @@ export default function ChallengeCreateModal({ simulatorId, simulatorName, onClo
                                             onChange={(e) => setInitialCode(e.target.value)}
                                             className="flex-1 w-full mt-8 p-6 font-mono text-sm text-[#d4d4d4] bg-[#1e1e1e] outline-none resize-none whitespace-pre overflow-x-auto leading-relaxed custom-scrollbar selection:bg-indigo-500/30 code-textarea"
                                             spellCheck={false}
-                                            placeholder="function Solution(list, io) {\n  // Your code here\n}"
+                                            placeholder={`function Solution(${dsParam}, io) {\n  // Your code here\n}`}
                                         />
                                         <div className="absolute left-0 top-8 bottom-0 w-12 bg-[#1e1e1e] border-r border-[#333] pointer-events-none flex flex-col items-center pt-6 text-[#858585] font-mono text-[11px] select-none">
                                             {Array.from({ length: 40 }).map((_, i) => (
@@ -238,7 +258,7 @@ export default function ChallengeCreateModal({ simulatorId, simulatorName, onClo
                                                 <div className="w-2.5 h-2.5 rounded-full bg-[#27c93f]"></div>
                                             </div>
                                             <div className="ml-4 text-[10px] text-slate-500 font-mono flex items-center gap-2">
-                                                <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.1a2 2 0 0 1-1-1.72v-.51a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z" /><circle cx="12" cy="12" r="3" /></svg>
+                                                <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.1a2 2 0 0 1-1.72v-.51a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z" /><circle cx="12" cy="12" r="3" /></svg>
                                                 config.json
                                             </div>
                                         </div>

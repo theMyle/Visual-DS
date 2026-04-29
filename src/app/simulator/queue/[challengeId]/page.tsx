@@ -90,8 +90,9 @@ function SimulationQueueCore({ challenge, challengeId, nextChallengeSlug }: { ch
         ?? challenge.runnerParameterNames
         ?? DEFAULT_RUNNER_PARAMETER_NAMES;
 
+    const dsParam = runnerParameterNames[0] || 'queue';
     const initialInputs = challenge.testCases[0]?.inputs
-        ?? { queue: challenge.testCases[0]?.input ?? [] };
+        ?? { [dsParam]: challenge.testCases[0]?.input ?? [] };
 
     const getSeeds = () => {
         const seeds: Record<string, (string | number)[]> = {};
@@ -395,10 +396,10 @@ function SimulationQueueCore({ challenge, challengeId, nextChallengeSlug }: { ch
         if (Array.isArray(out)) return formatArray(out);
         if (typeof out === 'object' && out !== null) {
             const entries = Object.entries(out);
-            if (entries.length === 1) {
-                return formatArray(entries[0][1] as (string | number)[]);
+            if (entries.length === 1 && Array.isArray(entries[0][1])) {
+                return formatArray(entries[0][1]);
             }
-            return Object.entries(out).map(([k, v]) => `${k}: ${formatArray(v as any)}`).join(" | ");
+            return entries.map(([k, v]) => `${k}: ${formatArray(v as any)}`).join(" | ");
         }
         return String(out);
     }
@@ -550,7 +551,7 @@ function SimulationQueueCore({ challenge, challengeId, nextChallengeSlug }: { ch
         for (let i = 0; i < additionalCases.length; i++) {
             const testCase = additionalCases[i];
             const caseIndex = i + 1;
-            const caseInputs = testCase.inputs ?? { queue: testCase.input ?? [] };
+            const caseInputs = testCase.inputs ?? { [dsParam]: testCase.input ?? [] };
             const { apis, getValues } = createHeadlessChallengeApi(caseInputs);
             const silentIo = {
                 println: (_message: unknown) => {

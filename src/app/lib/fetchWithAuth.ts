@@ -30,5 +30,14 @@ export async function FetchWithAuth<T>(
     throw new Error(`Request failed (${response.status}): ${errorText}`);
   }
 
-  return (await response.json()) as T;
+  if (response.status === 204) {
+    return {} as T;
+  }
+
+  const text = await response.text();
+  if (!text) {
+    return {} as T;
+  }
+
+  return JSON.parse(text) as T;
 }

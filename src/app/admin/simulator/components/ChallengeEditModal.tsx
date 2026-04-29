@@ -264,7 +264,7 @@ export default function ChallengeEditModal({ challengeId, simulatorName, onClose
                                             onChange={(e) => setInitialCode(e.target.value)}
                                             className="flex-1 w-full mt-8 p-6 font-mono text-sm text-[#d4d4d4] bg-[#1e1e1e] outline-none resize-none whitespace-pre overflow-x-auto leading-relaxed custom-scrollbar selection:bg-indigo-500/30 code-textarea"
                                             spellCheck={false}
-                                            placeholder="function Solution(list, io) {\n  // Your code here\n}"
+                                            placeholder="function Solution(datastructure, io) {\n  // Your code here\n}"
                                         />
                                         <div className="absolute left-0 top-8 bottom-0 w-12 bg-[#1e1e1e] border-r border-[#333] pointer-events-none flex flex-col items-center pt-6 text-[#858585] font-mono text-[11px] select-none">
                                             {Array.from({ length: 40 }).map((_, i) => (

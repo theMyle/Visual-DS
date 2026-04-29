@@ -52,8 +52,8 @@ interface SimulatorCurriculumResponse {
   challenges: CurriculumChallenge[];
 }
 
-export default async function UserDetailPage({ params }: { params: { id: string } }) {
-  const { id } = params;
+export default async function UserDetailPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
   const { getToken } = await auth();
 
   let user: AdminUserDTO | null = null;

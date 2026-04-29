@@ -312,7 +312,9 @@ export default function SimulatorManagement({ simulators, onUpdate, onCreateChal
 
             {creatingChallengeSim && (
                 <ChallengeCreateModal
+                    key={creatingChallengeSim.id}
                     simulatorId={creatingChallengeSim.id}
+                    simulatorSlug={creatingChallengeSim.slug}
                     simulatorName={creatingChallengeSim.name}
                     onClose={() => setCreatingChallengeSim(null)}
                     onSave={handleCreateChallenge}
