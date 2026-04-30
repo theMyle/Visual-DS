@@ -29,19 +29,14 @@ export default function LessonDetailClient({ title, description, challengeHref, 
                     description={description}
                 />
 
-                {challengeHref && (
-                    <ChallengeLinkCard href={challengeHref} />
-                )}
-
                 <div className="flex flex-col gap-4">
-                    {lessons.map((lesson) => (
+                    {lessons.map((lesson, index) => (
                         <SubLessonItem
                             key={lesson.href}
+                            index={index + 1}
                             title={lesson.title}
                             href={lesson.href}
                             status={lesson.completed}
-                            // Toggle is removed, so we just pass a no-op or remove the prop
-                            onToggle={() => { }}
                         />
                     ))}
                 </div>

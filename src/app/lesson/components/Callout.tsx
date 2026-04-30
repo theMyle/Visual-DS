@@ -85,12 +85,12 @@ export default function Callout({
 }) {
     const s = styles[variant];
     return (
-        <div className={`mt-4 rounded-xl border ${s.border} ${s.bg} ${s.text} ${className}`} role="note">
+        <div className={`mt-2 mb-8 rounded-xl border ${s.border} ${s.bg} ${s.text} ${className}`} role="note">
             <div className="flex items-start gap-3 p-4">
                 <div className="mt-0.5 shrink-0" aria-hidden>{s.icon}</div>
                 <div className="flex-1">
                     {title && <p className={`font-semibold ${s.titleColor} mb-1`}>{title}</p>}
-                    <div className="leading-relaxed">{children}</div>
+                    <div className="leading-relaxed [&>*:last-child]:mb-0">{children}</div>
                 </div>
             </div>
         </div>

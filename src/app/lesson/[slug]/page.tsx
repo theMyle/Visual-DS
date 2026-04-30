@@ -16,7 +16,7 @@ export default async function Page({ params }: { params: Promise<{ slug: string 
     const apiUrl = `${process.env.NEXT_PUBLIC_API_BASE_URL}/lessons/${slug}`;
     let dbData: any = null;
     try {
-        const response = await fetch(apiUrl, { next: { revalidate: 60 } });
+        const response = await fetch(apiUrl, { cache: "no-store" });
         if (response.ok) {
             dbData = await response.json();
         }

@@ -24,7 +24,7 @@ export default function BottomNav({
     return (
         <nav
             aria-label="Lesson navigation"
-            className={`max-w-3xl mx-auto py-10 px-5 ${className}`}
+            className={`max-w-3xl mx-auto py-12 px-6 ${className}`}
         >
             <div className="grid grid-cols-2 gap-4">
                 {/* Previous Link */}

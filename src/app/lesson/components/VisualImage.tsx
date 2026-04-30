@@ -8,7 +8,7 @@ interface VisualImageProps {
 
 export default function VisualImage({ src, alt, showAlt = false }: VisualImageProps) {
     return (
-        <div className="flex flex-col justify-center items-center w-full pt-5 pb-5 gap-2">
+        <div className="flex flex-col justify-center items-center w-full my-10 gap-2">
             <Image
                 src={src}
                 alt={alt}

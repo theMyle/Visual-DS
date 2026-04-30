@@ -24,21 +24,21 @@ export default function LessonRenderer({ content }: LessonRendererProps) {
         remarkPlugins={[remarkGfm]}
         components={{
           h1: ({ children }) => (
-            <div className="mt-4 mb-2">
+            <div className="mt-2 mb-8">
               <Heading as="h1" size="lg">{children}</Heading>
             </div>
           ),
           h2: ({ children }) => (
-            <div className="mt-4 mb-2">
+            <div className="mt-8 mb-6">
               <Heading as="h2" size="md">{children}</Heading>
             </div>
           ),
           h3: ({ children }) => (
-            <div className="mt-3 mb-1">
+            <div className="mt-6 mb-4">
               <Heading as="h3" size="sm">{children}</Heading>
             </div>
           ),
-          p: ({ children }) => <div className="leading-relaxed mb-3">{children}</div>,
+          p: ({ children }) => <div className="leading-relaxed mb-6">{children}</div>,
           blockquote: ({ children }) => {
             // Recursive helper to extract all text content from an element tree
             const getTextContent = (node: any): string => {
@@ -90,7 +90,7 @@ export default function LessonRenderer({ content }: LessonRendererProps) {
             }
 
             return (
-              <blockquote className="border-l-4 border-slate-200 pl-4 italic text-slate-600 mb-6 mt-2">
+              <blockquote className="border-l-4 border-slate-200 pl-6 italic text-slate-600 my-4 bg-slate-50/50 py-4 rounded-r-lg [&>*:last-child]:mb-0">
                 {children}
               </blockquote>
             );
@@ -106,7 +106,11 @@ export default function LessonRenderer({ content }: LessonRendererProps) {
 
             // Check if it's actually a video (custom convention for markdown migration)
             if (src.endsWith(".mp4") || src.endsWith(".webm") || src.includes("youtube.com") || src.includes("storage.googleapis.com")) {
-              return <VideoEmbed embedUrl={src} title={alt} />;
+              return (
+                <div className="my-10">
+                  <VideoEmbed embedUrl={src} title={alt} />
+                </div>
+              );
             }
 
             return <VisualImage src={src} alt={alt || ""} />;
@@ -155,7 +159,7 @@ export default function LessonRenderer({ content }: LessonRendererProps) {
               );
             }
             return (
-              <pre className="bg-slate-50 p-4 rounded-lg overflow-x-auto border border-slate-200 my-4 w-full">
+              <pre className="bg-slate-50 p-6 rounded-xl overflow-x-auto border border-slate-200 my-10 w-full shadow-sm">
                 <code className={className} {...props}>{children}</code>
               </pre>
             );

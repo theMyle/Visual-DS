@@ -10,7 +10,7 @@ export default function TableSection({
   rows: React.ReactNode[][];
 }) {
   return (
-    <div className="mb-4">
+    <div className="mb-10">
       {title && (
         <p className="leading-relaxed mb-2 font-medium">{title}</p>
       )}

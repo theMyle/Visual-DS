@@ -12,7 +12,7 @@ export default function ListSection({
   const listStyleClass = ordered ? "list-decimal" : "list-disc";
 
   return (
-    <div className="mb-4 md:mb-6">
+    <div className="mb-8">
       {title && (
         <p className="mb-2 text-base md:text-lg font-semibold text-slate-900 leading-snug">{title}</p>
       )}
