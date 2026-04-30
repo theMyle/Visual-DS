@@ -11,7 +11,7 @@ interface ProgressItem {
 
 export default async function Page({ params }: { params: Promise<{ slug: string }> }) {
     const { slug } = await params;
-    
+
     // 1. Fetch category and lessons from DB
     const apiUrl = `${process.env.NEXT_PUBLIC_API_BASE_URL}/lessons/${slug}`;
     let dbData: any = null;
@@ -26,7 +26,7 @@ export default async function Page({ params }: { params: Promise<{ slug: string 
 
     // Fallback to static if DB fails
     const staticData = LESSON_MAP[slug];
-    
+
     if (!dbData && !staticData) notFound();
 
     const title = dbData?.category?.title || staticData?.title || "";

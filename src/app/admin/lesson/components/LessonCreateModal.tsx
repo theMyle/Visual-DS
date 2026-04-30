@@ -13,8 +13,12 @@ interface LessonCreateModalProps {
 export default function LessonCreateModal({ category, onClose }: LessonCreateModalProps) {
     const [title, setTitle] = useState("");
     const [slug, setSlug] = useState("");
-    const [content, setContent] = useState("");
-    const [orderIndex, setOrderIndex] = useState(0);
+    // Calculate next available index
+    const nextOrderIndex = category.lessons.length > 0 
+        ? Math.max(...category.lessons.map(l => l.order_index)) + 1 
+        : 1;
+        
+    const [orderIndex, setOrderIndex] = useState(nextOrderIndex);
     const [isSubmitting, setIsSubmitting] = useState(false);
 
     const handleSubmit = async (e: React.FormEvent) => {
@@ -25,7 +29,7 @@ export default function LessonCreateModal({ category, onClose }: LessonCreateMod
                 category_id: category.category_id,
                 title,
                 slug,
-                content,
+                content: "",
                 order_index: orderIndex
             });
             toast.success("Lesson created successfully");
@@ -83,22 +87,15 @@ export default function LessonCreateModal({ category, onClose }: LessonCreateMod
                         <input
                             type="number"
                             required
-                            value={orderIndex}
-                            onChange={(e) => setOrderIndex(parseInt(e.target.value))}
+                            value={isNaN(orderIndex) ? "" : orderIndex}
+                            onChange={(e) => {
+                                const val = parseInt(e.target.value);
+                                setOrderIndex(isNaN(val) ? 0 : val);
+                            }}
                             className="w-full px-4 py-3 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
                         />
                     </div>
 
-                    <div className="flex flex-col gap-2 flex-1">
-                        <label className="text-xs font-bold text-slate-500 uppercase tracking-wider ml-1">Content (Markdown)</label>
-                        <textarea
-                            required
-                            value={content}
-                            onChange={(e) => setContent(e.target.value)}
-                            className="flex-1 min-h-[300px] w-full px-4 py-3 border border-slate-200 rounded-xl text-sm font-mono focus:outline-none focus:ring-2 focus:ring-indigo-500 resize-none"
-                            placeholder="# Lesson Title\n\nLesson content here..."
-                        />
-                    </div>
 
                     <div className="flex items-center justify-end gap-3 mt-4 flex-shrink-0">
                         <button type="button" onClick={onClose} className="px-6 py-2 text-sm font-bold text-slate-500 hover:bg-slate-100 rounded-xl transition-all">

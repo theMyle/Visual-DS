@@ -86,8 +86,11 @@ export default function CategoryCreateModal({ onClose }: CategoryCreateModalProp
                         <input
                             type="number"
                             required
-                            value={orderIndex}
-                            onChange={(e) => setOrderIndex(parseInt(e.target.value))}
+                            value={isNaN(orderIndex) ? "" : orderIndex}
+                            onChange={(e) => {
+                                const val = parseInt(e.target.value);
+                                setOrderIndex(isNaN(val) ? 0 : val);
+                            }}
                             className="w-full px-4 py-3 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
                         />
                     </div>

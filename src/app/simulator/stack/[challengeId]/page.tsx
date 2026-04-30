@@ -32,7 +32,7 @@ export default function SimulationStack() {
 
     useEffect(() => {
         if (!challengeId) return;
-        
+
         setLoading(true);
         fetchSimulatorChallenge("stack", challengeId)
             .then(setChallenge)
@@ -53,7 +53,7 @@ export default function SimulationStack() {
 
     if (error || !challenge) {
         return (
-            <SimulatorError 
+            <SimulatorError
                 title={error ? "Failed to Load Challenge" : "Challenge Not Found"}
                 message={error || "The requested challenge could not be found."}
                 onRetry={() => window.location.reload()}
@@ -81,7 +81,7 @@ function SimulationStackCore({ challenge, challengeId, nextChallengeSlug }: { ch
     const searchParams = useSearchParams();
     const nextPath = searchParams.get("next");
 
-    const inferredNextPath = nextChallengeSlug 
+    const inferredNextPath = nextChallengeSlug
         ? `/simulator/stack/${nextChallengeSlug}`
         : "/simulator";
 
@@ -406,9 +406,9 @@ function SimulationStackCore({ challenge, challengeId, nextChallengeSlug }: { ch
 
     const getSimulatorErrorLine = (error: unknown): number | null => {
         if (!(error instanceof Error) || !error.stack) return null;
-        const match = error.stack.match(/simulator-solution\.js:(\d+)/) || 
-                      error.stack.match(/<anonymous>:(\d+):(\d+)/) || 
-                      error.stack.match(/Function:(\d+):(\d+)/);
+        const match = error.stack.match(/simulator-solution\.js:(\d+)/) ||
+            error.stack.match(/<anonymous>:(\d+):(\d+)/) ||
+            error.stack.match(/Function:(\d+):(\d+)/);
         if (match) {
             const line = parseInt(match[1], 10);
             return Math.max(1, line - 2);

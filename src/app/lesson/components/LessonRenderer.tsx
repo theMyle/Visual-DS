@@ -53,13 +53,13 @@ export default function LessonRenderer({ content }: LessonRendererProps) {
 
             if (match) {
               const variant = match[1].toLowerCase() as any;
-              
+
               // Recursive helper to remove the tag from the tree
               const removeTagFromTree = (node: any): any => {
                 if (typeof node === 'string') {
                   return node.trimStart().replace(/^\[(info|warning|success|tip|danger)\]\s*/i, "");
                 }
-                
+
                 if (Array.isArray(node)) {
                   let found = false;
                   return node.map(c => {
@@ -78,17 +78,17 @@ export default function LessonRenderer({ content }: LessonRendererProps) {
                     return c;
                   });
                 }
-                
+
                 if (node?.props?.children) {
                   return React.cloneElement(node, { children: removeTagFromTree(node.props.children) });
                 }
-                
+
                 return node;
               };
 
               return <Callout variant={variant}>{removeTagFromTree(children)}</Callout>;
             }
-            
+
             return (
               <blockquote className="border-l-4 border-slate-200 pl-4 italic text-slate-600 mb-6 mt-2">
                 {children}
@@ -102,13 +102,13 @@ export default function LessonRenderer({ content }: LessonRendererProps) {
           ol: ({ children }) => <ListSection ordered={true}>{children}</ListSection>,
           li: ({ children }) => <li>{children}</li>,
           img: ({ src, alt }) => {
-            if (!src || typeof src !== 'string') return null;
-            
+            if (!src) return null;
+
             // Check if it's actually a video (custom convention for markdown migration)
             if (src.endsWith(".mp4") || src.endsWith(".webm") || src.includes("youtube.com") || src.includes("storage.googleapis.com")) {
               return <VideoEmbed embedUrl={src} title={alt} />;
             }
-            
+
             return <VisualImage src={src} alt={alt || ""} />;
           },
           table: ({ children }) => {
@@ -132,7 +132,7 @@ export default function LessonRenderer({ content }: LessonRendererProps) {
             let rows: React.ReactNode[][] = [];
             if (tbody) {
               const trs = React.Children.toArray(tbody.props.children).filter((c: any) => c.type === "tr") as any[];
-              rows = trs.map(tr => 
+              rows = trs.map(tr =>
                 React.Children.toArray(tr.props.children)
                   .filter((c: any) => c.type === "td")
                   .map((td: any) => td.props?.children)

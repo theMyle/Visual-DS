@@ -27,17 +27,17 @@ export default async function AdminLessonEditPage({ params }: LessonEditPageProp
     const { id } = await params;
     const { getToken } = await auth();
 
-    let lessonData: LessonResponse | undefined;
+    let lessonData: LessonResponse;
     let categoryData: CategoryResponse | undefined;
 
     try {
         // Fetch lesson
         lessonData = await fetchAdminApi<LessonResponse>(`sub-lessons/${id}`, getToken);
-        
+
         // Fetch category to get its title
         const categories = await fetchAdminApi<CategoryResponse[]>(`lessons`, getToken);
-        categoryData = categories.find(c => c.category_id === lessonData!.category_id);
-        
+        categoryData = categories.find(c => c.category_id === lessonData.category_id);
+
     } catch (e) {
         console.error("Failed to fetch lesson for editing:", e);
         return notFound();
@@ -49,9 +49,9 @@ export default async function AdminLessonEditPage({ params }: LessonEditPageProp
 
     return (
         <div className="h-screen w-full flex flex-col overflow-hidden">
-            <LessonEditor 
-                lesson={lessonData} 
-                categoryTitle={categoryData?.title || "Unknown Category"} 
+            <LessonEditor
+                lesson={lessonData}
+                categoryTitle={categoryData?.title || "Unknown Category"}
             />
         </div>
     );

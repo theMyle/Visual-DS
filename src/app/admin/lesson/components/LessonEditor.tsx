@@ -23,7 +23,7 @@ export default function LessonEditor({ lesson, categoryTitle }: LessonEditorProp
     const router = useRouter();
     const [title, setTitle] = useState(lesson.title);
     const [content, setContent] = useState(lesson.content || "");
-    const [orderIndex, setOrderIndex] = useState(lesson.order_index);
+    const [orderIndex, setOrderIndex] = useState(lesson.order_index ?? 0);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [view, setView] = useState<'edit' | 'preview' | 'split'>('split');
 
@@ -33,7 +33,7 @@ export default function LessonEditor({ lesson, categoryTitle }: LessonEditorProp
             await updateLesson(lesson.lesson_id, {
                 title,
                 content,
-                order_index: orderIndex
+                order_index: isNaN(orderIndex) ? 0 : orderIndex
             });
             toast.success("Lesson updated successfully");
         } catch (error) {
@@ -53,7 +53,7 @@ export default function LessonEditor({ lesson, categoryTitle }: LessonEditorProp
                         onClick={() => router.back()}
                         className="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-200 rounded-lg transition-all"
                     >
-                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="m15 18-6-6 6-6"/></svg>
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="m15 18-6-6 6-6" /></svg>
                     </button>
                     <div>
                         <h1 className="font-bold text-slate-900 text-lg leading-none">{title || "Untitled Lesson"}</h1>
@@ -114,8 +114,11 @@ export default function LessonEditor({ lesson, categoryTitle }: LessonEditorProp
                     <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-1">Order Index</label>
                     <input
                         type="number"
-                        value={orderIndex}
-                        onChange={(e) => setOrderIndex(parseInt(e.target.value))}
+                        value={isNaN(orderIndex) ? "" : orderIndex}
+                        onChange={(e) => {
+                            const val = parseInt(e.target.value);
+                            setOrderIndex(isNaN(val) ? 0 : val);
+                        }}
                         className="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all"
                     />
                 </div>
@@ -171,7 +174,8 @@ export default function LessonEditor({ lesson, categoryTitle }: LessonEditorProp
                 )}
             </div>
 
-            <style dangerouslySetInnerHTML={{ __html: `
+            <style dangerouslySetInnerHTML={{
+                __html: `
                 .custom-scrollbar::-webkit-scrollbar {
                     width: 8px;
                     height: 8px;

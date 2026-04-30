@@ -14,14 +14,14 @@ export default function CategoryEditModal({ category, onClose }: CategoryEditMod
     const [title, setTitle] = useState(category.title);
     const [slug, setSlug] = useState(category.slug);
     const [description, setDescription] = useState(category.description || "");
-    const [orderIndex, setOrderIndex] = useState(category.order_index);
+    const [orderIndex, setOrderIndex] = useState(category.order_index ?? 0);
     const [isSubmitting, setIsSubmitting] = useState(false);
 
     useEffect(() => {
         setTitle(category.title);
         setSlug(category.slug);
         setDescription(category.description || "");
-        setOrderIndex(category.order_index);
+        setOrderIndex(category.order_index ?? 0);
     }, [category]);
 
     const handleSubmit = async (e: React.FormEvent) => {
@@ -92,8 +92,11 @@ export default function CategoryEditModal({ category, onClose }: CategoryEditMod
                         <input
                             type="number"
                             required
-                            value={orderIndex}
-                            onChange={(e) => setOrderIndex(parseInt(e.target.value))}
+                            value={isNaN(orderIndex) ? "" : orderIndex}
+                            onChange={(e) => {
+                                const val = parseInt(e.target.value);
+                                setOrderIndex(isNaN(val) ? 0 : val);
+                            }}
                             className="w-full px-4 py-3 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
                         />
                     </div>
