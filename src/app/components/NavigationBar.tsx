@@ -60,12 +60,12 @@ export default function NavBar({ initialIsSignedIn }: { initialIsSignedIn: boole
                         <Link href="/assessment" className="px-4 py-2 text-gray-700 hover:text-gray-900 hover:bg-gray-100 rounded-md transition-colors font-medium active:transform active:scale-95">
                             Assessment
                         </Link>
-                        <Link
+                        {/* <Link
                             href="https://forms.gle/RFBzwqqXkiWQNyKp9"
                             target="_blank"
                             className="px-4 py-2 text-gray-700 hover:text-gray-900 hover:bg-gray-100 rounded-md transition-colors font-medium active:transform active:scale-95">
                             Feedback
-                        </Link>
+                        </Link> */}
                     </div>
 
                     <div className="pl-5 flex justify-end items-center gap-2">
@@ -155,10 +155,10 @@ export default function NavBar({ initialIsSignedIn }: { initialIsSignedIn: boole
                                 href={"/assessment"}
                                 onClick={() => { setMenuOpen(false) }} />
 
-                            <MenuItemButton
+                            {/* <MenuItemButton
                                 text={"Feedback"}
                                 href={"https://forms.gle/RFBzwqqXkiWQNyKp9"}
-                                onClick={() => { setMenuOpen(false) }} />
+                                onClick={() => { setMenuOpen(false) }} /> */}
 
                             {isSignedIn && (
                                 <div className="">
