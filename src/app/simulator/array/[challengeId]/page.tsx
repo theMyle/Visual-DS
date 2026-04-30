@@ -143,8 +143,8 @@ function SimulationArrayCore({ challenge, challengeId, nextChallengeSlug }: { ch
         initialEditorCode
     );
 
-    const MIN_LEFT_PANE_PERCENT = 45;
-    const MAX_LEFT_PANE_PERCENT = 60;
+    const MIN_LEFT_PANE_PERCENT = 30;
+    const MAX_LEFT_PANE_PERCENT = 70;
 
     const [leftPaneWidth, setLeftPaneWidth] = useState<number>(50);
     const [isResizing, setIsResizing] = useState<boolean>(false);
@@ -984,7 +984,7 @@ function SimulationArrayCore({ challenge, challengeId, nextChallengeSlug }: { ch
     const numArrays = Object.keys(arrays).length;
 
     return (
-        <div className="h-full bg-gray-50 overflow-hidden">
+        <div className="h-full bg-gray-100 overflow-hidden">
             <ChallengeCompletedModal
                 isOpen={isChallengeCompletedModalOpen}
                 onClose={() => setIsChallengeCompletedModalOpen(false)}
@@ -995,19 +995,19 @@ function SimulationArrayCore({ challenge, challengeId, nextChallengeSlug }: { ch
 
             <main
                 ref={workspaceRef}
-                className={`flex flex-col lg:grid h-full max-w-[1500px] mx-auto bg-white ${isResizing ? "select-none" : ""}`}
+                className={`flex flex-col lg:grid h-full max-w-[1500px] mx-auto bg-gray-100 ${isResizing ? "select-none" : ""}`}
                 style={{ gridTemplateColumns: `${leftPaneWidth}fr 10px ${100 - leftPaneWidth}fr` }}
             >
 
-                {/* Array display - Constrained height */}
-                <div className="flex flex-col h-[40vh] lg:h-full overflow-hidden border-b lg:border-b-0 lg:border-r border-gray-200">
+                {/* Left pane: Instructions (self-managing height) + Array Visualizer */}
+                <div className="flex flex-col h-[40vh] lg:h-full overflow-hidden border-b lg:border-b-0 lg:border-r border-white/[0.06]">
                     <ChallengeInstructions
                         title={challenge.title}
                         description={challenge.description}
                         completed={isCompleted}
                     />
 
-                    <div className="flex-1 overflow-y-auto relative flex flex-col min-h-0">
+                    <div className="flex-1 overflow-y-auto relative flex flex-col min-h-0 bg-gray-50">
                         {Object.entries(arrays).map(([name, arrayElements]) => (
                             <div key={name} className="flex-1 flex flex-col items-center border-b border-gray-100 last:border-b-0 min-h-[200px]">
                                 {numArrays > 1 && (
@@ -1023,16 +1023,21 @@ function SimulationArrayCore({ challenge, challengeId, nextChallengeSlug }: { ch
                             </div>
                         ))}
                     </div>
-                </div >
+                </div>
 
+                {/* Vertical resize divider */}
                 <div
-                    className="hidden lg:flex items-center justify-center cursor-col-resize bg-gray-200 hover:bg-blue-200 transition-colors"
+                    className={`hidden lg:flex items-center justify-center cursor-col-resize transition-colors group ${
+                        isResizing ? "bg-indigo-500/30" : "bg-white/[0.04] hover:bg-indigo-500/20"
+                    }`}
                     onMouseDown={() => setIsResizing(true)}
                     role="separator"
                     aria-orientation="vertical"
                     aria-label="Resize panels"
                 >
-                    <div className="h-14 w-1 rounded bg-gray-500" />
+                    <div className={`h-16 w-[3px] rounded-full transition-colors ${
+                        isResizing ? "bg-indigo-400" : "bg-gray-300 group-hover:bg-indigo-400"
+                    }`} />
                 </div>
 
                 <CodeEditorPanel

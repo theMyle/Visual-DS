@@ -22,3 +22,32 @@ body {
 .animate-fade-in {
   animation: fade-in 0.3s ease-out forwards;
 }
+
+/* Dark scrollbar for code editor areas */
+.scrollbar-dark {
+  scrollbar-width: thin;
+  scrollbar-color: #3f4759 #1a1e2a;
+}
+
+.scrollbar-dark::-webkit-scrollbar {
+  width: 7px;
+  height: 7px;
+}
+
+.scrollbar-dark::-webkit-scrollbar-track {
+  background: #1a1e2a;
+}
+
+.scrollbar-dark::-webkit-scrollbar-thumb {
+  background-color: #3f4759;
+  border-radius: 4px;
+  border: 1px solid #1a1e2a;
+}
+
+.scrollbar-dark::-webkit-scrollbar-thumb:hover {
+  background-color: #5a6580;
+}
+
+.scrollbar-dark::-webkit-scrollbar-corner {
+  background: #1a1e2a;
+}
