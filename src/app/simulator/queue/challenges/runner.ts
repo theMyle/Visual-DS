@@ -38,14 +38,14 @@ export type ChallengeRunner = (...args: unknown[]) => unknown;
 
 export const DEFAULT_RUNNER_PARAMETER_NAMES = ["queue", "io"] as const;
 
-const buildChallengeRunnerSource = (code: string, parameterNames: readonly string[]) => `
-${code}
+const buildChallengeRunnerSource = (code: string, parameterNames: readonly string[]) => `${code}
 
 if (typeof Solution !== 'function') {
   throw new Error('Solution(...) is required');
 }
 
-return Solution(${parameterNames.join(", ")});`;
+return Solution(${parameterNames.join(", ")});
+//# sourceURL=simulator-solution.js`;
 
 export const createChallengeRunner = (
   code: string,

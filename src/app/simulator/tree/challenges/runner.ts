@@ -41,14 +41,14 @@ export const DEFAULT_PROGRAM_STRUCTURE: ChallengeProgramStructure = {
   parameterNames: DEFAULT_RUNNER_PARAMETER_NAMES,
 };
 
-const buildChallengeRunnerSource = (code: string, parameterNames: readonly string[]) => `
-${code}
+const buildChallengeRunnerSource = (code: string, parameterNames: readonly string[]) => `${code}
 
 if (typeof Solution !== 'function') {
   throw new Error('Solution(...) is required');
 }
 
-return Solution(${parameterNames.join(", ")});`;
+return Solution(${parameterNames.join(", ")});
+//# sourceURL=simulator-solution.js`;
 
 export const createChallengeRunner = (
   code: string,

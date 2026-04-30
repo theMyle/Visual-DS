@@ -11,7 +11,7 @@ import { useAuth } from "@clerk/nextjs";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { syncSimulatorProgress } from "../../../lib/simulatorProgress";
 import { fetchSimulatorChallenge, SimulatorChallengeDTO } from "@/app/lib/simulators";
-import { ChallengeConfig, createChallengeRunner, DEFAULT_RUNNER_PARAMETER_NAMES } from "../challenges/runner";
+import { ChallengeConfig, createChallengeRunner, ChallengeRunner, DEFAULT_RUNNER_PARAMETER_NAMES } from "../challenges/runner";
 import SimulatorError from "../../components/SimulatorError";
 
 type ChallengeResultSummary = {
@@ -852,7 +852,23 @@ function SimulationTreeCore({ challenge, challengeId, nextChallengeSlug }: { cha
         const additionalCases = challenge.testCases.slice(1);
         if (additionalCases.length === 0) return [];
 
-        const runner = createChallengeRunner(code, runnerParameterNames);
+        let runner: ChallengeRunner;
+        try {
+            runner = createChallengeRunner(code, runnerParameterNames);
+        } catch (error) {
+            const message = error instanceof Error ? error.message : "Syntax Error";
+            return additionalCases.map((testCase, i) => ({
+                name: testCase.name || `Test Case ${i + 2}`,
+                input: formatOutput(testCase.inputs ?? testCase.input ?? []),
+                expected: testCase.expectedReturn !== undefined
+                    ? formatOutput(testCase.expectedReturn)
+                    : formatOutput(testCase.expected ?? []),
+                actual: "Syntax Error",
+                passed: false,
+                statusText: `FAIL: ${message}`,
+            }));
+        }
+
         const summaries: ChallengeResultSummary[] = [];
 
         for (let i = 0; i < additionalCases.length; i++) {
@@ -1001,8 +1017,9 @@ function SimulationTreeCore({ challenge, challengeId, nextChallengeSlug }: { cha
             });
         } catch (error) {
             const message = error instanceof Error ? error.message : "Unknown editor execution error";
+            const line = getSimulatorErrorLine(error);
             setShowNextAction(false);
-            writeToConsole(`ERROR: ${message}`);
+            writeToConsole(`ERROR${line ? ` (Line ${line})` : ""}: ${message}`);
             writeToConsole("NOTICE: Execution stopped. Press Reset to restore a clean state.");
         }
     };
@@ -1015,6 +1032,18 @@ function SimulationTreeCore({ challenge, challengeId, nextChallengeSlug }: { cha
     const handleChallengeMenu = () => {
         setIsChallengeCompletedModalOpen(false);
         router.push("/simulator");
+    };
+
+    const getSimulatorErrorLine = (error: unknown): number | null => {
+        if (!(error instanceof Error) || !error.stack) return null;
+        const match = error.stack.match(/simulator-solution\.js:(\d+)/) || 
+                      error.stack.match(/<anonymous>:(\d+):(\d+)/) || 
+                      error.stack.match(/Function:(\d+):(\d+)/);
+        if (match) {
+            const line = parseInt(match[1], 10);
+            return Math.max(1, line - 2);
+        }
+        return null;
     };
 
     const resetEditorCode = () => {
