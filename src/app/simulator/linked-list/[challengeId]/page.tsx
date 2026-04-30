@@ -105,8 +105,13 @@ function SimulationLinkedListCore({ challenge, challengeId, nextChallengeSlug }:
         ?? DEFAULT_RUNNER_PARAMETER_NAMES;
 
     const dsParam = runnerParameterNames[0] || 'list';
-    const initialInputs = challenge.testCases[0]?.inputs
-        ?? { [dsParam]: challenge.testCases[0]?.input ?? [] };
+    const firstCase = challenge.testCases[0];
+    const initialInputs = firstCase?.inputs
+        ? firstCase.inputs
+        : (firstCase?.input && !Array.isArray(firstCase.input) && typeof firstCase.input === 'object')
+            ? (firstCase.input as Record<string, any>)
+            : { [dsParam]: firstCase?.input ?? [] };
+
 
     const initialEditorCode = challenge.initialEditorCode;
 
@@ -144,6 +149,7 @@ function SimulationLinkedListCore({ challenge, challengeId, nextChallengeSlug }:
     const listsRef = useRef<Record<string, ListData>>({});
     const nodeActionQueueRef = useRef(Promise.resolve());
     const consoleWriteQueueRef = useRef(Promise.resolve());
+    const logicalInputsRef = useRef<Record<string, any>>({});
     const nextPointerShadowRef = useRef<Map<string, string | null>>(new Map());
     const valueShadowRef = useRef<Map<string, string | number>>(new Map());
     const sleep = (ms: number) => new Promise<void>((resolve) => setTimeout(resolve, ms));
@@ -474,18 +480,22 @@ function SimulationLinkedListCore({ challenge, challengeId, nextChallengeSlug }:
 
     useEffect(() => {
         const initialLists: Record<string, ListData> = {};
-        for (const [key, arr] of Object.entries(initialInputs)) {
-            const nodes = createNodes(...arr);
-            let head = null;
-            let tail = null;
-            if (nodes.length > 0) {
-                head = nodes[0].id;
-                tail = nodes[nodes.length - 1].id;
+        for (const [key, value] of Object.entries(initialInputs)) {
+            if (Array.isArray(value)) {
+                const nodes = createNodes(...value);
+                let head = null;
+                let tail = null;
+                if (nodes.length > 0) {
+                    head = nodes[0].id;
+                    tail = nodes[nodes.length - 1].id;
+                }
+                initialLists[key] = { nodes, head, tail };
             }
-            initialLists[key] = { nodes, head, tail };
         }
+        logicalInputsRef.current = { ...initialInputs };
         commitLists(initialLists);
     }, []);
+
 
     useEffect(() => {
         if (!isResizing) return;
@@ -521,7 +531,8 @@ function SimulationLinkedListCore({ challenge, challengeId, nextChallengeSlug }:
             if (entries.length === 1 && Array.isArray(entries[0][1])) {
                 return formatArray(entries[0][1]);
             }
-            return entries.map(([k, v]) => `${k}: ${formatArray(v as any)}`).join(" | ");
+            return entries.map(([k, v]) => `${k}: ${Array.isArray(v) ? formatArray(v as any) : String(v)}`).join(" | ");
+
         }
         return String(out);
     }
@@ -588,9 +599,9 @@ function SimulationLinkedListCore({ challenge, challengeId, nextChallengeSlug }:
 
     const createCaseSummary = (
         caseIndex: number,
-        inputs: Record<string, (string | number)[]> | (string | number)[],
-        expected: Record<string, (string | number)[]> | (string | number)[] | undefined,
-        actual: Record<string, (string | number)[]> | (string | number)[],
+        inputs: any,
+        expected: any,
+        actual: any,
         caseName?: string,
         expectedReturn?: string | number,
         actualReturn?: unknown,
@@ -623,13 +634,19 @@ function SimulationLinkedListCore({ challenge, challengeId, nextChallengeSlug }:
         };
     };
 
-    const createHeadlessChallengeApi = (seedInputs: Record<string, (string | number)[]>) => {
+    const createHeadlessChallengeApi = (seedInputs: Record<string, any>) => {
         type HeadlessNode = { id: string; value: string | number; next: string | null; };
-
+        const getValuesMap: Record<string, () => any> = {};
         const apis: Record<string, any> = {};
-        const getValuesMap: Record<string, () => (string | number)[]> = {};
 
-        for (const [name, seedArr] of Object.entries(seedInputs)) {
+        for (const [name, value] of Object.entries(seedInputs)) {
+            if (!Array.isArray(value)) {
+                apis[name] = value;
+                getValuesMap[name] = () => value;
+                continue;
+            }
+
+            const seedArr = value;
             const store = new Map<string, HeadlessNode>();
             let headId: string | null = null;
             let tailId: string | null = null;
@@ -637,9 +654,9 @@ function SimulationLinkedListCore({ challenge, challengeId, nextChallengeSlug }:
 
             const makeId = () => `${name}-n-${idCounter++}`;
 
-            const seededIds = seedArr.map((value) => {
+            const seededIds = seedArr.map((v) => {
                 const id = makeId();
-                store.set(id, { id, value, next: null });
+                store.set(id, { id, value: v, next: null });
                 return id;
             });
 
@@ -696,10 +713,10 @@ function SimulationLinkedListCore({ challenge, challengeId, nextChallengeSlug }:
                 return {
                     id: nodeId,
                     getValue: () => store.get(nodeId)?.value,
-                    setValue: async (value) => {
+                    setValue: async (v) => {
                         const target = store.get(nodeId);
                         if (!target) return;
-                        target.value = value;
+                        target.value = v;
                     },
                     getNext: () => createHandle(store.get(nodeId)?.next ?? null),
                     setNext: (next) => {
@@ -723,9 +740,9 @@ function SimulationLinkedListCore({ challenge, challengeId, nextChallengeSlug }:
                     tailId = nextTail?.id ?? null;
                 },
                 size: () => materializeValues().length,
-                newNode: (value: string | number) => {
+                newNode: (v: string | number) => {
                     const id = makeId();
-                    store.set(id, { id, value, next: null });
+                    store.set(id, { id, value: v, next: null });
                     return createHandle(id);
                 },
             };
@@ -736,14 +753,18 @@ function SimulationLinkedListCore({ challenge, challengeId, nextChallengeSlug }:
         return {
             apis,
             getValues: () => {
-                const res: Record<string, (string | number)[]> = {};
+                const res: Record<string, any> = {};
                 for (const [name, fn] of Object.entries(getValuesMap)) {
-                    res[name] = fn();
+                    const val = fn();
+                    if (Array.isArray(val)) {
+                        res[name] = val;
+                    }
                 }
                 return res;
             },
         };
     };
+
 
     const materializeVisualList = (listName: string) => {
         const out: (string | number)[] = [];
@@ -780,7 +801,11 @@ function SimulationLinkedListCore({ challenge, challengeId, nextChallengeSlug }:
         for (let i = 0; i < additionalCases.length; i++) {
             const testCase = additionalCases[i];
             const caseIndex = i + 1;
-            const caseInputs = testCase.inputs ?? { [dsParam]: testCase.input ?? [] };
+            const caseInputs = testCase.inputs
+                ? testCase.inputs
+                : (testCase.input && !Array.isArray(testCase.input) && typeof testCase.input === 'object')
+                    ? (testCase.input as Record<string, any>)
+                    : { [dsParam]: testCase.input ?? [] };
             const { apis, getValues } = createHeadlessChallengeApi(caseInputs);
             const silentIo = {
                 println: (_message: unknown) => {
@@ -841,10 +866,14 @@ function SimulationLinkedListCore({ challenge, challengeId, nextChallengeSlug }:
 
             const runner = createChallengeRunner(editorCode, runnerParameterNames);
             const context: Record<string, unknown> = { io: { println: writeToConsole } };
-            const listNames = Object.keys(initialInputs);
-            for (const name of listNames) {
-                context[name] = createChallengeApi(name);
+            for (const [name, value] of Object.entries(initialInputs)) {
+                if (Array.isArray(value)) {
+                    context[name] = createChallengeApi(name);
+                } else {
+                    context[name] = value;
+                }
             }
+
 
             const result = runner(...buildRunnerArgs(context));
             let resolvedResult: unknown = result;
@@ -856,9 +885,11 @@ function SimulationLinkedListCore({ challenge, challengeId, nextChallengeSlug }:
             await consoleWriteQueueRef.current;
             await new Promise((resolve) => setTimeout(resolve, 1200));
 
-            const finalValues: Record<string, (string | number)[]> = {};
-            for (const name of Object.keys(listsRef.current)) {
-                finalValues[name] = materializeVisualList(name);
+            const finalValues: Record<string, any> = {};
+            for (const [name, value] of Object.entries(logicalInputsRef.current)) {
+                if (Array.isArray(value)) {
+                    finalValues[name] = materializeVisualList(name);
+                }
             }
 
             const primaryCase = challenge.testCases[0];
@@ -943,16 +974,19 @@ function SimulationLinkedListCore({ challenge, challengeId, nextChallengeSlug }:
 
     const resetListsOnly = () => {
         const initialLists: Record<string, ListData> = {};
-        for (const [key, arr] of Object.entries(initialInputs)) {
-            const nodes = createNodes(...arr);
-            let head = null;
-            let tail = null;
-            if (nodes.length > 0) {
-                head = nodes[0].id;
-                tail = nodes[nodes.length - 1].id;
+        for (const [key, value] of Object.entries(initialInputs)) {
+            if (Array.isArray(value)) {
+                const nodes = createNodes(...value);
+                let head = null;
+                let tail = null;
+                if (nodes.length > 0) {
+                    head = nodes[0].id;
+                    tail = nodes[nodes.length - 1].id;
+                }
+                initialLists[key] = { nodes, head, tail };
             }
-            initialLists[key] = { nodes, head, tail };
         }
+        logicalInputsRef.current = { ...initialInputs };
         commitLists(initialLists);
         setIsCompleted(false);
         setIsChallengeCompletedModalOpen(false);

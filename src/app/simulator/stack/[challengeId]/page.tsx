@@ -90,19 +90,24 @@ function SimulationStackCore({ challenge, challengeId, nextChallengeSlug }: { ch
         ?? DEFAULT_RUNNER_PARAMETER_NAMES;
 
     const dsParam = runnerParameterNames[0] || 'stack';
-    const initialInputs = challenge.testCases[0]?.inputs
-        ?? { [dsParam]: challenge.testCases[0]?.input ?? [] };
+    const firstCase = challenge.testCases[0];
+    const initialInputs = firstCase?.inputs
+        ? firstCase.inputs
+        : (firstCase?.input && !Array.isArray(firstCase.input) && typeof firstCase.input === 'object')
+            ? (firstCase.input as Record<string, any>)
+            : { [dsParam]: firstCase?.input ?? [] };
 
     // The test case input has the top of the stack at the end (right-most element),
     // but our VisualStack expects the top of the stack to be at index 0 (start of the array).
     // So we reverse the seeds.
     const getReversedSeeds = () => {
-        const reversed: Record<string, (string | number)[]> = {};
-        for (const key of Object.keys(initialInputs)) {
-            reversed[key] = [...initialInputs[key]].reverse();
+        const reversed: Record<string, any> = {};
+        for (const [key, value] of Object.entries(initialInputs)) {
+            reversed[key] = Array.isArray(value) ? [...value].reverse() : value;
         }
         return reversed;
     };
+
 
     const initialEditorCode = challenge.initialEditorCode;
 
@@ -212,8 +217,10 @@ function SimulationStackCore({ challenge, challengeId, nextChallengeSlug }: { ch
     useEffect(() => {
         const seeds = getReversedSeeds();
         const initialStacks: Record<string, StackElement[]> = {};
-        for (const key of Object.keys(seeds)) {
-            initialStacks[key] = createStackElements(...seeds[key]);
+        for (const [key, value] of Object.entries(seeds)) {
+            if (Array.isArray(value)) {
+                initialStacks[key] = createStackElements(...value);
+            }
         }
         commitStacks(initialStacks);
         logicalStacksRef.current = { ...seeds };
@@ -222,8 +229,10 @@ function SimulationStackCore({ challenge, challengeId, nextChallengeSlug }: { ch
     const resetStructureState = () => {
         const seeds = getReversedSeeds();
         const initialStacks: Record<string, StackElement[]> = {};
-        for (const key of Object.keys(seeds)) {
-            initialStacks[key] = createStackElements(...seeds[key]);
+        for (const [key, value] of Object.entries(seeds)) {
+            if (Array.isArray(value)) {
+                initialStacks[key] = createStackElements(...value);
+            }
         }
         commitStacks(initialStacks);
         logicalStacksRef.current = { ...seeds };
@@ -413,7 +422,7 @@ function SimulationStackCore({ challenge, challengeId, nextChallengeSlug }: { ch
             if (entries.length === 1 && Array.isArray(entries[0][1])) {
                 return formatArray(entries[0][1]);
             }
-            return entries.map(([k, v]) => `${k}: ${formatArray(v as any)}`).join(" | ");
+            return entries.map(([k, v]) => `${k}: ${Array.isArray(v) ? formatArray(v as any) : String(v)}`).join(" | ");
         }
         return String(out);
     }
@@ -480,9 +489,9 @@ function SimulationStackCore({ challenge, challengeId, nextChallengeSlug }: { ch
 
     const createCaseSummary = (
         caseIndex: number,
-        inputs: Record<string, (string | number)[]> | (string | number)[],
-        expected: Record<string, (string | number)[]> | (string | number)[] | undefined,
-        actual: Record<string, (string | number)[]> | (string | number)[],
+        inputs: any,
+        expected: any,
+        actual: any,
         caseName?: string,
         expectedReturn?: string | number,
         actualReturn?: unknown,
@@ -515,17 +524,24 @@ function SimulationStackCore({ challenge, challengeId, nextChallengeSlug }: { ch
         };
     };
 
-    const createHeadlessChallengeApi = (seedInputs: Record<string, (string | number)[]>) => {
-        const valuesMap: Record<string, (string | number)[]> = {};
-        const apis: Record<string, ChallengeStackApi> = {};
+    const createHeadlessChallengeApi = (seedInputs: Record<string, any>) => {
+        const valuesMap: Record<string, any> = {};
+        const apis: Record<string, any> = {};
         const maxElements = challenge.maxCapacity.desktop;
 
-        for (const [name, arr] of Object.entries(seedInputs)) {
+        for (const [name, value] of Object.entries(seedInputs)) {
+            if (!Array.isArray(value)) {
+                apis[name] = value;
+                valuesMap[name] = value;
+                continue;
+            }
+
+            const arr = value;
             valuesMap[name] = [...arr].reverse();
             apis[name] = {
-                push: (value: string | number) => {
+                push: (v: string | number) => {
                     if (valuesMap[name].length >= maxElements) return;
-                    valuesMap[name].unshift(value);
+                    valuesMap[name].unshift(v);
                 },
                 pop: (): string | number | undefined => {
                     if (valuesMap[name].length === 0) return undefined;
@@ -546,14 +562,17 @@ function SimulationStackCore({ challenge, challengeId, nextChallengeSlug }: { ch
         return {
             apis,
             getValues: () => {
-                const res: Record<string, (string | number)[]> = {};
-                for (const [name, arr] of Object.entries(valuesMap)) {
-                    res[name] = [...arr].reverse();
+                const res: Record<string, any> = {};
+                for (const [name, value] of Object.entries(valuesMap)) {
+                    if (Array.isArray(value)) {
+                        res[name] = [...value].reverse();
+                    }
                 }
                 return res;
             }
         };
     };
+
 
     const buildRunnerArgs = (runtimeContext: Record<string, unknown>) => {
         return runnerParameterNames.map((parameterName) => runtimeContext[parameterName]);
@@ -569,7 +588,11 @@ function SimulationStackCore({ challenge, challengeId, nextChallengeSlug }: { ch
         for (let i = 0; i < additionalCases.length; i++) {
             const testCase = additionalCases[i];
             const caseIndex = i + 1;
-            const caseInputs = testCase.inputs ?? { [dsParam]: testCase.input ?? [] };
+            const caseInputs = testCase.inputs
+                ? testCase.inputs
+                : (testCase.input && !Array.isArray(testCase.input) && typeof testCase.input === 'object')
+                    ? (testCase.input as Record<string, any>)
+                    : { [dsParam]: testCase.input ?? [] };
             const { apis, getValues } = createHeadlessChallengeApi(caseInputs);
             const silentIo = {
                 println: (_message: unknown) => {
@@ -628,8 +651,12 @@ function SimulationStackCore({ challenge, challengeId, nextChallengeSlug }: { ch
             const runner = createChallengeRunner(editorCode, runnerParameterNames);
             const context: Record<string, unknown> = { io: challengeIoApi };
             const stackNames = Object.keys(initialInputs);
-            for (const name of stackNames) {
-                context[name] = createChallengeApi(name);
+            for (const [name, value] of Object.entries(initialInputs)) {
+                if (Array.isArray(value)) {
+                    context[name] = createChallengeApi(name);
+                } else {
+                    context[name] = value;
+                }
             }
 
             const result = runner(...buildRunnerArgs(context));
@@ -640,9 +667,11 @@ function SimulationStackCore({ challenge, challengeId, nextChallengeSlug }: { ch
             await challengeQueueRef.current;
             await sleep(500);
 
-            const finalValues: Record<string, (string | number)[]> = {};
-            for (const [name, arr] of Object.entries(logicalStacksRef.current)) {
-                finalValues[name] = [...arr].reverse();
+            const finalValues: Record<string, any> = {};
+            for (const [name, value] of Object.entries(logicalStacksRef.current)) {
+                if (Array.isArray(value)) {
+                    finalValues[name] = [...value].reverse();
+                }
             }
 
             const primaryCase = challenge.testCases[0];

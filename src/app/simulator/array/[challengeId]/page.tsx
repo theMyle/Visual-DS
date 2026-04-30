@@ -91,13 +91,17 @@ function SimulationArrayCore({ challenge, challengeId, nextChallengeSlug }: { ch
         ?? DEFAULT_RUNNER_PARAMETER_NAMES;
 
     const dsParam = runnerParameterNames[0] || 'array';
-    const initialInputs = challenge.testCases[0]?.inputs
-        ?? { [dsParam]: challenge.testCases[0]?.input ?? [] };
+    const firstCase = challenge.testCases[0];
+    const initialInputs = firstCase?.inputs
+        ? firstCase.inputs
+        : (firstCase?.input && !Array.isArray(firstCase.input) && typeof firstCase.input === 'object')
+            ? (firstCase.input as Record<string, any>)
+            : { [dsParam]: firstCase?.input ?? [] };
 
     const getSeeds = () => {
-        const seeds: Record<string, (string | number)[]> = {};
-        for (const key of Object.keys(initialInputs)) {
-            seeds[key] = [...initialInputs[key]];
+        const seeds: Record<string, any> = {};
+        for (const [key, value] of Object.entries(initialInputs)) {
+            seeds[key] = Array.isArray(value) ? [...value] : value;
         }
         return seeds;
     };
@@ -226,9 +230,11 @@ function SimulationArrayCore({ challenge, challengeId, nextChallengeSlug }: { ch
     useEffect(() => {
         const seeds = getSeeds();
         const initialArrays: Record<string, ArrayElement[]> = {};
-        for (const key of Object.keys(seeds)) {
-            initialArrays[key] = createArrayElements(...seeds[key]);
-            arraysSizeRef.current[key] = seeds[key].length;
+        for (const [key, value] of Object.entries(seeds)) {
+            if (Array.isArray(value)) {
+                initialArrays[key] = createArrayElements(...value);
+                arraysSizeRef.current[key] = value.length;
+            }
         }
         commitArrays(initialArrays);
         logicalArraysRef.current = { ...seeds };
@@ -237,9 +243,11 @@ function SimulationArrayCore({ challenge, challengeId, nextChallengeSlug }: { ch
     const resetStructureState = () => {
         const seeds = getSeeds();
         const initialArrays: Record<string, ArrayElement[]> = {};
-        for (const key of Object.keys(seeds)) {
-            initialArrays[key] = createArrayElements(...seeds[key]);
-            arraysSizeRef.current[key] = seeds[key].length;
+        for (const [key, value] of Object.entries(seeds)) {
+            if (Array.isArray(value)) {
+                initialArrays[key] = createArrayElements(...value);
+                arraysSizeRef.current[key] = value.length;
+            }
         }
         commitArrays(initialArrays);
         logicalArraysRef.current = { ...seeds };
@@ -607,7 +615,7 @@ function SimulationArrayCore({ challenge, challengeId, nextChallengeSlug }: { ch
             if (entries.length === 1 && Array.isArray(entries[0][1])) {
                 return formatArray(entries[0][1]);
             }
-            return entries.map(([k, v]) => `${k}: ${formatArray(v as any)}`).join(" | ");
+            return entries.map(([k, v]) => `${k}: ${Array.isArray(v) ? formatArray(v as any) : String(v)}`).join(" | ");
         }
         return String(out);
     }
@@ -674,9 +682,9 @@ function SimulationArrayCore({ challenge, challengeId, nextChallengeSlug }: { ch
 
     const createCaseSummary = (
         caseIndex: number,
-        inputs: Record<string, (string | number)[]> | (string | number)[],
-        expected: Record<string, (string | number)[]> | (string | number)[] | undefined,
-        actual: Record<string, (string | number)[]> | (string | number)[],
+        inputs: any,
+        expected: any,
+        actual: any,
         caseName?: string,
         expectedReturn?: string | number,
         actualReturn?: unknown,
@@ -709,12 +717,19 @@ function SimulationArrayCore({ challenge, challengeId, nextChallengeSlug }: { ch
         };
     };
 
-    const createHeadlessChallengeApi = (seedInputs: Record<string, (string | number)[]>) => {
-        const valuesMap: Record<string, (string | number)[]> = {};
+    const createHeadlessChallengeApi = (seedInputs: Record<string, any>) => {
+        const valuesMap: Record<string, any> = {};
         const apis: Record<string, any> = {};
         const maxElements = challenge.maxCapacity.desktop;
 
-        for (const [name, arr] of Object.entries(seedInputs)) {
+        for (const [name, value] of Object.entries(seedInputs)) {
+            if (!Array.isArray(value)) {
+                apis[name] = value;
+                valuesMap[name] = value;
+                continue;
+            }
+
+            const arr = value;
             valuesMap[name] = [...arr];
             apis[name] = {
                 insertAt: async (position: number, value: string | number) => {
@@ -768,12 +783,14 @@ function SimulationArrayCore({ challenge, challengeId, nextChallengeSlug }: { ch
         return {
             apis,
             getValues: () => {
-                const res: Record<string, (string | number)[]> = {};
-                for (const [name, arr] of Object.entries(valuesMap)) {
-                    res[name] = [...arr];
+                const res: Record<string, any> = {};
+                for (const [name, value] of Object.entries(valuesMap)) {
+                    if (Array.isArray(value)) {
+                        res[name] = [...value];
+                    }
                 }
                 return res;
-            }
+            },
         };
     };
 
@@ -791,7 +808,11 @@ function SimulationArrayCore({ challenge, challengeId, nextChallengeSlug }: { ch
         for (let i = 0; i < additionalCases.length; i++) {
             const testCase = additionalCases[i];
             const caseIndex = i + 1;
-            const caseInputs = testCase.inputs ?? { [dsParam]: testCase.input ?? [] };
+            const caseInputs = testCase.inputs
+                ? testCase.inputs
+                : (testCase.input && !Array.isArray(testCase.input) && typeof testCase.input === 'object')
+                    ? (testCase.input as Record<string, any>)
+                    : { [dsParam]: testCase.input ?? [] };
             const { apis, getValues } = createHeadlessChallengeApi(caseInputs);
             const silentIo = {
                 println: (_message: unknown) => {
@@ -849,8 +870,12 @@ function SimulationArrayCore({ challenge, challengeId, nextChallengeSlug }: { ch
             const runner = createChallengeRunner(editorCode, runnerParameterNames);
             const context: Record<string, unknown> = { io: challengeIoApi };
             const arrayNames = Object.keys(initialInputs);
-            for (const name of arrayNames) {
-                context[name] = createChallengeApi(name);
+            for (const [name, value] of Object.entries(initialInputs)) {
+                if (Array.isArray(value)) {
+                    context[name] = createChallengeApi(name);
+                } else {
+                    context[name] = value;
+                }
             }
 
             const result = runner(...buildRunnerArgs(context));
@@ -861,9 +886,11 @@ function SimulationArrayCore({ challenge, challengeId, nextChallengeSlug }: { ch
             await challengeQueueRef.current;
             await sleep(1000);
 
-            const finalValues: Record<string, (string | number)[]> = {};
-            for (const [name, arr] of Object.entries(logicalArraysRef.current)) {
-                finalValues[name] = [...arr];
+            const finalValues: Record<string, any> = {};
+            for (const [name, value] of Object.entries(logicalArraysRef.current)) {
+                if (Array.isArray(value)) {
+                    finalValues[name] = [...value];
+                }
             }
 
             const primaryCase = challenge.testCases[0];

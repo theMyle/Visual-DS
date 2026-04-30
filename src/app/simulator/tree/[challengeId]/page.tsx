@@ -105,8 +105,12 @@ function SimulationTreeCore({ challenge, challengeId, nextChallengeSlug }: { cha
         ?? DEFAULT_RUNNER_PARAMETER_NAMES;
 
     const dsParam = runnerParameterNames[0] || 'tree';
-    const initialInputs = challenge.testCases[0]?.inputs
-        ?? { [dsParam]: challenge.testCases[0]?.input ?? [] };
+    const firstCase = challenge.testCases[0];
+    const initialInputs = firstCase?.inputs
+        ? firstCase.inputs
+        : (firstCase?.input && !Array.isArray(firstCase.input) && typeof firstCase.input === 'object')
+            ? (firstCase.input as Record<string, any>)
+            : { [dsParam]: firstCase?.input ?? [] };
 
     const initialEditorCode = challenge.initialEditorCode;
 
@@ -552,9 +556,11 @@ function SimulationTreeCore({ challenge, challengeId, nextChallengeSlug }: { cha
 
     useEffect(() => {
         const initialTrees: Record<string, TreeData> = {};
-        for (const [key, arr] of Object.entries(initialInputs)) {
-            const { nodes, rootId } = createTreeNodesFromArray(arr);
-            initialTrees[key] = { nodes, rootId };
+        for (const [key, value] of Object.entries(initialInputs)) {
+            if (Array.isArray(value)) {
+                const { nodes, rootId } = createTreeNodesFromArray(value);
+                initialTrees[key] = { nodes, rootId };
+            }
         }
         commitTrees(initialTrees);
     }, []);
@@ -593,7 +599,7 @@ function SimulationTreeCore({ challenge, challengeId, nextChallengeSlug }: { cha
             if (entries.length === 1 && Array.isArray(entries[0][1])) {
                 return formatArray(entries[0][1]);
             }
-            return entries.map(([k, v]) => `${k}: ${formatArray(v as any)}`).join(" | ");
+            return entries.map(([k, v]) => `${k}: ${Array.isArray(v) ? formatArray(v as any) : String(v)}`).join(" | ");
         }
         return String(out);
     }
@@ -660,9 +666,9 @@ function SimulationTreeCore({ challenge, challengeId, nextChallengeSlug }: { cha
 
     const createCaseSummary = (
         caseIndex: number,
-        inputs: Record<string, (string | number | null)[]> | (string | number | null)[],
-        expected: Record<string, (string | number | null)[]> | (string | number | null)[] | undefined,
-        actual: Record<string, (string | number | null)[]> | (string | number | null)[],
+        inputs: any,
+        expected: any,
+        actual: any,
         caseName?: string,
         expectedReturn?: string | number,
         actualReturn?: unknown,
@@ -695,13 +701,20 @@ function SimulationTreeCore({ challenge, challengeId, nextChallengeSlug }: { cha
         };
     };
 
-    const createHeadlessChallengeApi = (seedInputs: Record<string, (string | number | null)[]>) => {
+    const createHeadlessChallengeApi = (seedInputs: Record<string, any>) => {
         type HeadlessNode = { id: string; value: string | number; left: string | null; right: string | null; };
 
         const apis: Record<string, any> = {};
-        const getValuesMap: Record<string, () => (string | number | null)[]> = {};
+        const getValuesMap: Record<string, () => any> = {};
 
-        for (const [name, seedArr] of Object.entries(seedInputs)) {
+        for (const [name, value] of Object.entries(seedInputs)) {
+            if (!Array.isArray(value)) {
+                apis[name] = value;
+                getValuesMap[name] = () => value;
+                continue;
+            }
+
+            const seedArr = value;
             const store = new Map<string, HeadlessNode>();
             let rootId: string | null = null;
             let idCounter = 0;
@@ -818,14 +831,18 @@ function SimulationTreeCore({ challenge, challengeId, nextChallengeSlug }: { cha
         return {
             apis,
             getValues: () => {
-                const res: Record<string, (string | number | null)[]> = {};
+                const res: Record<string, any> = {};
                 for (const [name, fn] of Object.entries(getValuesMap)) {
-                    res[name] = fn();
+                    const val = fn();
+                    if (Array.isArray(val)) {
+                        res[name] = val;
+                    }
                 }
                 return res;
             },
         };
     };
+
 
     const buildRunnerArgs = (runtimeContext: Record<string, unknown>) => {
         return runnerParameterNames.map((parameterName) => runtimeContext[parameterName]);
@@ -841,7 +858,11 @@ function SimulationTreeCore({ challenge, challengeId, nextChallengeSlug }: { cha
         for (let i = 0; i < additionalCases.length; i++) {
             const testCase = additionalCases[i];
             const caseIndex = i + 1;
-            const caseInputs = testCase.inputs ?? { [dsParam]: testCase.input ?? [] };
+            const caseInputs = testCase.inputs
+                ? testCase.inputs
+                : (testCase.input && !Array.isArray(testCase.input) && typeof testCase.input === 'object')
+                    ? (testCase.input as Record<string, any>)
+                    : { [dsParam]: testCase.input ?? [] };
             const { apis, getValues } = createHeadlessChallengeApi(caseInputs);
             const silentIo = {
                 println: (_message: unknown) => { },
@@ -903,8 +924,12 @@ function SimulationTreeCore({ challenge, challengeId, nextChallengeSlug }: { cha
             const runner = createChallengeRunner(editorCode, runnerParameterNames);
             const context: Record<string, unknown> = { io: { println: writeToConsole } };
             const treeNames = Object.keys(initialInputs);
-            for (const name of treeNames) {
-                context[name] = createChallengeApi(name);
+            for (const [name, value] of Object.entries(initialInputs)) {
+                if (Array.isArray(value)) {
+                    context[name] = createChallengeApi(name);
+                } else {
+                    context[name] = value;
+                }
             }
 
             const result = runner(...buildRunnerArgs(context));
@@ -917,9 +942,11 @@ function SimulationTreeCore({ challenge, challengeId, nextChallengeSlug }: { cha
             await consoleWriteQueueRef.current;
             await sleep(1000);
 
-            const finalValues: Record<string, (string | number | null)[]> = {};
-            for (const name of Object.keys(treesRef.current)) {
-                finalValues[name] = levelOrderSerialize(name);
+            const finalValues: Record<string, any> = {};
+            for (const [name, value] of Object.entries(initialInputs)) {
+                if (Array.isArray(value)) {
+                    finalValues[name] = levelOrderSerialize(name);
+                }
             }
 
             const primaryCase = challenge.testCases[0];
@@ -1001,9 +1028,11 @@ function SimulationTreeCore({ challenge, challengeId, nextChallengeSlug }: { cha
 
     const resetStructureState = () => {
         const initialTrees: Record<string, TreeData> = {};
-        for (const [key, arr] of Object.entries(initialInputs)) {
-            const { nodes, rootId } = createTreeNodesFromArray(arr);
-            initialTrees[key] = { nodes, rootId };
+        for (const [key, value] of Object.entries(initialInputs)) {
+            if (Array.isArray(value)) {
+                const { nodes, rootId } = createTreeNodesFromArray(value);
+                initialTrees[key] = { nodes, rootId };
+            }
         }
         commitTrees(initialTrees);
         setIsCompleted(false);
