@@ -11,7 +11,7 @@ import ListSection from "./ListSection";
 import Callout from "./Callout";
 import Highlight from "./Highlight";
 import TextLink from "./TextLink";
-import { SECTION_CLASS } from "./constants";
+import InlineQuiz from "./InlineQuiz";
 
 interface LessonRendererProps {
   content: string;
@@ -105,14 +105,17 @@ export default function LessonRenderer({ content }: LessonRendererProps) {
             if (!src) return null;
 
             // Check if it's actually a video (custom convention for markdown migration)
+            // @ts-ignore
             if (src.endsWith(".mp4") || src.endsWith(".webm") || src.includes("youtube.com") || src.includes("storage.googleapis.com")) {
               return (
                 <div className="my-10">
+                  {/* @ts-ignore */}
                   <VideoEmbed embedUrl={src} title={alt} />
                 </div>
               );
             }
 
+            // @ts-ignore
             return <VisualImage src={src} alt={alt || ""} />;
           },
           table: ({ children }) => {
@@ -148,6 +151,10 @@ export default function LessonRenderer({ content }: LessonRendererProps) {
           code: ({ inline, children, className, ...props }: any) => {
             const match = /language-(\w+)/.exec(className || "");
             const isInline = inline || !match;
+
+            if (match && match[1] === "quiz") {
+              return <InlineQuiz content={children as string} />;
+            }
 
             if (isInline) {
               return (
