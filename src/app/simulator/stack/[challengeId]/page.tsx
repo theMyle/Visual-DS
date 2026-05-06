@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { StackElement, StackElementAnimationState } from "@/app/simulator/components/stack/types";
 import { createStackElement, createStackElements } from "@/app/simulator/components/stack/utils";
 import ChallengeInstructions from "@/app/simulator/components/ChallengeInstructions";
@@ -9,7 +9,7 @@ import CodeEditorPanel from "@/app/simulator/components/CodeEditorPanel";
 import VisualStack from "@/app/simulator/components/stack/VisualStack";
 import { useAuth } from "@clerk/nextjs";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
-import { syncSimulatorProgress } from "../../../lib/simulatorProgress";
+import { syncSimulatorProgress, fetchSimulatorProgress, fetchSimulatorSubmissions, SimulatorSubmissionDTO } from "../../../lib/simulatorProgress";
 import { fetchSimulatorChallenge, SimulatorChallengeDTO } from "@/app/lib/simulators";
 import { ChallengeConfig, createChallengeRunner, ChallengeRunner, DEFAULT_RUNNER_PARAMETER_NAMES } from "../challenges/runner";
 import SimulatorError from "../../components/SimulatorError";
@@ -30,15 +30,39 @@ export default function SimulationStack() {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
 
+    const { isLoaded: isAuthLoaded, isSignedIn, getToken } = useAuth();
+    const [lastCode, setLastCode] = useState<string | null>(null);
+    const [isCompleted, setIsCompleted] = useState(false);
+
     useEffect(() => {
         if (!challengeId) return;
 
         setLoading(true);
-        fetchSimulatorChallenge("stack", challengeId)
-            .then(setChallenge)
-            .catch(err => setError(err.message))
-            .finally(() => setLoading(false));
-    }, [challengeId]);
+        const fetchData = async () => {
+            try {
+                const challengeData = await fetchSimulatorChallenge("stack", challengeId);
+                setChallenge(challengeData);
+
+                if (isAuthLoaded && isSignedIn) {
+                    const progress = await fetchSimulatorProgress("stack", `/simulator/stack/${challengeId}`, getToken);
+                    if (progress) {
+                        if (progress.last_submitted_code) {
+                            setLastCode(progress.last_submitted_code);
+                        }
+                        if (progress.is_completed) {
+                            setIsCompleted(true);
+                        }
+                    }
+                }
+            } catch (err: any) {
+                setError(err.message);
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        fetchData();
+    }, [challengeId, isAuthLoaded, isSignedIn, getToken]);
 
     if (loading) {
         return (
@@ -72,10 +96,10 @@ export default function SimulationStack() {
         maxCapacity: challenge.capacity,
     };
 
-    return <SimulationStackCore challenge={config} challengeId={challengeId} nextChallengeSlug={challenge.next_challenge_slug} />;
+    return <SimulationStackCore challenge={config} challengeId={challenge.id} nextChallengeSlug={challenge.next_challenge_slug} initialCodeFromProgress={lastCode} initialIsCompleted={isCompleted} />;
 }
 
-function SimulationStackCore({ challenge, challengeId, nextChallengeSlug }: { challenge: ChallengeConfig, challengeId: string, nextChallengeSlug?: string }) {
+function SimulationStackCore({ challenge, challengeId, nextChallengeSlug, initialCodeFromProgress, initialIsCompleted }: { challenge: ChallengeConfig, challengeId: string, nextChallengeSlug?: string, initialCodeFromProgress: string | null, initialIsCompleted: boolean }) {
     const router = useRouter();
     const { isLoaded, isSignedIn, userId, getToken } = useAuth();
     const searchParams = useSearchParams();
@@ -116,12 +140,19 @@ function SimulationStackCore({ challenge, challengeId, nextChallengeSlug }: { ch
             await syncSimulatorProgress({
                 category: "stack",
                 path: `/simulator/stack/${challengeId}`,
+                challengeId: challengeId,
                 isCompleted: passed,
+                lastSubmittedCode: editorCode,
                 isLoaded,
                 isSignedIn,
                 userId,
                 getToken,
             });
+            if (passed) {
+                setIsCompleted(true);
+                // Refresh submissions list after success
+                void fetchSubmissions();
+            }
         } catch (error) {
             console.error("Failed to sync simulator progress", error);
         }
@@ -142,7 +173,20 @@ function SimulationStackCore({ challenge, challengeId, nextChallengeSlug }: { ch
     };
 
     const [stacks, setStacks] = useState<Record<string, StackElement[]>>({});
-    const [editorCode, setEditorCode] = useState<string>(initialEditorCode);
+    const [editorCode, setEditorCode] = useState<string>(initialCodeFromProgress ?? initialEditorCode);
+    const [isCompleted, setIsCompleted] = useState(initialIsCompleted);
+
+    useEffect(() => {
+        if (initialIsCompleted !== undefined) {
+            setIsCompleted(initialIsCompleted);
+        }
+    }, [initialIsCompleted]);
+
+    useEffect(() => {
+        if (initialCodeFromProgress !== null) {
+            setEditorCode(initialCodeFromProgress);
+        }
+    }, [initialCodeFromProgress]);
 
     const MIN_LEFT_PANE_PERCENT = 45;
     const MAX_LEFT_PANE_PERCENT = 60;
@@ -151,7 +195,22 @@ function SimulationStackCore({ challenge, challengeId, nextChallengeSlug }: { ch
     const [isResizing, setIsResizing] = useState<boolean>(false);
     const [consoleOutput, setConsoleOutput] = useState<string[]>([]);
     const [resultSummaries, setResultSummaries] = useState<ChallengeResultSummary[] | null>(null);
-    const [isCompleted, setIsCompleted] = useState<boolean>(false);
+    const [submissions, setSubmissions] = useState<SimulatorSubmissionDTO[]>([]);
+
+    const fetchSubmissions = useCallback(async () => {
+        if (isSignedIn && getToken) {
+            const data = await fetchSimulatorSubmissions(challengeId, getToken);
+            setSubmissions(data);
+        }
+    }, [challengeId, isSignedIn, getToken]);
+
+    useEffect(() => {
+        void fetchSubmissions();
+    }, [fetchSubmissions]);
+
+    const handleRestoreSolution = (code: string) => {
+        setEditorCode(code);
+    };
     const [isChallengeCompletedModalOpen, setIsChallengeCompletedModalOpen] = useState<boolean>(false);
     const [showNextAction, setShowNextAction] = useState<boolean>(false);
 
@@ -740,6 +799,8 @@ function SimulationStackCore({ challenge, challengeId, nextChallengeSlug }: { ch
                         setShowNextAction(true);
                         handleChallengeCompleted();
                         setIsChallengeCompletedModalOpen(true);
+                    } else {
+                        void syncChallengeResult(false);
                     }
                     return;
                 }
@@ -751,6 +812,8 @@ function SimulationStackCore({ challenge, challengeId, nextChallengeSlug }: { ch
                     setShowNextAction(true);
                     handleChallengeCompleted();
                     setIsChallengeCompletedModalOpen(true);
+                } else {
+                    void syncChallengeResult(false);
                 }
             });
         } catch (error) {
@@ -759,6 +822,7 @@ function SimulationStackCore({ challenge, challengeId, nextChallengeSlug }: { ch
             setShowNextAction(false);
             writeToConsole(`ERROR${line ? ` (Line ${line})` : ""}: ${message}`);
             writeToConsole("NOTICE: Execution stopped. Press Reset to restore a clean state.");
+            void syncChallengeResult(false);
         }
     };
 
@@ -818,7 +882,9 @@ function SimulationStackCore({ challenge, challengeId, nextChallengeSlug }: { ch
                     code={editorCode}
                     output={consoleOutput}
                     resultSummaries={resultSummaries}
+                    submissions={submissions}
                     onCodeChange={setEditorCode}
+                    onRestoreSolution={handleRestoreSolution}
                     onReset={resetEditorCode}
                     onResetArray={resetStackOnly}
                     onSubmit={submitEditorCode}

@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { ArrayElement, ArrayElementAnimationState } from "@/app/simulator/components/array-list/types";
 import { createArrayElement, createArrayElements } from "@/app/simulator/components/array-list/utils";
 import ChallengeInstructions from "@/app/simulator/components/ChallengeInstructions";
@@ -10,7 +10,7 @@ import VisualArrayContainer from "@/app/simulator/components/VisualArrayContaine
 import VisualArray from "@/app/simulator/components/array-list/VisualArray";
 import { useAuth } from "@clerk/nextjs";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
-import { syncSimulatorProgress } from "../../../lib/simulatorProgress";
+import { syncSimulatorProgress, fetchSimulatorProgress, fetchSimulatorSubmissions, SimulatorSubmissionDTO } from "../../../lib/simulatorProgress";
 import { fetchSimulatorChallenge, SimulatorChallengeDTO } from "@/app/lib/simulators";
 import { ChallengeConfig, createChallengeRunner, ChallengeRunner, DEFAULT_RUNNER_PARAMETER_NAMES } from "../challenges/runner";
 import SimulatorError from "../../components/SimulatorError";
@@ -31,15 +31,39 @@ export default function SimulationArrayChallenge() {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
 
+    const { isLoaded: isAuthLoaded, isSignedIn, getToken } = useAuth();
+    const [lastCode, setLastCode] = useState<string | null>(null);
+    const [isCompleted, setIsCompleted] = useState(false);
+
     useEffect(() => {
         if (!challengeId) return;
 
         setLoading(true);
-        fetchSimulatorChallenge("array", challengeId)
-            .then(setChallenge)
-            .catch(err => setError(err.message))
-            .finally(() => setLoading(false));
-    }, [challengeId]);
+        const fetchData = async () => {
+            try {
+                const challengeData = await fetchSimulatorChallenge("array", challengeId);
+                setChallenge(challengeData);
+
+                if (isAuthLoaded && isSignedIn) {
+                    const progress = await fetchSimulatorProgress("array", `/simulator/array/${challengeId}`, getToken);
+                    if (progress) {
+                        if (progress.last_submitted_code) {
+                            setLastCode(progress.last_submitted_code);
+                        }
+                        if (progress.is_completed) {
+                            setIsCompleted(true);
+                        }
+                    }
+                }
+            } catch (err: any) {
+                setError(err.message);
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        fetchData();
+    }, [challengeId, isAuthLoaded, isSignedIn, getToken]);
 
     if (loading) {
         return (
@@ -73,10 +97,10 @@ export default function SimulationArrayChallenge() {
         maxCapacity: challenge.capacity,
     };
 
-    return <SimulationArrayCore challenge={config} challengeId={challengeId} nextChallengeSlug={challenge.next_challenge_slug} />;
+    return <SimulationArrayCore challenge={config} challengeId={challenge.id} nextChallengeSlug={challenge.next_challenge_slug} initialCodeFromProgress={lastCode} initialIsCompleted={isCompleted} />;
 }
 
-function SimulationArrayCore({ challenge, challengeId, nextChallengeSlug }: { challenge: ChallengeConfig, challengeId: string, nextChallengeSlug?: string }) {
+function SimulationArrayCore({ challenge, challengeId, nextChallengeSlug, initialCodeFromProgress, initialIsCompleted }: { challenge: ChallengeConfig, challengeId: string, nextChallengeSlug?: string, initialCodeFromProgress: string | null, initialIsCompleted: boolean }) {
     const router = useRouter();
     const { isLoaded, isSignedIn, userId, getToken } = useAuth();
     const searchParams = useSearchParams();
@@ -113,12 +137,19 @@ function SimulationArrayCore({ challenge, challengeId, nextChallengeSlug }: { ch
             await syncSimulatorProgress({
                 category: "array",
                 path: `/simulator/array/${challengeId}`,
+                challengeId: challengeId,
                 isCompleted: passed,
+                lastSubmittedCode: editorCode,
                 isLoaded,
                 isSignedIn,
                 userId,
                 getToken,
             });
+            if (passed) {
+                setIsCompleted(true);
+                // Refresh submissions list after success
+                void fetchSubmissions();
+            }
         } catch (error) {
             console.error("Failed to sync simulator progress", error);
         }
@@ -139,9 +170,20 @@ function SimulationArrayCore({ challenge, challengeId, nextChallengeSlug }: { ch
     };
 
     const [arrays, setArrays] = useState<Record<string, ArrayElement[]>>({});
-    const [editorCode, setEditorCode] = useState<string>(
-        initialEditorCode
-    );
+    const [editorCode, setEditorCode] = useState<string>(initialCodeFromProgress ?? initialEditorCode);
+    const [isCompleted, setIsCompleted] = useState(initialIsCompleted);
+
+    useEffect(() => {
+        if (initialIsCompleted !== undefined) {
+            setIsCompleted(initialIsCompleted);
+        }
+    }, [initialIsCompleted]);
+
+    useEffect(() => {
+        if (initialCodeFromProgress !== null) {
+            setEditorCode(initialCodeFromProgress);
+        }
+    }, [initialCodeFromProgress]);
 
     const MIN_LEFT_PANE_PERCENT = 30;
     const MAX_LEFT_PANE_PERCENT = 70;
@@ -150,7 +192,23 @@ function SimulationArrayCore({ challenge, challengeId, nextChallengeSlug }: { ch
     const [isResizing, setIsResizing] = useState<boolean>(false);
     const [consoleOutput, setConsoleOutput] = useState<string[]>([]);
     const [resultSummaries, setResultSummaries] = useState<ChallengeResultSummary[] | null>(null);
-    const [isCompleted, setIsCompleted] = useState<boolean>(false);
+    const [submissions, setSubmissions] = useState<SimulatorSubmissionDTO[]>([]);
+
+    const fetchSubmissions = useCallback(async () => {
+        if (isSignedIn && getToken) {
+            const data = await fetchSimulatorSubmissions(challengeId, getToken);
+            setSubmissions(data);
+        }
+    }, [challengeId, isSignedIn, getToken]);
+
+    useEffect(() => {
+        void fetchSubmissions();
+    }, [fetchSubmissions]);
+
+    const handleRestoreSolution = (code: string) => {
+        setEditorCode(code);
+    };
+
     const [isChallengeCompletedModalOpen, setIsChallengeCompletedModalOpen] = useState<boolean>(false);
     const [showNextAction, setShowNextAction] = useState<boolean>(false);
 
@@ -959,6 +1017,8 @@ function SimulationArrayCore({ challenge, challengeId, nextChallengeSlug }: { ch
                         setShowNextAction(true);
                         handleChallengeCompleted();
                         setIsChallengeCompletedModalOpen(true);
+                    } else {
+                        void syncChallengeResult(false);
                     }
                     return;
                 }
@@ -970,6 +1030,8 @@ function SimulationArrayCore({ challenge, challengeId, nextChallengeSlug }: { ch
                     setShowNextAction(true);
                     handleChallengeCompleted();
                     setIsChallengeCompletedModalOpen(true);
+                } else {
+                    void syncChallengeResult(false);
                 }
             });
         } catch (error) {
@@ -978,6 +1040,7 @@ function SimulationArrayCore({ challenge, challengeId, nextChallengeSlug }: { ch
             setShowNextAction(false);
             writeToConsole(`ERROR${line ? ` (Line ${line})` : ""}: ${message}`);
             writeToConsole("NOTICE: Execution stopped. Press Reset to restore a clean state.");
+            void syncChallengeResult(false);
         }
     };
 
@@ -1044,7 +1107,9 @@ function SimulationArrayCore({ challenge, challengeId, nextChallengeSlug }: { ch
                     code={editorCode}
                     output={consoleOutput}
                     resultSummaries={resultSummaries}
+                    submissions={submissions}
                     onCodeChange={setEditorCode}
+                    onRestoreSolution={handleRestoreSolution}
                     onReset={resetEditorCode}
                     onResetArray={resetArrayOnly}
                     onSubmit={submitEditorCode}

@@ -16,7 +16,14 @@ type CodeEditorPanelProps = {
         passed: boolean | null;
         statusText: string;
     }> | null;
+    submissions?: Array<{
+        id: string;
+        code: string;
+        created_at: string;
+        status: string;
+    }> | null;
     onCodeChange: (nextCode: string) => void;
+    onRestoreSolution?: (code: string) => void;
     onReset: () => void;
     onResetArray: () => void;
     onSubmit: () => void;
@@ -34,7 +41,9 @@ export default function CodeEditorPanel({
     code,
     output,
     resultSummaries = null,
+    submissions = null,
     onCodeChange,
+    onRestoreSolution,
     onReset,
     onResetArray,
     onSubmit,
@@ -50,38 +59,12 @@ export default function CodeEditorPanel({
     const panelBodyRef = useRef<HTMLDivElement | null>(null);
     const [outputHeight, setOutputHeight] = useState<number | null>(null);
     const [isResizingOutput, setIsResizingOutput] = useState<boolean>(false);
-    const [activeTab, setActiveTab] = useState<"output" | "result">("output");
+    const [activeTab, setActiveTab] = useState<"output" | "result" | "solutions">("output");
     const [expandedResultIndexes, setExpandedResultIndexes] = useState<Set<number>>(new Set());
+    const [expandedSolutionIds, setExpandedSolutionIds] = useState<Set<string>>(new Set());
     const [isHelpOpen, setIsHelpOpen] = useState<boolean>(false);
     const [isOutputCollapsed, setIsOutputCollapsed] = useState<boolean>(false);
     const collapsedOutputHeight = 42;
-
-    useEffect(() => {
-        if (resultSummaries && resultSummaries.length > 0) {
-            setActiveTab("result");
-            setIsOutputCollapsed(false);
-
-            const body = panelBodyRef.current;
-            if (!body) {
-                return;
-            }
-
-            const { maxRatio } = getOutputSizing();
-            const maxOutputHeight = Math.floor(body.clientHeight * maxRatio);
-            // Auto-expand to half of max on new results
-            setOutputHeight((currentHeight) => {
-                const targetHeight = Math.floor(maxOutputHeight * 0.55);
-                if (currentHeight === null || currentHeight < targetHeight) {
-                    return targetHeight;
-                }
-                return currentHeight;
-            });
-        }
-    }, [resultSummaries]);
-
-    useEffect(() => {
-        setExpandedResultIndexes(new Set());
-    }, [resultSummaries]);
 
     const toggleResultExpanded = (idx: number) => {
         setExpandedResultIndexes((prev) => {
@@ -95,11 +78,48 @@ export default function CodeEditorPanel({
         });
     };
 
+    const toggleSolutionExpanded = (id: string) => {
+        const newSet = new Set(expandedSolutionIds);
+        if (newSet.has(id)) {
+            newSet.delete(id);
+        } else {
+            newSet.add(id);
+        }
+        setExpandedSolutionIds(newSet);
+    };
+
+    useEffect(() => {
+        if (resultSummaries && resultSummaries.length > 0) {
+            setActiveTab("result");
+            setIsOutputCollapsed(false);
+
+            const body = panelBodyRef.current;
+            if (!body) {
+                return;
+            }
+
+            const { maxRatio } = getOutputSizing();
+            const maxOutputHeight = Math.floor(body.clientHeight * maxRatio);
+            // Auto-expand to a balanced height (about half of max) on new results
+            setOutputHeight((currentHeight) => {
+                const targetHeight = Math.floor(maxOutputHeight * 0.6);
+                if (currentHeight === null || currentHeight < targetHeight) {
+                    return targetHeight;
+                }
+                return currentHeight;
+            });
+        }
+    }, [resultSummaries]);
+
+    useEffect(() => {
+        setExpandedResultIndexes(new Set());
+    }, [resultSummaries]);
+
     const getOutputSizing = () => {
         const isMobileViewport = typeof window !== "undefined" && window.innerWidth < 768;
         return {
-            minRatio: isMobileViewport ? 0.15 : 0.15,
-            maxRatio: isMobileViewport ? 0.70 : 0.75,
+            minRatio: 0.15,
+            maxRatio: 0.75,
         };
     };
 
@@ -118,6 +138,14 @@ export default function CodeEditorPanel({
         const clamped = Math.max(0, Math.min(maxOutputHeight, outputHeight));
         if (clamped !== outputHeight) {
             setOutputHeight(clamped);
+        }
+    }, [outputHeight]);
+
+    // Set initial height to a balanced level on first load
+    useEffect(() => {
+        const body = panelBodyRef.current;
+        if (body && outputHeight === null) {
+            setOutputHeight(Math.floor(body.clientHeight * 0.45));
         }
     }, [outputHeight]);
 
@@ -272,7 +300,7 @@ export default function CodeEditorPanel({
 
                 <div
                     className="border-t border-white/[0.06] flex flex-col overflow-hidden"
-                    style={{ height: `${isOutputCollapsed ? collapsedOutputHeight : outputHeight ?? collapsedOutputHeight}px`, background: "#0c0f18" }}
+                    style={{ height: `${isOutputCollapsed ? collapsedOutputHeight : outputHeight ?? (typeof window !== 'undefined' && window.innerHeight * 0.4 || 350)}px`, background: "#0c0f18" }}
                 >
                     <div className="px-3 md:px-4 py-2 border-b border-white/[0.06]" style={{ background: "#0c0f18" }}>
                         <div className="flex items-center justify-between gap-2">
@@ -303,11 +331,33 @@ export default function CodeEditorPanel({
                                 >
                                     Result
                                 </button>
+                                <button
+                                    type="button"
+                                    onClick={() => {
+                                        setActiveTab("solutions");
+                                        setIsOutputCollapsed(false);
+                                    }}
+                                    className={`px-2.5 py-1 text-[11px] md:text-xs rounded ${activeTab === "solutions"
+                                        ? "bg-indigo-800/80 text-indigo-100"
+                                        : "text-gray-300 hover:text-gray-100"
+                                        }`}
+                                >
+                                    Solutions
+                                </button>
                             </div>
 
                             <button
                                 type="button"
-                                onClick={() => setIsOutputCollapsed((prev) => !prev)}
+                                onClick={() => {
+                                    const nextState = !isOutputCollapsed;
+                                    setIsOutputCollapsed(nextState);
+                                    if (!nextState && outputHeight === null) {
+                                        const body = panelBodyRef.current;
+                                        if (body) {
+                                            setOutputHeight(Math.floor(body.clientHeight * 0.45));
+                                        }
+                                    }
+                                }}
                                 title={isOutputCollapsed ? "Expand" : "Collapse"}
                                 aria-label={isOutputCollapsed ? "Expand output panel" : "Collapse output panel"}
                                 className="h-7 w-7 rounded-md border border-gray-700 bg-gray-800/80 text-gray-200 hover:bg-gray-700 transition-colors flex items-center justify-center text-xs"
@@ -334,7 +384,7 @@ export default function CodeEditorPanel({
                                         );
                                     })}
                                 </div>
-                            ) : (
+                            ) : activeTab === "result" ? (
                                 <div className="space-y-2">
                                     {!resultSummaries || resultSummaries.length === 0 ? (
                                         <p className="text-xs md:text-sm font-normal font-sans text-gray-400">Submit your solution to see challenge results here.</p>
@@ -391,6 +441,57 @@ export default function CodeEditorPanel({
                                                 </div>
                                             </div>
                                         ))
+                                    )}
+                                </div>
+                            ) : (
+                                <div className="space-y-3">
+                                    {!submissions || submissions.length === 0 ? (
+                                        <div className="py-6 text-center">
+                                            <p className="text-xs md:text-sm font-normal font-sans text-gray-400">No previous solutions found for this challenge.</p>
+                                        </div>
+                                    ) : (
+                                        <div className="grid gap-2 max-w-3xl">
+                                            {submissions.map((sub) => {
+                                                const isExpanded = expandedSolutionIds.has(sub.id);
+                                                return (
+                                                    <div
+                                                        key={sub.id}
+                                                        className="flex flex-col gap-2 p-3 rounded-lg border border-gray-700 bg-gray-900/40 hover:bg-gray-900/60 transition-colors group"
+                                                    >
+                                                        <div className="flex items-center gap-4">
+                                                            <button
+                                                                type="button"
+                                                                onClick={() => onRestoreSolution?.(sub.code)}
+                                                                className="px-3 py-1.5 text-[10px] md:text-[11px] font-bold rounded-md bg-indigo-600 text-white hover:bg-indigo-500 transition-all shadow-md active:scale-95 shrink-0"
+                                                            >
+                                                                Restore
+                                                            </button>
+                                                            <button
+                                                                type="button"
+                                                                onClick={() => toggleSolutionExpanded(sub.id)}
+                                                                className="flex flex-col text-left hover:opacity-80 transition-opacity min-w-0"
+                                                            >
+                                                                <span className="text-[10px] text-gray-500 uppercase font-bold tracking-tight flex items-center gap-1">
+                                                                    <span className="text-gray-600">{isExpanded ? "▾" : "▸"}</span>
+                                                                    {new Date(sub.created_at).toLocaleString()}
+                                                                </span>
+                                                                <span className="text-[11px] font-medium text-emerald-400">
+                                                                    Successful Submission
+                                                                </span>
+                                                            </button>
+                                                        </div>
+                                                        <div className="relative">
+                                                            <pre className={`text-[10px] font-mono text-gray-400 bg-black/30 p-2 rounded border border-white/[0.03] overflow-x-auto scrollbar-dark transition-all duration-200 ${isExpanded ? "max-h-[400px]" : "max-h-24"}`}>
+                                                                {isExpanded ? sub.code : (sub.code.length > 300 ? sub.code.slice(0, 300) + '...' : sub.code)}
+                                                            </pre>
+                                                            {!isExpanded && sub.code.length > 300 && (
+                                                                <div className="absolute inset-0 bg-gradient-to-t from-gray-900/20 to-transparent pointer-events-none" />
+                                                            )}
+                                                        </div>
+                                                    </div>
+                                                );
+                                            })}
+                                        </div>
                                     )}
                                 </div>
                             )}

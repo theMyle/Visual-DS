@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { TreeNode, TreeNodeAnimationState } from "@/app/simulator/components/tree/types";
 import { createNode } from "@/app/simulator/components/tree/utils";
 import ChallengeInstructions from "@/app/simulator/components/ChallengeInstructions";
@@ -9,7 +9,7 @@ import CodeEditorPanel from "@/app/simulator/components/CodeEditorPanel";
 import VisualTree from "@/app/simulator/components/tree/VisualTree";
 import { useAuth } from "@clerk/nextjs";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
-import { syncSimulatorProgress } from "../../../lib/simulatorProgress";
+import { syncSimulatorProgress, fetchSimulatorProgress, fetchSimulatorSubmissions, SimulatorSubmissionDTO } from "../../../lib/simulatorProgress";
 import { fetchSimulatorChallenge, SimulatorChallengeDTO } from "@/app/lib/simulators";
 import { ChallengeConfig, createChallengeRunner, ChallengeRunner, DEFAULT_RUNNER_PARAMETER_NAMES } from "../challenges/runner";
 import SimulatorError from "../../components/SimulatorError";
@@ -45,15 +45,39 @@ export default function SimulationTreeChallenge() {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
 
+    const { isLoaded: isAuthLoaded, isSignedIn, getToken } = useAuth();
+    const [lastCode, setLastCode] = useState<string | null>(null);
+    const [isCompleted, setIsCompleted] = useState(false);
+
     useEffect(() => {
         if (!challengeId) return;
 
         setLoading(true);
-        fetchSimulatorChallenge("tree", challengeId)
-            .then(setChallenge)
-            .catch(err => setError(err.message))
-            .finally(() => setLoading(false));
-    }, [challengeId]);
+        const fetchData = async () => {
+            try {
+                const challengeData = await fetchSimulatorChallenge("tree", challengeId);
+                setChallenge(challengeData);
+
+                if (isAuthLoaded && isSignedIn) {
+                    const progress = await fetchSimulatorProgress("tree", `/simulator/tree/${challengeId}`, getToken);
+                    if (progress) {
+                        if (progress.last_submitted_code) {
+                            setLastCode(progress.last_submitted_code);
+                        }
+                        if (progress.is_completed) {
+                            setIsCompleted(true);
+                        }
+                    }
+                }
+            } catch (err: any) {
+                setError(err.message);
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        fetchData();
+    }, [challengeId, isAuthLoaded, isSignedIn, getToken]);
 
     if (loading) {
         return (
@@ -87,10 +111,10 @@ export default function SimulationTreeChallenge() {
         maxCapacity: challenge.capacity,
     };
 
-    return <SimulationTreeCore challenge={config} challengeId={challengeId} nextChallengeSlug={challenge.next_challenge_slug} />;
+    return <SimulationTreeCore challenge={config} challengeId={challenge.id} nextChallengeSlug={challenge.next_challenge_slug} initialCodeFromProgress={lastCode} initialIsCompleted={isCompleted} />;
 }
 
-function SimulationTreeCore({ challenge, challengeId, nextChallengeSlug }: { challenge: ChallengeConfig, challengeId: string, nextChallengeSlug?: string }) {
+function SimulationTreeCore({ challenge, challengeId, nextChallengeSlug, initialCodeFromProgress, initialIsCompleted }: { challenge: ChallengeConfig, challengeId: string, nextChallengeSlug?: string, initialCodeFromProgress: string | null, initialIsCompleted: boolean }) {
     const router = useRouter();
     const { isLoaded, isSignedIn, userId, getToken } = useAuth();
     const searchParams = useSearchParams();
@@ -119,12 +143,19 @@ function SimulationTreeCore({ challenge, challengeId, nextChallengeSlug }: { cha
             await syncSimulatorProgress({
                 category: "tree",
                 path: `/simulator/tree/${challengeId}`,
+                challengeId: challengeId,
                 isCompleted: passed,
+                lastSubmittedCode: editorCode,
                 isLoaded,
                 isSignedIn,
                 userId,
                 getToken,
             });
+            if (passed) {
+                setIsCompleted(true);
+                // Refresh submissions list after success
+                void fetchSubmissions();
+            }
         } catch (error) {
             console.error("Failed to sync simulator progress", error);
         }
@@ -135,10 +166,40 @@ function SimulationTreeCore({ challenge, challengeId, nextChallengeSlug }: { cha
     };
 
     const [trees, setTrees] = useState<Record<string, TreeData>>({});
-    const [editorCode, setEditorCode] = useState<string>(initialEditorCode);
+    const [editorCode, setEditorCode] = useState<string>(initialCodeFromProgress ?? initialEditorCode);
+    const [isCompleted, setIsCompleted] = useState(initialIsCompleted);
+
+    useEffect(() => {
+        if (initialIsCompleted !== undefined) {
+            setIsCompleted(initialIsCompleted);
+        }
+    }, [initialIsCompleted]);
+
+    useEffect(() => {
+        if (initialCodeFromProgress !== null) {
+            setEditorCode(initialCodeFromProgress);
+        }
+    }, [initialCodeFromProgress]);
+
     const [consoleOutput, setConsoleOutput] = useState<string[]>([]);
     const [resultSummaries, setResultSummaries] = useState<ChallengeResultSummary[] | null>(null);
-    const [isCompleted, setIsCompleted] = useState<boolean>(false);
+    const [submissions, setSubmissions] = useState<SimulatorSubmissionDTO[]>([]);
+
+    const fetchSubmissions = useCallback(async () => {
+        if (isSignedIn && getToken) {
+            const data = await fetchSimulatorSubmissions(challengeId, getToken);
+            setSubmissions(data);
+        }
+    }, [challengeId, isSignedIn, getToken]);
+
+    useEffect(() => {
+        void fetchSubmissions();
+    }, [fetchSubmissions]);
+
+    const handleRestoreSolution = (code: string) => {
+        setEditorCode(code);
+    };
+
     const [isChallengeCompletedModalOpen, setIsChallengeCompletedModalOpen] = useState<boolean>(false);
     const [showNextAction, setShowNextAction] = useState<boolean>(false);
     const [leftPaneWidth, setLeftPaneWidth] = useState<number>(50);
@@ -1002,6 +1063,8 @@ function SimulationTreeCore({ challenge, challengeId, nextChallengeSlug }: { cha
                         setShowNextAction(true);
                         handleChallengeCompleted();
                         setIsChallengeCompletedModalOpen(true);
+                    } else {
+                        void syncChallengeResult(false);
                     }
                     return;
                 }
@@ -1013,6 +1076,8 @@ function SimulationTreeCore({ challenge, challengeId, nextChallengeSlug }: { cha
                     setShowNextAction(true);
                     handleChallengeCompleted();
                     setIsChallengeCompletedModalOpen(true);
+                } else {
+                    void syncChallengeResult(false);
                 }
             });
         } catch (error) {
@@ -1021,6 +1086,7 @@ function SimulationTreeCore({ challenge, challengeId, nextChallengeSlug }: { cha
             setShowNextAction(false);
             writeToConsole(`ERROR${line ? ` (Line ${line})` : ""}: ${message}`);
             writeToConsole("NOTICE: Execution stopped. Press Reset to restore a clean state.");
+            void syncChallengeResult(false);
         }
     };
 
@@ -1161,7 +1227,9 @@ function SimulationTreeCore({ challenge, challengeId, nextChallengeSlug }: { cha
                     code={editorCode}
                     output={consoleOutput}
                     resultSummaries={resultSummaries}
+                    submissions={submissions}
                     onCodeChange={setEditorCode}
+                    onRestoreSolution={handleRestoreSolution}
                     onReset={resetEditorCode}
                     onResetArray={resetStructureState}
                     onSubmit={submitEditorCode}
