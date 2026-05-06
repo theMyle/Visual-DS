@@ -1,6 +1,7 @@
 import { auth } from "@clerk/nextjs/server";
 import { FetchWithAuth } from "../lib/fetchWithAuth";
 import SimulatorMenuItem from "./components/SimulatorMenuItem";
+import { redirect } from "next/navigation";
 
 type Level = {
   id: number;
@@ -22,6 +23,10 @@ import { fetchSimulatorCurriculum } from "../lib/simulators";
 
 export default async function SimulatorPage() {
   const { userId, getToken } = await auth();
+
+  if (!userId) {
+    return null; // Handled by middleware
+  }
 
   let progress: SimulatorProgressResponse[] = [];
   let curriculum: any[] = [];

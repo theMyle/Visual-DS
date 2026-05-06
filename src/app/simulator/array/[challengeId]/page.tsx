@@ -97,10 +97,10 @@ export default function SimulationArrayChallenge() {
         maxCapacity: challenge.capacity,
     };
 
-    return <SimulationArrayCore challenge={config} challengeId={challenge.id} nextChallengeSlug={challenge.next_challenge_slug} initialCodeFromProgress={lastCode} initialIsCompleted={isCompleted} />;
+    return <SimulationArrayCore challenge={config} challengeId={challenge.id} challengeSlug={challenge.slug} nextChallengeSlug={challenge.next_challenge_slug} initialCodeFromProgress={lastCode} initialIsCompleted={isCompleted} />;
 }
 
-function SimulationArrayCore({ challenge, challengeId, nextChallengeSlug, initialCodeFromProgress, initialIsCompleted }: { challenge: ChallengeConfig, challengeId: string, nextChallengeSlug?: string, initialCodeFromProgress: string | null, initialIsCompleted: boolean }) {
+function SimulationArrayCore({ challenge, challengeId, challengeSlug, nextChallengeSlug, initialCodeFromProgress, initialIsCompleted }: { challenge: ChallengeConfig, challengeId: string, challengeSlug: string, nextChallengeSlug?: string, initialCodeFromProgress: string | null, initialIsCompleted: boolean }) {
     const router = useRouter();
     const { isLoaded, isSignedIn, userId, getToken } = useAuth();
     const searchParams = useSearchParams();
@@ -136,7 +136,7 @@ function SimulationArrayCore({ challenge, challengeId, nextChallengeSlug, initia
         try {
             await syncSimulatorProgress({
                 category: "array",
-                path: `/simulator/array/${challengeId}`,
+                path: `/simulator/array/${challengeSlug}`,
                 challengeId: challengeId,
                 isCompleted: passed,
                 lastSubmittedCode: editorCode,

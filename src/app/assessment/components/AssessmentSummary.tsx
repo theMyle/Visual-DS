@@ -1,134 +1,184 @@
-import CircularProgress from "./CircularProgress";
+import type { Question } from "../types";
 
 type AssessmentSummaryProps = {
+    questions: Question[];
+    selectedAnswers: Record<string, string>;
     correctCount: number;
     totalQuestions: number;
     isSyncing?: boolean;
     showLoginButton?: boolean;
+    canRetry?: boolean;
+    attemptsRemaining?: number | null;
     onLoginToSaveProgress?: () => void;
     onRetry: () => void;
     onBackToHome: () => void;
 }
 
 export default function AssessmentSummary({
+    questions,
+    selectedAnswers,
     correctCount,
     totalQuestions,
     isSyncing = false,
     showLoginButton = false,
+    canRetry = true,
+    attemptsRemaining = null,
     onLoginToSaveProgress,
     onRetry,
     onBackToHome
 }: AssessmentSummaryProps) {
-    const percentage = (correctCount / totalQuestions) * 100;
+    const percentage = Math.round((correctCount / totalQuestions) * 100);
     const incorrectCount = totalQuestions - correctCount;
 
-    let message = "";
-    let messageColor = "text-slate-700";
-    let statusLabel = "Needs Review";
-    let statusBadgeClass = "bg-amber-50 text-amber-700 border-amber-200";
-
-    if (percentage === 100) {
-        message = "Outstanding result. Full mastery achieved.";
-        messageColor = "text-emerald-700";
-        statusLabel = "Mastered";
-        statusBadgeClass = "bg-emerald-50 text-emerald-700 border-emerald-200";
-    } else if (percentage >= 80) {
-        message = "Strong performance with solid understanding.";
-        messageColor = "text-emerald-700";
-        statusLabel = "Proficient";
-        statusBadgeClass = "bg-emerald-50 text-emerald-700 border-emerald-200";
-    } else if (percentage >= 50) {
-        message = "You are on track. A quick review will improve consistency.";
-        messageColor = "text-amber-700";
-        statusLabel = "Developing";
-        statusBadgeClass = "bg-amber-50 text-amber-700 border-amber-200";
-    } else {
-        message = "Focus on fundamentals, then retake this assessment.";
-        messageColor = "text-rose-700";
-        statusLabel = "Foundational";
-        statusBadgeClass = "bg-rose-50 text-rose-700 border-rose-200";
-    }
-
     return (
-        <div className="fixed inset-0 z-[120] flex flex-col items-center justify-start md:justify-center p-4 pt-6 md:pt-4 bg-gradient-to-b from-slate-50 to-white overflow-y-auto">
-            <div className="max-w-2xl w-full rounded-2xl border border-slate-200/80 bg-white/95 shadow-[0_20px_60px_-30px_rgba(15,23,42,0.35)] p-6 md:p-8 space-y-6 opacity-0 animate-fade-in">
-                <div className="flex items-center justify-between gap-4 border-b border-slate-200 pb-4">
-                    <div>
-                        <p className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">
-                            Assessment Result
-                        </p>
-                        <h1 className="mt-1 text-2xl md:text-3xl font-semibold text-slate-900">
-                            Completed
-                        </h1>
-                    </div>
-                    <div className={`rounded-full border px-4 py-1.5 text-sm font-semibold ${statusBadgeClass}`}>
-                        {statusLabel}
-                    </div>
-                </div>
+        <div className="fixed inset-0 z-[120] overflow-y-auto bg-slate-50">
+            <div className="max-w-2xl mx-auto px-4 py-12 space-y-6">
 
-                <div className="grid grid-cols-1 md:grid-cols-[220px_1fr] gap-5 md:gap-6 items-center">
-                    <div className="flex justify-center md:justify-start">
-                        <CircularProgress percentage={percentage} size={160} strokeWidth={11} />
+                {/* Score Header */}
+                <div className="bg-white rounded-2xl border border-slate-200 p-6 space-y-4">
+                    <p className="text-xs font-semibold text-slate-400 uppercase tracking-widest">Assessment Complete</p>
+                    <div className="flex items-baseline gap-3">
+                        <h1 className="text-5xl font-black text-slate-900">{percentage}%</h1>
+                        <p className="text-slate-500 font-medium">{correctCount} of {totalQuestions} correct</p>
                     </div>
 
-                    <div className="space-y-3">
-                        <h2 className={`text-lg md:text-xl font-semibold ${messageColor}`}>
-                            {message}
-                        </h2>
-                        <p className="text-sm md:text-base text-slate-600 leading-relaxed">
-                            Your final score is <span className="font-semibold text-slate-900">{Math.round(percentage)}%</span>.
-                        </p>
+                    {/* Score bar */}
+                    <div className="h-2 bg-slate-100 rounded-full overflow-hidden">
+                        <div
+                            className="h-full bg-emerald-500 rounded-full transition-all duration-700 ease-out"
+                            style={{ width: `${percentage}%` }}
+                        />
+                    </div>
 
-                        <div className="grid grid-cols-3 gap-3 pt-1">
-                            <div className="rounded-xl border border-slate-200 bg-slate-50 p-3 text-center">
-                                <p className="text-xs uppercase tracking-wide text-slate-500">Correct</p>
-                                <p className="mt-1 text-lg font-semibold text-emerald-700">{correctCount}</p>
-                            </div>
-                            <div className="rounded-xl border border-slate-200 bg-slate-50 p-3 text-center">
-                                <p className="text-xs uppercase tracking-wide text-slate-500">Incorrect</p>
-                                <p className="mt-1 text-lg font-semibold text-rose-700">{incorrectCount}</p>
-                            </div>
-                            <div className="rounded-xl border border-slate-200 bg-slate-50 p-3 text-center">
-                                <p className="text-xs uppercase tracking-wide text-slate-500">Total</p>
-                                <p className="mt-1 text-lg font-semibold text-slate-800">{totalQuestions}</p>
-                            </div>
+                    {/* Stats row */}
+                    <div className="grid grid-cols-3 gap-3 pt-1">
+                        <div className="rounded-lg bg-emerald-50 border border-emerald-100 p-3 text-center">
+                            <p className="text-xl font-bold text-emerald-700">{correctCount}</p>
+                            <p className="text-xs text-emerald-600 font-medium mt-0.5">Correct</p>
+                        </div>
+                        <div className="rounded-lg bg-red-50 border border-red-100 p-3 text-center">
+                            <p className="text-xl font-bold text-red-600">{incorrectCount}</p>
+                            <p className="text-xs text-red-500 font-medium mt-0.5">Incorrect</p>
+                        </div>
+                        <div className="rounded-lg bg-slate-50 border border-slate-200 p-3 text-center">
+                            <p className="text-xl font-bold text-slate-700">{totalQuestions}</p>
+                            <p className="text-xs text-slate-400 font-medium mt-0.5">Total</p>
                         </div>
                     </div>
                 </div>
 
-                <div className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3">
-                    <p className="text-sm text-slate-600">
-                        You answered <span className="font-semibold text-slate-900">{correctCount}</span> out of <span className="font-semibold text-slate-900">{totalQuestions}</span> questions correctly.
-                    </p>
-                    {isSyncing && (
-                        <p className="mt-2 text-xs font-medium text-slate-500">
-                            Syncing...
-                        </p>
-                    )}
+                {/* Review Section */}
+                <div className="space-y-3">
+                    <div className="flex items-center justify-between px-1">
+                        <p className="text-sm font-semibold text-slate-600 uppercase tracking-wider">Review</p>
+                        {isSyncing && (
+                            <p className="text-xs text-slate-400 animate-pulse">Syncing...</p>
+                        )}
+                    </div>
+
+                    {questions.map((question, index) => {
+                        const selectedId = selectedAnswers[question.id];
+                        const selectedChoice = question.choices.find(c => c.id === selectedId);
+                        const isCorrect = selectedChoice?.is_correct ?? false;
+
+                        return (
+                            <div
+                                key={question.id}
+                                className={`rounded-xl border-l-4 bg-white border border-l-4 p-5 space-y-3 ${
+                                    isCorrect
+                                        ? "border-slate-100 border-l-emerald-400"
+                                        : "border-slate-100 border-l-red-400"
+                                }`}
+                            >
+                                {/* Question header */}
+                                <div className="flex items-start gap-3">
+                                    <div className={`mt-0.5 flex-shrink-0 w-5 h-5 rounded-full flex items-center justify-center ${
+                                        isCorrect ? "bg-emerald-500" : "bg-red-400"
+                                    }`}>
+                                        {isCorrect ? (
+                                            <svg className="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M5 13l4 4L19 7" />
+                                            </svg>
+                                        ) : (
+                                            <svg className="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M6 18L18 6M6 6l12 12" />
+                                            </svg>
+                                        )}
+                                    </div>
+                                    <p className="text-sm font-semibold text-slate-800 leading-relaxed">
+                                        <span className="text-slate-400 font-normal mr-1">{index + 1}.</span>
+                                        {question.text}
+                                    </p>
+                                </div>
+
+                                {/* Answer & Feedback */}
+                                <div className="ml-8 space-y-2.5">
+                                    <div className="flex items-start gap-3">
+                                        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider w-14 flex-shrink-0 pt-0.5">Answer</p>
+                                        <p className={`text-sm font-semibold ${isCorrect ? "text-emerald-700" : "text-red-600"}`}>
+                                            {selectedChoice?.text ?? "—"}
+                                        </p>
+                                    </div>
+                                    <div className="flex items-start gap-3">
+                                        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider w-14 flex-shrink-0 pt-0.5">Note</p>
+                                        <p className="text-xs text-slate-500 leading-relaxed">
+                                            {isCorrect ? question.feedback.correct : question.feedback.incorrect}
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+                        );
+                    })}
                 </div>
 
-                <div className="flex flex-col sm:flex-row gap-3 pt-1">
-                    <button
-                        onClick={onRetry}
-                        className="flex-1 rounded-lg bg-slate-900 hover:bg-slate-800 active:bg-slate-950 text-white font-semibold py-3 px-4 text-base transition-colors"
-                    >
-                        Try Again
-                    </button>
+                {/* Actions */}
+                <div className="flex flex-col sm:flex-row gap-3 pb-12">
+                    {canRetry ? (
+                        <button
+                            onClick={onRetry}
+                            disabled={isSyncing}
+                            className={`flex-1 flex flex-col items-center justify-center font-semibold py-3 rounded-xl transition-all ${
+                                isSyncing 
+                                ? "bg-slate-100 text-slate-400 cursor-not-allowed" 
+                                : "bg-slate-900 text-white hover:bg-slate-800 active:bg-black"
+                            }`}
+                        >
+                            <span className="text-sm">Try Again</span>
+                            {attemptsRemaining !== null && (
+                                <span className={`text-[10px] font-medium ${isSyncing ? "text-slate-300" : "text-slate-400"}`}>
+                                    {attemptsRemaining} attempt{attemptsRemaining !== 1 ? 's' : ''} left
+                                </span>
+                            )}
+                        </button>
+                    ) : (
+                        <button
+                            disabled
+                            className="flex-1 flex flex-col items-center justify-center bg-slate-100 text-slate-400 font-semibold py-3 rounded-xl cursor-not-allowed"
+                        >
+                            <span className="text-sm">No Attempts Left</span>
+                            <span className="text-[10px] font-medium">Limit reached</span>
+                        </button>
+                    )}
                     <button
                         onClick={onBackToHome}
-                        className="flex-1 rounded-lg bg-white hover:bg-slate-50 active:bg-slate-100 text-slate-700 font-semibold py-3 px-4 text-base border border-slate-300 transition-colors"
+                        disabled={isSyncing}
+                        className={`flex-1 font-semibold py-3 rounded-xl transition-colors text-sm border ${
+                            isSyncing
+                            ? "bg-slate-50 text-slate-300 border-slate-100 cursor-not-allowed"
+                            : "bg-white border-slate-200 text-slate-600 hover:bg-slate-50 active:bg-slate-100"
+                        }`}
                     >
                         Back to Assessments
                     </button>
                 </div>
 
                 {showLoginButton && onLoginToSaveProgress && (
-                    <div className="flex justify-center pt-1">
+                    <div className="flex justify-center -mt-8 pb-8">
                         <button
                             onClick={onLoginToSaveProgress}
-                            className="rounded-lg bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800 text-white font-semibold py-3 px-4 text-base transition-colors"
+                            className="text-xs text-slate-400 hover:text-slate-700 transition-colors font-medium underline underline-offset-4"
                         >
-                            Login to Save Progress
+                            Login to save your progress
                         </button>
                     </div>
                 )}

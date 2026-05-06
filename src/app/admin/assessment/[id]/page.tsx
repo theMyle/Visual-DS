@@ -5,10 +5,12 @@ import QuestionManagement, { QuestionDTO } from "./components/QuestionManagement
 import Link from "next/link";
 import { revalidatePath } from "next/cache";
 import { addQuestion, updateQuestion, deleteQuestion } from "./actions";
+import AttemptLimitConfig from "./components/AttemptLimitConfig";
 
 interface AssessmentDetailDTO {
     id: string;
     category: string;
+    max_attempts: number | null;
     questions: QuestionDTO[];
 }
 
@@ -82,14 +84,20 @@ export default async function AdminAssessmentDetailPage({
                         </div>
                     ) : (
                         assessment && (
-                            <div className="flex-1 overflow-hidden">
-                                <QuestionManagement
-                                    assessmentId={id}
-                                    initialQuestions={assessment.questions}
-                                    onAddQuestion={onAdd}
-                                    onUpdateQuestion={onUpdate}
-                                    onDeleteQuestion={onDelete}
+                            <div className="flex-1 overflow-hidden flex flex-col gap-6">
+                                <AttemptLimitConfig 
+                                    assessmentId={id} 
+                                    initialMaxAttempts={assessment.max_attempts} 
                                 />
+                                <div className="flex-1 overflow-hidden min-h-0 bg-white rounded-xl border border-slate-200">
+                                    <QuestionManagement
+                                        assessmentId={id}
+                                        initialQuestions={assessment.questions}
+                                        onAddQuestion={onAdd}
+                                        onUpdateQuestion={onUpdate}
+                                        onDeleteQuestion={onDelete}
+                                    />
+                                </div>
                             </div>
                         )
                     )}

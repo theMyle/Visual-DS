@@ -5,16 +5,28 @@ import { motion, AnimatePresence } from "framer-motion";
 import MenuItemButton from "@/app/components/MenuItemButton";
 import VisualDSIcon from "@/app/components/VisualDSIcon";
 import Link from "next/link";
-import { SignOutButton, UserButton, useClerk, useUser } from "@clerk/nextjs";
+import { SignOutButton, UserButton, useClerk, useUser, useAuth } from "@clerk/nextjs";
+import { checkCertificateEligibility } from "../lib/certificate/eligibility";
+
+function LockClosedIcon({ className }: { className?: string }) {
+    return (
+        <svg className={className} fill="currentColor" viewBox="0 0 24 24">
+            <path fillRule="evenodd" d="M12 1.5a5.25 5.25 0 00-5.25 5.25v3a3 3 0 00-3 3v6.75a3 3 0 003 3h10.5a3 3 0 003-3v-6.75a3 3 0 00-3-3v-3c0-2.9-2.35-5.25-5.25-5.25zm3.75 8.25v-3a3.75 3.75 0 10-7.5 0v3h7.5z" clipRule="evenodd" />
+        </svg>
+    );
+}
 
 export default function NavBar({ initialIsSignedIn }: { initialIsSignedIn: boolean }) {
     const { isSignedIn: clerkIsSignedIn, user } = useUser();
     const isSignedIn = clerkIsSignedIn ?? initialIsSignedIn;
     const { openUserProfile } = useClerk();
+    const { getToken } = useAuth();
 
     const [menuOpen, setMenuOpen] = useState(false);
     const overlayRef = useRef<HTMLDivElement>(null);
     const hamburgerButtonRef = useRef<HTMLButtonElement>(null);
+
+    const [isEligible, setIsEligible] = useState<boolean | null>(null);
 
     // Detect clicks outside the overlay
     useEffect(() => {
@@ -33,6 +45,14 @@ export default function NavBar({ initialIsSignedIn }: { initialIsSignedIn: boole
         document.addEventListener("mousedown", handleClickOutside);
         return () => document.removeEventListener("mousedown", handleClickOutside);
     }, [menuOpen]);
+
+    useEffect(() => {
+        if (isSignedIn) {
+            checkCertificateEligibility(getToken, "")
+                .then(res => setIsEligible(res.eligible))
+                .catch(() => setIsEligible(false));
+        }
+    }, [isSignedIn, getToken]);
 
     return (
         <div>
@@ -59,6 +79,10 @@ export default function NavBar({ initialIsSignedIn }: { initialIsSignedIn: boole
                         </Link>
                         <Link href="/assessment" className="px-4 py-2 text-gray-700 hover:text-gray-900 hover:bg-gray-100 rounded-md transition-colors font-medium active:transform active:scale-95">
                             Assessment
+                        </Link>
+                        <Link href="/certificate" className="px-4 py-2 text-gray-700 hover:text-gray-900 hover:bg-gray-100 rounded-md transition-colors font-medium active:transform active:scale-95 flex items-center gap-1.5 inline-flex">
+                            {isEligible === false && <LockClosedIcon className="w-3.5 h-3.5 text-slate-400" />}
+                            Certificate
                         </Link>
                         <Link
                             href="https://forms.gle/o91fYs18hEEN5wgh9"
@@ -153,6 +177,12 @@ export default function NavBar({ initialIsSignedIn }: { initialIsSignedIn: boole
                             <MenuItemButton
                                 text={"Assessment"}
                                 href={"/assessment"}
+                                onClick={() => { setMenuOpen(false) }} />
+
+                            <MenuItemButton
+                                text={"Certificate"}
+                                icon={isEligible === false ? <LockClosedIcon className="w-5 h-5 text-slate-400" /> : undefined}
+                                href={"/certificate"}
                                 onClick={() => { setMenuOpen(false) }} />
 
                             <MenuItemButton

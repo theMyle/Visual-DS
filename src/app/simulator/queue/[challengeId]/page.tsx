@@ -97,10 +97,10 @@ export default function SimulationQueueChallenge() {
         maxCapacity: challenge.capacity,
     };
 
-    return <SimulationQueueCore challenge={config} challengeId={challenge.id} nextChallengeSlug={challenge.next_challenge_slug} initialCodeFromProgress={lastCode} initialIsCompleted={isCompleted} />;
+    return <SimulationQueueCore challenge={config} challengeId={challenge.id} challengeSlug={challenge.slug} nextChallengeSlug={challenge.next_challenge_slug} initialCodeFromProgress={lastCode} initialIsCompleted={isCompleted} />;
 }
 
-function SimulationQueueCore({ challenge, challengeId, nextChallengeSlug, initialCodeFromProgress, initialIsCompleted }: { challenge: ChallengeConfig, challengeId: string, nextChallengeSlug?: string, initialCodeFromProgress: string | null, initialIsCompleted: boolean }) {
+function SimulationQueueCore({ challenge, challengeId, challengeSlug, nextChallengeSlug, initialCodeFromProgress, initialIsCompleted }: { challenge: ChallengeConfig, challengeId: string, challengeSlug: string, nextChallengeSlug?: string, initialCodeFromProgress: string | null, initialIsCompleted: boolean }) {
     const router = useRouter();
     const { isLoaded, isSignedIn, userId, getToken } = useAuth();
     const searchParams = useSearchParams();
@@ -136,7 +136,7 @@ function SimulationQueueCore({ challenge, challengeId, nextChallengeSlug, initia
         try {
             await syncSimulatorProgress({
                 category: "queue",
-                path: `/simulator/queue/${challengeId}`,
+                path: `/simulator/queue/${challengeSlug}`,
                 challengeId: challengeId,
                 isCompleted: passed,
                 lastSubmittedCode: editorCode,

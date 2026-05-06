@@ -3,6 +3,7 @@ import { auth } from '@clerk/nextjs/server';
 import LessonClient from './LessonClient';
 import { FetchWithAuth } from '../lib/fetchWithAuth';
 import { LESSON_MAP } from "../lib/lessons";
+import { redirect } from "next/navigation";
 
 interface ProgressItem {
     lesson_category: string;
@@ -11,6 +12,11 @@ interface ProgressItem {
 
 export default async function Page() {
     const { userId, getToken } = await auth();
+
+    if (!userId) {
+        // This case is now handled by middleware, but we keep a fallback for type safety
+        return null;
+    }
 
     // 1. Fetch Categories from DB
     const apiUrl = `${process.env.NEXT_PUBLIC_API_BASE_URL}/lessons`;
@@ -22,20 +28,6 @@ export default async function Page() {
         }
     } catch (error) {
         console.error("Error fetching categories:", error);
-    }
-
-    if (!userId) {
-        const initialProgress: Record<string, number> = {};
-        if (dbCategories.length > 0) {
-            dbCategories.forEach(c => {
-                initialProgress[c.slug] = 0;
-            });
-        } else {
-            Object.keys(LESSON_MAP).forEach(slug => {
-                initialProgress[slug] = 0;
-            });
-        }
-        return <LessonClient initialProgress={initialProgress} categories={dbCategories} />;
     }
 
     // 2. Fetch User Progress

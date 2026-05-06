@@ -111,10 +111,10 @@ export default function SimulationTreeChallenge() {
         maxCapacity: challenge.capacity,
     };
 
-    return <SimulationTreeCore challenge={config} challengeId={challenge.id} nextChallengeSlug={challenge.next_challenge_slug} initialCodeFromProgress={lastCode} initialIsCompleted={isCompleted} />;
+    return <SimulationTreeCore challenge={config} challengeId={challenge.id} challengeSlug={challenge.slug} nextChallengeSlug={challenge.next_challenge_slug} initialCodeFromProgress={lastCode} initialIsCompleted={isCompleted} />;
 }
 
-function SimulationTreeCore({ challenge, challengeId, nextChallengeSlug, initialCodeFromProgress, initialIsCompleted }: { challenge: ChallengeConfig, challengeId: string, nextChallengeSlug?: string, initialCodeFromProgress: string | null, initialIsCompleted: boolean }) {
+function SimulationTreeCore({ challenge, challengeId, challengeSlug, nextChallengeSlug, initialCodeFromProgress, initialIsCompleted }: { challenge: ChallengeConfig, challengeId: string, challengeSlug: string, nextChallengeSlug?: string, initialCodeFromProgress: string | null, initialIsCompleted: boolean }) {
     const router = useRouter();
     const { isLoaded, isSignedIn, userId, getToken } = useAuth();
     const searchParams = useSearchParams();
@@ -142,7 +142,7 @@ function SimulationTreeCore({ challenge, challengeId, nextChallengeSlug, initial
         try {
             await syncSimulatorProgress({
                 category: "tree",
-                path: `/simulator/tree/${challengeId}`,
+                path: `/simulator/tree/${challengeSlug}`,
                 challengeId: challengeId,
                 isCompleted: passed,
                 lastSubmittedCode: editorCode,

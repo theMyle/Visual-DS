@@ -12,6 +12,7 @@ type AssessmentListItem = {
     id: string;
     title: string;
     path: string;
+    maxAttempts: number | null;
     scoreHistory?: QuizResultPoint[];
 };
 
@@ -35,6 +36,7 @@ async function fetchAssessmentMenuData(): Promise<AssessmentListItem[]> {
             id: assessment.id || `unknown-${index}`,
             title: assessment.category || "Assessment",
             path: assessment.id ? `/assessment/${assessment.id}` : "/assessment",
+            maxAttempts: assessment.max_attempts ?? null,
             scoreHistory: scoreHistoryByQuizId[assessment.id] ?? [],
         }));
     } catch {
@@ -56,14 +58,21 @@ export default async function LessonPage() {
             >
                 <p className="font-bold text-gray-700">Assessment</p>
 
-                {sanitizedAssessments.map((assessment) => (
-                    <AssessmentMenuItem
-                        key={assessment.id}
-                        title={assessment.title}
-                        path={assessment.path}
-                        scoreHistory={assessment.scoreHistory}
-                    />
-                ))}
+                {sanitizedAssessments.map((assessment) => {
+                    const history = assessment.scoreHistory ?? [];
+                    const limitReached = assessment.maxAttempts !== null && history.length >= assessment.maxAttempts;
+
+                    return (
+                        <AssessmentMenuItem
+                            key={assessment.id}
+                            title={assessment.title}
+                            path={assessment.path}
+                            scoreHistory={history}
+                            maxAttempts={assessment.maxAttempts}
+                            isLocked={limitReached}
+                        />
+                    );
+                })}
 
                 {/* <Link href={"/assessment/stack"}>Stack</Link>
             <Link href={"/assessment/queue"}>Queue</Link>

@@ -4,10 +4,19 @@ import { hasAdminAccess } from "@/app/lib/auth/admin";
 
 export default clerkMiddleware(async (auth, req) => {
   const pathname = req.nextUrl.pathname;
+  const isProtectedRoute = pathname.startsWith("/simulator") || pathname.startsWith("/lesson");
   const isAdminRoute = pathname === "/admin" || pathname.startsWith("/admin/");
   const isAdminUnauthorizedPage = pathname === "/admin/unauthorized";
   const requestHeaders = new Headers(req.headers);
   requestHeaders.set("x-pathname", pathname);
+
+  const { userId, orgRole, sessionClaims } = await auth();
+
+  if (!userId && (isAdminRoute || isProtectedRoute)) {
+    const loginUrl = new URL("/login", req.url);
+    loginUrl.searchParams.set("redirect_url", req.nextUrl.pathname + req.nextUrl.search);
+    return NextResponse.redirect(loginUrl);
+  }
 
   if (!isAdminRoute) {
     return NextResponse.next({
@@ -15,14 +24,6 @@ export default clerkMiddleware(async (auth, req) => {
         headers: requestHeaders,
       },
     });
-  }
-
-  const { userId, orgRole, sessionClaims } = await auth();
-
-  if (!userId) {
-    const loginUrl = new URL("/login", req.url);
-    loginUrl.searchParams.set("redirect_url", req.nextUrl.pathname + req.nextUrl.search);
-    return NextResponse.redirect(loginUrl);
   }
 
   if (isAdminUnauthorizedPage) {

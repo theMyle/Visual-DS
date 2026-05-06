@@ -1,11 +1,18 @@
 import { getApiUrl } from "../env";
 import type { Assessment } from "../../assessment/types";
 
-type GetTokenFn = () => Promise<string | null>;
+export type GetTokenFn = () => Promise<string | null>;
 
 export type BackendAssessment = {
     id: string;
     category: string;
+    max_attempts: number | null;
+};
+
+export type AttemptStatus = {
+    attempts_used: number;
+    max_attempts: number | null;
+    limit_reached: boolean;
 };
 
 export type BackendQuizResult = {
@@ -139,4 +146,33 @@ export function buildScoreHistoryByQuizId(
     });
 
     return historyMap;
+}
+
+export async function fetchAttemptStatus(
+    assessmentId: string,
+    getToken?: GetTokenFn,
+): Promise<AttemptStatus> {
+    const headers = new Headers(JSON_HEADERS);
+    if (getToken) {
+        const token = await getToken();
+        if (token) headers.set("Authorization", `Bearer ${token}`);
+    }
+
+    const response = await fetch(getApiUrl(`/assessments/${assessmentId}/attempt-status`), {
+        method: "GET",
+        headers,
+        cache: "no-store",
+    });
+
+    if (!response.ok) {
+        // If it fails, default to no limit so we don't block the user unexpectedly
+        return { attempts_used: 0, max_attempts: null, limit_reached: false };
+    }
+
+    return (await response.json()) as AttemptStatus;
+}
+
+export function toPercent(score: number, total: number): number {
+    if (total === 0) return 0;
+    return (score / total) * 100;
 }

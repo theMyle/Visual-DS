@@ -96,10 +96,10 @@ export default function SimulationStack() {
         maxCapacity: challenge.capacity,
     };
 
-    return <SimulationStackCore challenge={config} challengeId={challenge.id} nextChallengeSlug={challenge.next_challenge_slug} initialCodeFromProgress={lastCode} initialIsCompleted={isCompleted} />;
+    return <SimulationStackCore challenge={config} challengeId={challenge.id} challengeSlug={challenge.slug} nextChallengeSlug={challenge.next_challenge_slug} initialCodeFromProgress={lastCode} initialIsCompleted={isCompleted} />;
 }
 
-function SimulationStackCore({ challenge, challengeId, nextChallengeSlug, initialCodeFromProgress, initialIsCompleted }: { challenge: ChallengeConfig, challengeId: string, nextChallengeSlug?: string, initialCodeFromProgress: string | null, initialIsCompleted: boolean }) {
+function SimulationStackCore({ challenge, challengeId, challengeSlug, nextChallengeSlug, initialCodeFromProgress, initialIsCompleted }: { challenge: ChallengeConfig, challengeId: string, challengeSlug: string, nextChallengeSlug?: string, initialCodeFromProgress: string | null, initialIsCompleted: boolean }) {
     const router = useRouter();
     const { isLoaded, isSignedIn, userId, getToken } = useAuth();
     const searchParams = useSearchParams();
@@ -139,7 +139,7 @@ function SimulationStackCore({ challenge, challengeId, nextChallengeSlug, initia
         try {
             await syncSimulatorProgress({
                 category: "stack",
-                path: `/simulator/stack/${challengeId}`,
+                path: `/simulator/stack/${challengeSlug}`,
                 challengeId: challengeId,
                 isCompleted: passed,
                 lastSubmittedCode: editorCode,

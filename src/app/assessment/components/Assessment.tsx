@@ -12,6 +12,8 @@ import { FetchWithAuth } from "../../lib/fetchWithAuth";
 
 type AssessmentProps = {
     assessmentData: AssessmentType;
+    attemptsUsed?: number;
+    maxAttempts?: number | null;
 };
 
 type QuestionOutcome = {
@@ -28,62 +30,56 @@ type SubmitAssessmentRequest = {
 };
 
 
-export default function Assessment({ assessmentData }: AssessmentProps) {
+export default function Assessment({ assessmentData, attemptsUsed = 0, maxAttempts = null }: AssessmentProps) {
     const router = useRouter();
-    const { isLoaded, isSignedIn, getToken } = useAuth();
+    const { isLoaded, isSignedIn, userId, getToken } = useAuth();
     const { redirectToSignIn } = useClerk();
     const [isMounted, setIsMounted] = useState(false);
 
-    const [assessment, setAssessment] = useState<AssessmentType | null>(null);
+    const [localAttemptsUsed, setLocalAttemptsUsed] = useState(attemptsUsed);
 
+    const [assessment, setAssessment] = useState<AssessmentType | null>(null);
     const [showSummary, setShowSummary] = useState(false);
     const totalQuestions = assessment?.questions.length ?? 0;
 
-    const [currentDot, setCurrentDot] = useState(0);
-    const [answeredCount, setAnsweredCount] = useState(0);
-    const [correctDots, setCorrectDots] = useState<boolean[]>([]);
+    const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
+    const [selectedAnswers, setSelectedAnswers] = useState<Record<string, string>>({});
     const [questionOutcomes, setQuestionOutcomes] = useState<QuestionOutcome[]>([]);
+    const [shuffledChoicesMap, setShuffledChoicesMap] = useState<Record<string, Choice[]>>({});
 
-    const [currentQuestion, setCurrentQuestion] = useState<AssessmentType["questions"][number] | null>(null);
-    const [shuffledChoices, setShuffledChoices] = useState<Choice[]>([]);
-
-    const [correctFeedback, setCorrectFeedback] = useState("");
-    const [wrongFeedback, setWrongFeedback] = useState("");
     const hasSubmittedAssessmentRef = useRef(false);
+    const attemptsRemaining = maxAttempts !== null ? maxAttempts - localAttemptsUsed : null;
+    const canRetry = attemptsRemaining === null || attemptsRemaining > 0;
 
     useEffect(() => {
         const shuffledQuestions = [...assessmentData.questions].sort(() => Math.random() - 0.5);
+
+        const choicesMap: Record<string, Choice[]> = {};
+        shuffledQuestions.forEach(q => {
+            choicesMap[q.id] = [...q.choices].sort(() => Math.random() - 0.5);
+        });
+
         const initializedAssessment = {
             ...assessmentData,
             questions: shuffledQuestions,
         };
 
         setAssessment(initializedAssessment);
-        setCurrentQuestion(shuffledQuestions[0] ?? null);
-        setCorrectDots(Array(shuffledQuestions.length).fill(false));
+        setShuffledChoicesMap(choicesMap);
+        setSelectedAnswers({});
         setQuestionOutcomes([]);
         setShowSummary(false);
+        setCurrentQuestionIndex(0);
 
         setIsMounted(true);
     }, [assessmentData]);
 
-    useEffect(() => {
-        if (!currentQuestion) return;
-
-        setCorrectFeedback(currentQuestion.feedback.correct);
-        setWrongFeedback(currentQuestion.feedback.incorrect);
-
-        const shuffled = [...currentQuestion.choices].sort(() => Math.random() - 0.5);
-        setShuffledChoices(shuffled);
-    }, [currentQuestion]);
-
-    const [selectedButton, setSelectedButton] = useState<string | null>(null);
-    const [feedbackMode, setFeedbackMode] = useState(false);
-    const [answerIsCorrect, setAnswerIsCorrect] = useState(false);
+    const currentQuestion = assessment?.questions[currentQuestionIndex] ?? null;
+    const shuffledChoices = currentQuestion ? shuffledChoicesMap[currentQuestion.id] || [] : [];
 
     const questionDiv = useRef<HTMLDivElement>(null);
 
-    const correctCount = correctDots.filter(Boolean).length;
+    const correctCount = questionOutcomes.filter(outcome => outcome.is_correct).length;
 
     const submitAssessmentMutation = useMutation({
         mutationFn: async (payload: SubmitAssessmentRequest) => {
@@ -98,152 +94,112 @@ export default function Assessment({ assessmentData }: AssessmentProps) {
         },
         onSuccess: () => {
             console.log("Assessment submitted successfully.");
+            setLocalAttemptsUsed(prev => prev + 1);
         },
         onError: (error) => {
             console.error("Failed to submit assessment:", error);
         },
     });
 
-    function handleCorrectAnswer() {
-        setCorrectDots((previous) => {
-            const newCorrectDots = [...previous];
-            newCorrectDots[currentDot] = true;
-            return newCorrectDots;
-        });
+    const [isSubmitting, setIsSubmitting] = useState(false);
 
-        setCurrentDot((current) => current + 1);
-    }
+    async function handleNext() {
+        if (!assessment || !currentQuestion) return;
 
-    function handleWrongAnswer() {
-        setCurrentDot((current) => current + 1);
-    }
+        const nextIndex = currentQuestionIndex + 1;
+        if (nextIndex >= assessment.questions.length) {
+            // Final submission
+            const outcomes: QuestionOutcome[] = assessment.questions.map(q => {
+                const selectedChoiceId = selectedAnswers[q.id];
+                const choice = q.choices.find(c => c.id === selectedChoiceId);
+                return {
+                    question_id: q.id,
+                    is_correct: choice?.is_correct ?? false
+                };
+            });
+            setQuestionOutcomes(outcomes);
 
-    function handleNextQuestion() {
-        if (!assessment) return;
+            // Sync BEFORE displaying result
+            if (isSignedIn && userId) {
+                setIsSubmitting(true);
+                try {
+                    console.log("[Submit] Syncing assessment result...");
+                    const correctCount = outcomes.filter(o => o.is_correct).length;
+                    await submitAssessmentMutation.mutateAsync({
+                        quiz_id: assessmentData.id,
+                        quiz_category: assessmentData.category,
+                        score: correctCount,
+                        total_items: assessment.questions.length,
+                        outcomes: outcomes,
+                    });
+                    console.log("[Submit] Sync complete.");
+                } catch (error) {
+                    console.error("Failed to sync assessment:", error);
+                    // We still show summary even on error so user sees their score,
+                    // but they'll know it didn't save if we add an error state (future work)
+                } finally {
+                    setIsSubmitting(false);
+                }
+            }
 
-        if (answeredCount === assessment.questions.length) {
             setShowSummary(true);
-            return;
+        } else {
+            setCurrentQuestionIndex(nextIndex);
+            if (questionDiv.current) {
+                questionDiv.current.scrollTo({ top: 0, behavior: "smooth" });
+            }
         }
+    }
 
-        setCurrentQuestion(assessment.questions[answeredCount]);
+    function handleBack() {
+        if (currentQuestionIndex > 0) {
+            setCurrentQuestionIndex(currentQuestionIndex - 1);
+            if (questionDiv.current) {
+                questionDiv.current.scrollTo({ top: 0, behavior: "smooth" });
+            }
+        }
     }
 
     function handleRetry() {
-        if (!assessment) return;
+        if (!assessment || !canRetry) return;
 
         setShowSummary(false);
         hasSubmittedAssessmentRef.current = false;
-        setCurrentDot(0);
-        setAnsweredCount(0);
-        setCorrectDots(Array(totalQuestions).fill(false));
+        setCurrentQuestionIndex(0);
+        setSelectedAnswers({});
         setQuestionOutcomes([]);
-        setCurrentQuestion(assessment.questions[0]);
-        setSelectedButton(null);
-        setFeedbackMode(false);
-        setAnswerIsCorrect(false);
+
+        // Re-shuffle for retry
+        const shuffledQuestions = [...assessment.questions].sort(() => Math.random() - 0.5);
+        const choicesMap: Record<string, Choice[]> = {};
+        shuffledQuestions.forEach(q => {
+            choicesMap[q.id] = [...q.choices].sort(() => Math.random() - 0.5);
+        });
+
+        setAssessment({ ...assessment, questions: shuffledQuestions });
+        setShuffledChoicesMap(choicesMap);
     }
 
     function handleBackToHome() {
         router.push("/assessment");
     }
 
-    function handleCheck() {
-        if (!currentQuestion) return;
-
-        const correctAnswer = currentQuestion.choices.find((choice) => choice.is_correct)!;
-        const isCorrect = correctAnswer.id === selectedButton;
-
-        setQuestionOutcomes((previous) => {
-            const next = previous.filter((outcome) => outcome.question_id !== currentQuestion.id);
-            next.push({
-                question_id: currentQuestion.id,
-                is_correct: isCorrect,
-            });
-            return next;
-        });
-
-        setAnswerIsCorrect(isCorrect);
-        setFeedbackMode(() => {
-            // Delay scroll until feedback has rendered.
-            setTimeout(() => {
-                if (questionDiv.current) {
-                    questionDiv.current.scrollTo({
-                        top: 1000,
-                        behavior: "smooth",
-                    });
-                }
-            }, 300);
-            return true;
-        });
-
-        if (isCorrect) {
-            handleCorrectAnswer();
-        } else {
-            handleWrongAnswer();
-        }
-        setAnsweredCount((current) => current + 1);
-    }
-
-    function handleContinue() {
-        setFeedbackMode(false);
-        setSelectedButton(null);
-        handleNextQuestion();
-    }
-
-    let bottomNavBackground = "bg-white";
-    let continueButtonColor = "bg-green-400 active:bg-green-600 hover:bg-green-500";
-    if (feedbackMode && answerIsCorrect) {
-        bottomNavBackground = "bg-green-50";
-    } else if (feedbackMode && !answerIsCorrect) {
-        bottomNavBackground = "bg-red-50";
-        continueButtonColor = "bg-gray-400 active:bg-gray-600 hover:bg-gray-500";
-    }
-
-    useEffect(() => {
-        if (!showSummary || !isMounted || !assessment) {
-            if (!showSummary) {
-                hasSubmittedAssessmentRef.current = false;
-            }
-            return;
-        }
-
-        if (!isLoaded || !isSignedIn) {
-            console.log("ℹ️ [Chain Interrupt] User not logged in. Skipping assessment submit.");
-            return;
-        }
-
-        if (hasSubmittedAssessmentRef.current) {
-            return;
-        }
-
-        console.log("[Submit] Sending assessment result to backend...");
-        hasSubmittedAssessmentRef.current = true;
-
-        submitAssessmentMutation.mutate({
-            quiz_id: assessmentData.id,
-            quiz_category: assessmentData.category,
-            score: correctCount,
-            total_items: totalQuestions,
-            outcomes: questionOutcomes,
-        });
-
-    }, [
-        showSummary,
-        isMounted,
-        assessment,
-        isLoaded,
-        isSignedIn,
-        assessmentData.id,
-        assessmentData.category,
-        correctCount,
-        totalQuestions,
-        questionOutcomes,
-    ]);
 
     const handleLoginToSaveProgress = async () => {
         await redirectToSignIn({ redirectUrl: window.location.href });
     };
+
+    if (isSubmitting) {
+        return (
+            <div className="h-full flex items-center justify-center bg-gray-50/50">
+                <div className="flex flex-col items-center gap-4">
+                    <div className="w-12 h-12 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin"></div>
+                    <p className="text-lg font-bold text-slate-700">Saving your results...</p>
+                    <p className="text-sm text-slate-500">Please wait a moment.</p>
+                </div>
+            </div>
+        );
+    }
 
     if (!isMounted || !assessment || !currentQuestion) {
         return null;
@@ -252,10 +208,14 @@ export default function Assessment({ assessmentData }: AssessmentProps) {
     if (showSummary) {
         return (
             <AssessmentSummary
+                questions={assessment.questions}
+                selectedAnswers={selectedAnswers}
                 correctCount={correctCount}
                 totalQuestions={totalQuestions}
                 isSyncing={submitAssessmentMutation.isPending}
                 showLoginButton={isLoaded && !isSignedIn}
+                canRetry={canRetry}
+                attemptsRemaining={attemptsRemaining}
                 onLoginToSaveProgress={handleLoginToSaveProgress}
                 onRetry={handleRetry}
                 onBackToHome={handleBackToHome}
@@ -263,14 +223,17 @@ export default function Assessment({ assessmentData }: AssessmentProps) {
         );
     }
 
+    const answeredCount = Object.keys(selectedAnswers).length;
+    const isLastQuestion = currentQuestionIndex === totalQuestions - 1;
+    const currentSelection = selectedAnswers[currentQuestion.id];
+
     return (
         <div className="h-full flex flex-col ">
             <div className="shrink-0">
                 <ProgressDots
-                    current={currentDot}
+                    current={currentQuestionIndex}
                     total={totalQuestions}
-                    answeredCount={answeredCount}
-                    correct={correctDots}
+                    answeredIndices={Object.keys(selectedAnswers).map(id => assessment.questions.findIndex(q => q.id === id))}
                 />
             </div>
 
@@ -299,39 +262,18 @@ export default function Assessment({ assessmentData }: AssessmentProps) {
                                 </div>
                             </div>
                         )}
-
-                        {feedbackMode && (answerIsCorrect ? correctFeedback : wrongFeedback) && (
-                            <div className="hidden lg:flex justify-center w-full opacity-0 animate-fade-in">
-                                <div
-                                    className={`max-w-3xl w-full flex flex-col gap-2 p-6 rounded-2xl border-2 shadow-md ${answerIsCorrect
-                                        ? "bg-green-50 border-green-300"
-                                        : "bg-red-50 border-red-300"
-                                        }`}
-                                >
-                                    <h1 className="font-bold text-lg">Explanation</h1>
-                                    <p className="text-gray-700 leading-relaxed">
-                                        {answerIsCorrect ? correctFeedback : wrongFeedback}
-                                    </p>
-                                </div>
-                            </div>
-                        )}
                     </div>
 
                     <div className="flex justify-center items-center lg:col-span-2">
                         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-1 gap-3 md:gap-4 max-w-2xl lg:max-w-lg w-full">
                             {shuffledChoices.map((choice: Choice) => {
-                                const isSelected = selectedButton === choice.id;
-                                const isCorrect = choice.is_correct;
+                                const isSelected = currentSelection === choice.id;
 
                                 let buttonClass =
                                     "cursor-pointer px-4 py-4 md:px-5 md:py-5 rounded-xl text-center border-2 transition-all duration-200 text-base md:text-lg shadow-sm hover:shadow-md";
 
-                                if (isSelected && !feedbackMode) {
+                                if (isSelected) {
                                     buttonClass += " bg-indigo-100 text-indigo-700 border-indigo-400 shadow-md scale-[1.02]";
-                                } else if (isSelected && feedbackMode && isCorrect) {
-                                    buttonClass += " bg-green-100 text-green-900 border-green-500 shadow-md";
-                                } else if (isSelected && feedbackMode && !isCorrect) {
-                                    buttonClass += " bg-red-100 text-red-800 border-red-400 shadow-md";
                                 } else {
                                     buttonClass += " bg-white text-gray-700 border-gray-300 hover:border-indigo-300 hover:bg-indigo-50";
                                 }
@@ -340,8 +282,7 @@ export default function Assessment({ assessmentData }: AssessmentProps) {
                                     <button
                                         key={choice.id}
                                         className={buttonClass}
-                                        onClick={() => setSelectedButton(choice.id)}
-                                        disabled={feedbackMode}
+                                        onClick={() => setSelectedAnswers(prev => ({ ...prev, [currentQuestion.id]: choice.id }))}
                                     >
                                         {choice.text}
                                     </button>
@@ -349,81 +290,27 @@ export default function Assessment({ assessmentData }: AssessmentProps) {
                             })}
                         </div>
                     </div>
-
-                    {feedbackMode && (answerIsCorrect ? correctFeedback : wrongFeedback) && (
-                        <div className="lg:hidden flex justify-center w-full lg:col-span-5 opacity-0 animate-fade-in pb-4">
-                            <div
-                                className={`max-w-3xl w-full flex flex-col gap-2 p-6 rounded-2xl border-2 shadow-md ${answerIsCorrect
-                                    ? "bg-green-50 border-green-300"
-                                    : "bg-red-50 border-red-300"
-                                    }`}
-                            >
-                                <h1 className="font-bold text-lg">Explanation</h1>
-                                <p className="text-gray-700 leading-relaxed">
-                                    {answerIsCorrect ? correctFeedback : wrongFeedback}
-                                </p>
-                            </div>
-                        </div>
-                    )}
                 </div>
             </div>
 
-            <div
-                className={`shrink-0 w-full border-t-2 border-gray-400 p-4 flex justify-center h-24 ${bottomNavBackground}`}
-            >
-                {!feedbackMode && (
+            <div className="shrink-0 w-full border-t-2 border-gray-100 p-4 flex justify-center h-24 bg-white">
+                <div className="flex justify-between items-center w-full max-w-4xl gap-4">
                     <button
-                        className="w-full md:w-sm bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl active:bg-indigo-800 disabled:bg-gray-300 disabled:text-gray-500"
-                        onClick={handleCheck}
-                        disabled={!selectedButton}
+                        className="flex-1 max-w-[200px] h-12 rounded-xl border-2 border-gray-200 text-gray-600 font-bold hover:bg-gray-50 active:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+                        onClick={handleBack}
+                        disabled={currentQuestionIndex === 0}
                     >
-                        Check
+                        Back
                     </button>
-                )}
-
-                {feedbackMode && (
-                    <div className="flex justify-between items-center w-full max-w-2xl px-2">
-                        <div className="flex items-center gap-2">
-                            {answerIsCorrect ? (
-                                <>
-                                    <svg
-                                        className="w-6 h-6 md:w-7 md:h-7 text-green-600"
-                                        fill="currentColor"
-                                        viewBox="0 0 20 20"
-                                    >
-                                        <path
-                                            fillRule="evenodd"
-                                            d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
-                                            clipRule="evenodd"
-                                        />
-                                    </svg>
-                                    <p className="font-bold text-lg md:text-xl text-green-700">Correct!</p>
-                                </>
-                            ) : (
-                                <>
-                                    <svg
-                                        className="w-6 h-6 md:w-7 md:h-7 text-red-600"
-                                        fill="currentColor"
-                                        viewBox="0 0 20 20"
-                                    >
-                                        <path
-                                            fillRule="evenodd"
-                                            d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
-                                            clipRule="evenodd"
-                                        />
-                                    </svg>
-                                    <p className="font-bold text-lg md:text-xl text-red-700">Incorrect</p>
-                                </>
-                            )}
-                        </div>
-                        <button
-                            className={`rounded-full px-6 md:px-8 py-2 text-white font-bold text-base md:text-lg transition-all ${continueButtonColor}`}
-                            onClick={handleContinue}
-                        >
-                            Continue
-                        </button>
-                    </div>
-                )}
+                    
+                    <button
+                        className="flex-1 max-w-[400px] h-12 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl active:bg-indigo-800 disabled:bg-gray-300 disabled:text-gray-500 transition-all shadow-md"
+                        onClick={handleNext}
+                        disabled={!currentSelection}
+                    >
+                        {isLastQuestion ? "Finish Assessment" : "Next Question"}
+                    </button>
+                </div>
             </div>
         </div>
     );

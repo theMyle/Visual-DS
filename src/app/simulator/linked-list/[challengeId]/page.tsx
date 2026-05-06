@@ -111,10 +111,10 @@ export default function SimulationLinkedListChallenge() {
         maxCapacity: challenge.capacity,
     };
 
-    return <SimulationLinkedListCore challenge={config} challengeId={challenge.id} nextChallengeSlug={challenge.next_challenge_slug} initialCodeFromProgress={lastCode} initialIsCompleted={isCompleted} />;
+    return <SimulationLinkedListCore challenge={config} challengeId={challenge.id} challengeSlug={challenge.slug} nextChallengeSlug={challenge.next_challenge_slug} initialCodeFromProgress={lastCode} initialIsCompleted={isCompleted} />;
 }
 
-function SimulationLinkedListCore({ challenge, challengeId, nextChallengeSlug, initialCodeFromProgress, initialIsCompleted }: { challenge: ChallengeConfig, challengeId: string, nextChallengeSlug?: string, initialCodeFromProgress: string | null, initialIsCompleted: boolean }) {
+function SimulationLinkedListCore({ challenge, challengeId, challengeSlug, nextChallengeSlug, initialCodeFromProgress, initialIsCompleted }: { challenge: ChallengeConfig, challengeId: string, challengeSlug: string, nextChallengeSlug?: string, initialCodeFromProgress: string | null, initialIsCompleted: boolean }) {
     const router = useRouter();
     const { isLoaded, isSignedIn, userId, getToken } = useAuth();
     const searchParams = useSearchParams();
@@ -143,7 +143,7 @@ function SimulationLinkedListCore({ challenge, challengeId, nextChallengeSlug, i
         try {
             await syncSimulatorProgress({
                 category: "linked-list",
-                path: `/simulator/linked-list/${challengeId}`,
+                path: `/simulator/linked-list/${challengeSlug}`,
                 challengeId: challengeId,
                 isCompleted: passed,
                 lastSubmittedCode: editorCode,
