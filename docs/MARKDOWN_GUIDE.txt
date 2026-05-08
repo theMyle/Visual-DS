@@ -1,0 +1,108 @@
+VISUALDS LESSON MARKDOWN GUIDE
+==============================
+
+This guide explains the custom markdown syntax and components supported by the LessonRenderer in VisualDS.
+
+1. HEADINGS
+-----------
+Standard markdown headings are styled to match the VisualDS design system.
+
+Example:
+# Level 1 Heading (Main Title)
+## Level 2 Heading (Section)
+### Level 3 Heading (Subsection)
+
+
+2. CALLOUTS (ALERTS)
+--------------------
+Use blockquotes with a specific tag at the beginning to create styled callouts.
+Supported tags: [info], [warning], [success], [tip], [danger].
+
+Example:
+> [info] This is an information callout.
+> It can span multiple lines.
+
+> [warning] Use this for important warnings.
+
+> [tip] Pro-tip: You can use other markdown inside callouts too!
+
+
+3. MEDIA (IMAGES & VIDEOS)
+--------------------------
+The renderer automatically distinguishes between images and videos based on the URL.
+
+Images Example:
+![Alternative Text](https://example.com/image.png)
+
+Videos Example:
+(Supports .mp4, .webm, YouTube, and Cloud Storage links)
+![Video Title](https://www.youtube.com/watch?v=dQw4w9WgXcQ)
+![Local Video](/videos/demo.mp4)
+
+
+4. TABLES
+---------
+Tables are rendered with a clean, responsive layout.
+
+Example:
+| Feature | Description |
+| :--- | :--- |
+| Fast | Optimized for speed |
+| Interactive | Supports user input |
+
+
+5. INLINE STYLING
+-----------------
+- Code: `code` will render as a highlighted "pill".
+- Links: Standard [Text](URL) links use custom hover effects.
+
+
+6. INLINE QUIZZES (SELF-CHECK)
+------------------------------
+You can embed interactive multiple-choice quizzes using a code block with the "quiz" language tag.
+
+Syntax Structure:
+```quiz
+[Question Text]
+a. [Option 1]
+b. [Option 2]
+c. [Option 3]
+Answer: [Correct Option Letter]
+Feedback Correct: [Message for correct answer]
+Feedback Wrong: [Message for wrong answer]
+```
+
+Rules:
+- Options: Must start with a letter and a period (e.g., a. ).
+- Answer: Must be "Answer: x" where x is the letter of the correct option.
+- Feedback: "Feedback Correct:" and "Feedback Wrong:" are optional but recommended.
+- Behavior: A "Retry" button appears if wrong. It disappears once correct.
+
+Example:
+```quiz
+What is the time complexity of searching in a Hash Map (average case)?
+a. O(n)
+b. O(log n)
+c. O(1)
+d. O(n^2)
+Answer: c
+Feedback Correct: Correct! Hash maps provide constant time complexity on average.
+Feedback Wrong: Not quite. Remember that hash maps use a hash function to jump directly to the data.
+```
+
+
+7. LISTS
+--------
+Both ordered and unordered lists are styled with custom markers.
+
+Example:
+- Item 1
+- Item 2
+  - Sub-item A
+
+1. First Step
+2. Second Step
+
+
+-------------------------------------------------------------------------------
+Note: The renderer supports standard GitHub Flavored Markdown (GFM) features.
