@@ -1,7 +1,6 @@
 'use client'
 import Link from "next/link";
 import { cn } from "../lib/utils";
-import { ACCENT_COLOR } from "../lib/constants";
 
 interface SubLessonItemProps {
     index: number;
@@ -25,11 +24,11 @@ export default function SubLessonItem({ index, title, href, status }: SubLessonI
             )}
         >
             {/* Index Badge */}
-            <div 
+            <div
                 className={cn(
                     "flex items-center justify-center w-9 h-9 rounded-full font-bold text-xs border transition-colors",
-                    status 
-                        ? "bg-green-50 border-green-300 text-green-700" 
+                    status
+                        ? "bg-green-50 border-green-300 text-green-700"
                         : "bg-slate-50 border-gray-200 text-gray-500 group-hover:text-slate-900 group-hover:border-gray-300"
                 )}
             >
@@ -71,4 +70,4 @@ function ArrowRight() {
             <path d="M5 12h14M12 5l7 7-7 7" />
         </svg>
     );
-}
+}

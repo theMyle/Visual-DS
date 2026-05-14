@@ -66,7 +66,7 @@ export default async function LessonPage({ params }: PageProps) {
     // Standard fallback for next if it's the last lesson
     const nextNav = nextLesson
         ? { href: nextLesson.href, label: nextLesson.title.split("- ")[1] || nextLesson.title }
-        : { href: "/lesson", label: "Lesson Page" };
+        : { href: `/lesson/${slug}`, label: "Lesson Category" };
 
     const prevNav = prevLesson
         ? { href: prevLesson.href, label: prevLesson.title.split("- ")[1] || prevLesson.title }

@@ -2,6 +2,7 @@ import { auth } from '@clerk/nextjs/server';
 import { notFound } from "next/navigation";
 import { LESSON_MAP } from "@/app/lib/lessons";
 import { FetchWithAuth } from "@/app/lib/fetchWithAuth";
+import { fetchAssessments } from "@/app/lib/assessments/api";
 import LessonDetailClient from './LessonDetailClient';
 
 interface ProgressItem {
@@ -78,11 +79,41 @@ export default async function Page({ params }: { params: Promise<{ slug: string 
         }));
     }
 
+    // 4. Check for Assessment
+    let assessmentHref: string | undefined = undefined;
+    try {
+        const availableAssessments = await fetchAssessments();
+        
+        const normalize = (s: string) => s.toLowerCase().replace(/[^a-z0-9]/g, "");
+        const normalizedSlug = normalize(slug);
+
+        // Try to find a matching assessment using various strategies:
+        const matchingAssessment = availableAssessments.find(a => {
+            const normalizedId = normalize(a.id);
+            const normalizedCategory = normalize(a.category);
+            const normalizedTitle = title ? normalize(title) : "";
+
+            return (
+                normalizedId === normalizedSlug ||
+                normalizedCategory === normalizedSlug ||
+                (normalizedTitle && normalizedCategory === normalizedTitle) ||
+                normalizedId.startsWith(normalizedSlug)
+            );
+        });
+
+        if (matchingAssessment) {
+            assessmentHref = `/assessment/${matchingAssessment.id}`;
+        }
+    } catch (error) {
+        console.error("Error fetching assessments for detail page:", error);
+    }
+
     return (
         <LessonDetailClient
             title={title}
             description={description}
             challengeHref={challengeHref}
+            assessmentHref={assessmentHref}
             lessons={lessons}
         />
     );
